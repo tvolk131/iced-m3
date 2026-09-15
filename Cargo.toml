@@ -1,22 +1,30 @@
 [package]
-name = "iced-material"
-version = "0.1.0"
+name = "iced-m3"
+version = "0.1.0-beta.1"
 edition = "2024"
 rust-version = "1.88"
 description = "Material 3 inspired desktop components for iced"
 license = "MIT AND Apache-2.0 AND OFL-1.1"
 readme = "README.md"
+repository = "https://github.com/tvolk131/iced-m3"
+homepage = "https://github.com/tvolk131/iced-m3"
+documentation = "https://docs.rs/iced-m3/0.1.0-beta.1/iced_m3/"
 keywords = ["iced", "material-design", "gui", "widgets"]
 categories = ["gui"]
-publish = false
+publish = ["crates-io"]
 # Retain build inputs, notices and executable tests. Pixel baselines stay in the
 # source repository; they are not needed by an application depending on the crate.
 include = [
-    "/Cargo.lock", "/Cargo.toml", "/LICENSE", "/NOTICE", "/README.md",
+    "/Cargo.lock", "/Cargo.toml", "/LICENSE", "/NOTICE", "/README.md", "/CHANGELOG.md",
     "/src/**", "/assets/**", "/docs/**", "/examples/**/*.rs",
     "/tests/**/*.rs", "/tests/visual/progress-preview.html",
     "/tools/generate_loading_shapes.py",
 ]
+
+[package.metadata.docs.rs]
+no-default-features = true
+default-target = "x86_64-unknown-linux-gnu"
+targets = []
 
 [features]
 default = ["wgpu"]

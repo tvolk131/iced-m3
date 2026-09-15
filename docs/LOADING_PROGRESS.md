@@ -8,7 +8,7 @@ readback or runtime dependency was added.
 ## Use
 
 ```rust
-use iced_material::{Element, linear_progress, circular_progress, loading_indicator};
+use iced_m3::{Element, linear_progress, circular_progress, loading_indicator};
 
 let bar: Element<'static, ()> = linear_progress(0.45).wavy(true).into();
 let ring: Element<'static, ()> = circular_progress(0.0)

@@ -1,6 +1,6 @@
 use iced::advanced::{Layout, Renderer as _, Shell, layout, renderer::Headless, widget::Tree};
 use iced::{Event, Length, Point, Rectangle, Size, keyboard, mouse, widget, window};
-use iced_material::{
+use iced_m3::{
     Element, MenuItem, Placement, RadioOption, SelectOption, Theme, button, context_menu,
     dialog::{dialog, modal},
     menu, radio, radio_group, select, snackbar, text_field, tooltip,
@@ -28,7 +28,7 @@ fn redraw(now: Instant) -> Event {
 fn moved(point: Point) -> Event {
     Event::Mouse(mouse::Event::CursorMoved { position: point })
 }
-fn actions() -> iced_material::Menu<'static, Message> {
+fn actions() -> iced_m3::Menu<'static, Message> {
     menu(
         "Actions",
         [

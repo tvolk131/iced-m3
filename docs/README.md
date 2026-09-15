@@ -23,6 +23,7 @@ the distributable and work in locally generated rustdoc without a hosted reposit
 - [Executed validation results](VALIDATION.md)
 - [Desktop beta integration checks](BETA_READINESS.md)
 - [Publication preparation](RELEASING.md)
+- [Release notes and compatibility](../CHANGELOG.md)
 - [Architecture](ARCHITECTURE.md), [roadmap](ROADMAP.md), and [references/licensing](REFERENCES.md)
 
 ## Detailed design notes

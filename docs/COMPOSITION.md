@@ -20,7 +20,7 @@ native iced container; use its existing `style` builder for an explicit fill.
 
 ```rust
 use iced::{widget, Background, Color};
-use iced_material::{list, list_item, tabs, Tab, Theme};
+use iced_m3::{list, list_item, tabs, Tab, Theme};
 
 #[derive(Clone)]
 enum Message { Page(u8) }

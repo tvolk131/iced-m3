@@ -11,10 +11,10 @@ resolver = "3"
 
 [features]
 default = ["wgpu"]
-wgpu = ["iced-material/wgpu"]
+wgpu = ["iced-m3/wgpu"]
 
 [dependencies]
-iced-material = { path = "../..", default-features = false }
+iced-m3 = { path = "../..", default-features = false }
 iced = { version = "=0.14.0", default-features = false, features = ["tiny-skia", "thread-pool"] }
 
 [dev-dependencies]

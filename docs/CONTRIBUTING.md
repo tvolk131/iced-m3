@@ -1,8 +1,9 @@
 # Development and validation
 
 Run commands from the source checkout. Rust 1.88 is the supported minimum;
-see [executed checks and platform boundaries](BETA_READINESS.md). CI is configured
-in `.github/workflows/ci.yml`; a configured job is not a recorded successful run.
+see [executed checks and platform boundaries](BETA_READINESS.md). The workflow is
+in `.github/workflows/ci.yml`; check the exact candidate's run in
+[GitHub Actions](https://github.com/tvolk131/iced-m3/actions).
 
 ## Routine checks
 
@@ -50,7 +51,8 @@ Outputs are in `target/visuals/`. These are visual inspection artifacts, not por
 
 The README is the short consumer introduction. Getting-started, cookbook and
 theming pages also appear under `guide` in rustdoc, with compiled examples.
-Use source-relative links in the README and source-only guides. The three embedded
+Use absolute public links in the README so it renders on crates.io; source-only
+guides can use relative links. The three embedded
 guides should be self-contained: use external URLs or describe source paths as
 code, since source Markdown and images are not copied into generated rustdoc.
 The crate homepage in `src/lib.rs` uses native Rust API links.
@@ -66,10 +68,13 @@ RUSTDOCFLAGS="-D warnings" cargo doc --locked --no-deps
 
 ```sh
 python3 tools/check_package.py
+cargo publish --dry-run --locked
 ```
 
 This packages and extracts the crate, checks its files and notices, then tests the
 package and a separate consuming app. Add `--offline` to use cached dependencies.
-It never publishes. Reference PNGs and the independent consumer are intentionally
+Neither command uploads. Linux CI also checks the docs.rs target and feature
+configuration before verifying the archive and publication dry run.
+Reference PNGs and the independent consumer are intentionally
 excluded from the distributable; ordinary tests and the consumer guides are included.
 See [publication preparation](RELEASING.md) for the remaining release steps.

@@ -1,8 +1,8 @@
-//! A standalone client of iced-material: application state stays in this crate.
+//! A standalone client of iced-m3: application state stays in this crate.
 mod metrics;
 
 use iced::{Alignment, Color, Length, widget};
-use iced_material::{
+use iced_m3::{
     ButtonVariant, Element, SelectOption, SurfaceVariant, Tab, Theme, TypeScale, app_bar, button,
     card, checkbox, dialog, focus, linear_progress, loading_indicator, select, snackbar, switch,
     tabs, text_field, typography,
@@ -323,7 +323,7 @@ impl Studio {
         .into()
     }
 
-    fn editor(&self) -> iced_material::Dialog<'_, Message> {
+    fn editor(&self) -> iced_m3::Dialog<'_, Message> {
         let email = text_field("Contact email", &self.draft.email).on_input(Message::Email);
         let email = if self.draft.valid() || self.draft.email == self.saved.email {
             email.supporting_text("Used for studio updates.")
@@ -398,7 +398,7 @@ impl Studio {
         .on_dismiss(Message::Cancel)
     }
 
-    fn discard_dialog(&self) -> iced_material::Dialog<'_, Message> {
+    fn discard_dialog(&self) -> iced_m3::Dialog<'_, Message> {
         dialog(
             widget::column![
                 typography("Discard your changes?", TypeScale::HeadlineSmall),

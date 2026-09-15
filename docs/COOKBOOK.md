@@ -20,7 +20,7 @@ See Search and filtering (`docs/SEARCH.md` in the source checkout) for the searc
 interaction details, animation timings and current scope.
 
 ```rust
-use iced_material::{Element, search_bar, list, list_item, filter_chip, range_slider};
+use iced_m3::{Element, search_bar, list, list_item, filter_chip, range_slider};
 use iced::widget::column;
 
 #[derive(Clone)]
@@ -39,7 +39,7 @@ fn filters(query: &str, open: bool, shared: bool, age: (f32, f32)) -> Element<'s
 
 ```rust
 use iced::{Length, widget::column};
-use iced_material::{Element, Segment, SegmentSelection, slider,
+use iced_m3::{Element, Segment, SegmentSelection, slider,
     segmented_buttons, linear_progress, circular_progress};
 
 #[derive(Clone)]
@@ -80,7 +80,7 @@ by timed tests. Details and examples (`docs/LOADING_PROGRESS.md` in the source c
 
 ```rust
 use iced::{Length, widget::column};
-use iced_material::{Element, Theme, TypeScale, button, extended_fab,
+use iced_m3::{Element, Theme, TypeScale, button, extended_fab,
     sheet, side_sheet, text_field, typography};
 
 #[derive(Clone)]
@@ -114,7 +114,7 @@ See sheet and FAB behavior, tokens, and limits (`docs/SHEETS.md` in the source c
 
 ```rust
 use iced::{Length, widget::{column, row}};
-use iced_material::{Element, NavigationItem, Tab, TabVariant, app_bar, button,
+use iced_m3::{Element, NavigationItem, Tab, TabVariant, app_bar, button,
     checkbox, list, list_item, navigation_rail, tabs};
 
 #[derive(Clone)]
@@ -170,7 +170,7 @@ Keep `modal` at the **root** of your view on every rebuild, including when close
 
 ```rust
 use iced::{Length, widget::{column, container, row}};
-use iced_material::{button, ButtonVariant, dialog::{actions, dialog, modal}, typography, TypeScale, Element};
+use iced_m3::{button, ButtonVariant, dialog::{actions, dialog, modal}, typography, TypeScale, Element};
 
 #[derive(Clone)]
 enum Message { Cancel, Confirm }
@@ -200,7 +200,7 @@ fn view(open: bool) -> Element<'static, Message> {
 
 Material helpers automatically register the bundled Roboto font once. Body and
 headings use Regular (400); action labels and smaller titles use Medium (500).
-Set `.default_font(iced_material::fonts::REGULAR)` on your iced application to
+Set `.default_font(iced_m3::fonts::REGULAR)` on your iced application to
 match ordinary iced text widgets too. Override individual fonts with `.font(...)`;
 text fields apply that override to their value, label and supporting text.
 
@@ -232,7 +232,7 @@ builder; a native iced checkbox can still use the Material theme's catalog.
 
 ```rust
 use iced::widget::column;
-use iced_material::{button, menu, radio_group, select, tooltip, Element,
+use iced_m3::{button, menu, radio_group, select, tooltip, Element,
     MenuItem, RadioOption, SelectOption};
 
 #[derive(Clone)]
@@ -283,7 +283,7 @@ application subscription is needed for their delay.
 
 ```rust
 use iced::{Length, widget::container};
-use iced_material::{Element, snackbar, dialog::modal};
+use iced_m3::{Element, snackbar, dialog::modal};
 
 #[derive(Clone)]
 enum Message { Undo, Dismiss(u64) }
@@ -313,7 +313,7 @@ subscription is needed. Queueing/replacing notices belongs to the application.
 
 ```rust
 use iced::widget::row;
-use iced_material::{Button, ButtonVariant, Element, TypeScale, badge, checkbox, chip,
+use iced_m3::{Button, ButtonVariant, Element, TypeScale, badge, checkbox, chip,
     divider, icon_button, surface, switch, typography, SurfaceVariant};
 
 #[derive(Clone)]
@@ -340,7 +340,7 @@ Supply a square icon widget as `add_icon`. `icon(svg_handle)` is a passive 24px 
 Cascading menus and full-screen dialogs share the keyboard and focus layer:
 
 ```rust
-use iced_material::{button, dialog, focus, full_screen_dialog, menu, MenuItem, Element, typography, TypeScale};
+use iced_m3::{button, dialog, focus, full_screen_dialog, menu, MenuItem, Element, typography, TypeScale};
 #[derive(Clone)]
 enum Message { Pdf, Save, Close }
 
@@ -358,7 +358,7 @@ A docked calendar retains month navigation across app updates and closes after
 selection is complete. Keep this widget mounted and rebuild with the new values:
 
 ```rust
-use iced_material::{Date, DateSelection, date_picker, docked_date_picker, typography, TypeScale, Element};
+use iced_m3::{Date, DateSelection, date_picker, docked_date_picker, typography, TypeScale, Element};
 #[derive(Clone)]
 enum Message { Month(Date), Selection(DateSelection) }
 

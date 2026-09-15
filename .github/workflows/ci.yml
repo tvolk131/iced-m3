@@ -27,6 +27,11 @@ jobs:
       - run: cargo doc --locked --no-deps
         env:
           RUSTDOCFLAGS: "-D warnings"
+      - name: Check the docs.rs target and feature configuration
+        if: runner.os == 'Linux'
+        run: cargo doc --locked --no-deps --no-default-features --target x86_64-unknown-linux-gnu
+        env:
+          RUSTDOCFLAGS: "-D warnings"
       - name: Check the independent desktop consumer
         run: |
           cargo fmt --manifest-path consumers/desktop/Cargo.toml --all -- --check
@@ -36,6 +41,9 @@ jobs:
       - name: Verify the archive and consume its extracted contents
         if: runner.os == 'Linux'
         run: python3 tools/check_package.py
+      - name: Verify publication without uploading
+        if: runner.os == 'Linux'
+        run: cargo publish --dry-run --locked
 
   msrv:
     runs-on: ubuntu-latest

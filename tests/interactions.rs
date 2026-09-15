@@ -2,7 +2,7 @@ use iced::{
     Event, Length, Point, Size, keyboard, mouse,
     widget::{column, container},
 };
-use iced_material::{
+use iced_m3::{
     Element, Theme, button,
     dialog::{dialog, modal},
     text_field,
@@ -20,7 +20,7 @@ enum Message {
 
 #[test]
 fn selection_controls_emit_new_application_values_and_respect_disabled() {
-    use iced_material::{TypeScale, checkbox, chip, icon_button, switch, typography};
+    use iced_m3::{TypeScale, checkbox, chip, icon_button, switch, typography};
     let mut ui = Simulator::new(
         column![
             checkbox(false).label("Check me").on_toggle(Message::Toggle),

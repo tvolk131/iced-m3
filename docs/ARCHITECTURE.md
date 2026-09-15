@@ -15,7 +15,7 @@ child removal. RangeSlider shares the single slider's scale/geometry calculation
 and tracks the active endpoint internally while publishing complete value pairs.
 See [SEARCH.md](SEARCH.md) for behavior and scope.
 
-`Element<'a, Message>` is an alias for `iced::Element<'a, Message, iced_material::Theme>`. Components expose typed variants and builders. Persistent business values remain in the application's model. Transient interaction state belongs to iced's widget `Tree`; `diff` preserves it across view rebuilds. Composition uses iced elements and native catalogs. The initial fixed layout scale is shared through `tokens`, with local builder overrides where they make sense. Runtime theme changes affect colors, elevation and motion; typography/spacing/shape measurements come from the shared scale.
+`Element<'a, Message>` is an alias for `iced::Element<'a, Message, iced_m3::Theme>`. Components expose typed variants and builders. Persistent business values remain in the application's model. Transient interaction state belongs to iced's widget `Tree`; `diff` preserves it across view rebuilds. Composition uses iced elements and native catalogs. The initial fixed layout scale is shared through `tokens`, with local builder overrides where they make sense. Runtime theme changes affect colors, elevation and motion; typography/spacing/shape measurements come from the shared scale.
 
 Rendering uses upstream iced's wgpu backend by default, retaining Tiny Skia as a fallback. Software-only builds are available through `--no-default-features`. Release profiling showed that small text changes still incur substantial software painting work when overlapping large shadows and surfaces; dependency optimization alone did not solve native dialog typing lag. No renderer fork or application animation loop is needed for the default GPU path. See [the measurements and native verification](VALIDATION.md).
 
@@ -211,7 +211,7 @@ accessibility boundary remains in effect.
 | iced_aw | [Main Cargo.toml](https://raw.githubusercontent.com/iced-rs/iced_aw/main/Cargo.toml) declares MIT and iced 0.15.0-dev dependencies/patches. | Useful component organization reference; inspected main is not a compatible dependency for this release. No code copied. This is not a claim that every older iced_aw release is incompatible. |
 | libcosmic | [Cargo.toml](https://raw.githubusercontent.com/pop-os/libcosmic/master/Cargo.toml) uses `./iced`; [LICENSE](https://raw.githubusercontent.com/pop-os/libcosmic/master/LICENSE) is MPL-2.0. | Its fork/platform integration exceeds this project's upstream-only scope. No code copied. |
 
-`Cargo.lock` records exact transitive versions. The package is unpublished (`publish = false`); publication/name checking is future work. Original code is MIT licensed. The unmodified bundled Roboto font is SIL OFL 1.1 licensed; its license and provenance are retained in `assets/fonts/`.
+`Cargo.lock` records exact transitive versions. The package is `iced-m3` (Rust import `iced_m3`); see [release preparation](RELEASING.md) for publication status and compatibility expectations. Original code is MIT licensed. The unmodified bundled Roboto font is SIL OFL 1.1 licensed; its license and provenance are retained in `assets/fonts/`.
 
 ## Future focus support
 

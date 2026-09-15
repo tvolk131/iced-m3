@@ -30,7 +30,7 @@ The [AccessKit winit adapter](https://docs.rs/accesskit_winit/0.34.0/accesskit_w
 requires a winit window plus active event loop at initialization, before the
 window is first shown, and native window events before the application handles
 them. Its callbacks also need synchronized action routing and semantic-tree
-updates. Merely adding this crate to iced-material does not expose those hooks.
+updates. Merely adding this crate to iced-m3 does not expose those hooks.
 AccessKit also offers separate platform adapters, so an application-specific
 bridge remains technically possible. See [AccessKit's integration overview](https://accesskit.dev/).
 

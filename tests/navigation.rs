@@ -4,7 +4,7 @@ use iced::advanced::{
     widget::Tree,
 };
 use iced::{Event, Length, Point, Rectangle, Size, Vector, mouse, widget, window};
-use iced_material::{
+use iced_m3::{
     ButtonVariant, Element, MenuItem, NavigationItem, Tab, TabVariant, Theme, app_bar, button,
     checkbox, icon_button, list, list_item, menu, navigation_rail, switch, tabs,
 };
@@ -209,10 +209,10 @@ fn long_rails_scroll_while_footer_actions_stay_reachable() {
 }
 #[test]
 fn root_dialog_blocks_navigation_and_list_actions() {
-    let mut ui = Simulator::new(iced_material::dialog::modal(
+    let mut ui = Simulator::new(iced_m3::dialog::modal(
         widget::row![rail(1), row(false)],
         Some(
-            iced_material::dialog::dialog("Dialog")
+            iced_m3::dialog::dialog("Dialog")
                 .on_dismiss(Message::Dismiss)
                 .dismiss_on_outside(false),
         ),
@@ -363,7 +363,7 @@ fn primary_icon_tabs_reserve_room_for_badges_at_narrow_width() {
         .on_select(Message::Select),
     );
     let badge = ui.find("3").unwrap().visible_bounds().unwrap();
-    let mut reference = Simulator::<Message, Theme>::new(iced_material::badge(3));
+    let mut reference = Simulator::<Message, Theme>::new(iced_m3::badge(3));
     let natural = reference.find("3").unwrap().visible_bounds().unwrap();
     assert_eq!(badge.width, natural.width);
     assert!(badge.x + badge.width < 192.0);
@@ -543,7 +543,7 @@ fn selected_rail_item_retains_visible_hover_feedback() {
 #[test]
 #[ignore = "writes navigation and selection-control renders for manual inspection"]
 fn navigation_snapshots() {
-    use iced_material::{TypeScale, typography};
+    use iced_m3::{TypeScale, typography};
     let backend = std::env::var("ICED_TEST_BACKEND").unwrap_or_else(|_| "tiny-skia".into());
     for (name, width, dark, pressed) in [
         ("light", 660.0, false, false),

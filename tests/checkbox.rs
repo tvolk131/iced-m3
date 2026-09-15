@@ -1,6 +1,6 @@
 use iced::advanced::{Layout, Renderer as _, Shell, layout, renderer::Headless, widget::Tree};
 use iced::{Event, Point, Rectangle, Size, mouse, window};
-use iced_material::{Element, Theme, checkbox};
+use iced_m3::{Element, Theme, checkbox};
 use std::time::Duration;
 
 struct Harness {

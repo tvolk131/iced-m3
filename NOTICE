@@ -1,4 +1,4 @@
-iced-material
+iced-m3
 
 The Rust component library code is licensed under MIT; see LICENSE.
 
@@ -13,4 +13,4 @@ assets/loading/README.md for the pinned sources and generation process.
 The package license expression describes these jointly distributed materials;
 it does not relicense the Rust code or offer a choice of licenses for the assets.
 Downstream applications can display the bundled asset notices through
-iced_material::fonts::LICENSE and iced_material::loading::{LICENSE, NOTICE}.
+iced_m3::fonts::LICENSE and iced_m3::loading::{LICENSE, NOTICE}.

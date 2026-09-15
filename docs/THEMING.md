@@ -4,7 +4,7 @@
 
 ```rust
 use iced::{Color, Font};
-use iced_material::{Theme, TypeScale, typography};
+use iced_m3::{Theme, TypeScale, typography};
 use std::time::Duration;
 
 let mut theme = Theme::from_accent(Color::from_rgb8(0, 106, 106), true);
@@ -29,7 +29,7 @@ The Material theme implements iced catalogs for text, containers, text inputs, S
 
 ```rust
 use iced::widget;
-use iced_material::{Element, Theme, text_field};
+use iced_m3::{Element, Theme, text_field};
 
 #[derive(Clone)]
 enum Message { Note(String), Refresh }

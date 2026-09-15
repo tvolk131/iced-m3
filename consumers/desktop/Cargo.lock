@@ -1062,8 +1062,8 @@ dependencies = [
 ]
 
 [[package]]
-name = "iced-material"
-version = "0.1.0"
+name = "iced-m3"
+version = "0.1.0-beta.1"
 dependencies = [
  "iced",
  "material-colors",
@@ -1521,7 +1521,7 @@ name = "material-desktop-consumer"
 version = "0.1.0"
 dependencies = [
  "iced",
- "iced-material",
+ "iced-m3",
  "iced_test",
  "png 0.18.1",
 ]

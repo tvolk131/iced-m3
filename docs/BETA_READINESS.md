@@ -3,7 +3,8 @@
 This milestone tests the crate as a dependency of an independent application and
 prepares a reproducible distributable. It does not certify full M3 conformance,
 native accessibility, Windows/Linux runtime behavior or a stable 1.0 API. The
-package remains unpublished with `publish = false`.
+first `iced-m3` beta is prepared for publication but has not been uploaded.
+See [release preparation](RELEASING.md) for current distribution details.
 
 ## Separate application boundary
 
@@ -34,7 +35,7 @@ goldens or an OS scaling certification.
 The existing public APIs support these flows without adding a wrapper framework
 or changing the library's runtime behavior. Application profiles are intentionally
 declared in the consumer manifest; dependency profiles do not configure an app.
-Its `wgpu` feature forwards to `iced-material/wgpu`, and both configurations are
+Its `wgpu` feature forwards to `iced-m3/wgpu`, and both configurations are
 checked independently of the root package's feature graph.
 
 The main documentation gap was the foreign-theme boundary. Native text/input,
@@ -64,8 +65,8 @@ The package metadata now records `MIT AND Apache-2.0 AND OFL-1.1` for the jointl
 distributed Rust code, generated shape data and font. The Rust code remains MIT;
 this is not a license change for individual files. Root and asset notices stay in
 the archive, with runtime notice constants available for application acknowledgments.
-No repository/homepage URL or crates.io name availability is invented to suppress
-Cargo's metadata warning. Real distribution identity is still a publication task.
+The package is now `iced-m3`, with public repository and documentation metadata.
+Both manifests/lockfiles and all executable examples use the release name.
 
 `python3 tools/check_package.py` runs Cargo's package verification, checks required
 assets/notices and the absence of heavyweight development files, executes ordinary
@@ -84,25 +85,25 @@ and [minimum-version policy](https://doc.rust-lang.org/cargo/reference/rust-vers
 
 | Area | Scope |
 | --- | --- |
-| Rust | Edition 2024; minimum 1.88.0, checked for library and consumer targets in both feature configurations; normal development uses 1.92.0 |
+| Rust | Edition 2024; minimum 1.88.0 checked for library and consumer targets in both feature configurations; CI also tests current stable; canonical visual tests use 1.92.0 |
 | iced | Released upstream 0.14.0; default GPU backend with software fallback, optional software-only build |
 | macOS | Local software and Metal checks; native release-window keyboard editing, nested confirmation, focus restoration and saving; captures at multiple logical sizes/scales |
-| Windows/Linux | CI builds/tests configured for all three desktop OSes; native interaction, IME, multiple-monitor scaling and GPU behavior still need real-platform checks |
+| Windows/Linux | Remote builds and headless tests pass; native interaction, IME, multiple-monitor scaling and GPU behavior still need real-platform checks |
 | Accessibility | Material keyboard traversal/reduced motion included; native screen-reader integration remains missing (see ACCESSIBILITY.md) |
 | Localization | RTL and localized calendar/date entry remain unfinished |
 | Fidelity | Known arbitrary-child clipping/group-opacity and remaining Expressive variants remain documented in FIDELITY.md |
 
 CI now explicitly enters the consumer workspace, checks Rust 1.88 in a dedicated
 job, and verifies the packaged consumer. The existing strict image suite remains
-in its canonical macOS job. CI configuration is not evidence that a remote run or
-native Windows/Linux session has happened. Exact locally executed results and
-artifact sizes are recorded in [VALIDATION.md](VALIDATION.md).
+in its canonical macOS job. All five jobs passed in
+[the first successful remote run](https://github.com/tvolk131/iced-m3/actions/runs/34933165692).
+This establishes automated coverage, not a native Windows/Linux session. Later
+release-candidate checks and artifact sizes are recorded in [VALIDATION.md](VALIDATION.md).
 
 ## Next use
 
 Run `cargo run --locked --manifest-path consumers/desktop/Cargo.toml` from the source
-checkout, then try the library in a real project. Before publishing, choose and
-verify the package/repository identity, review the 0.x compatibility policy and
-complete the desired platform acceptance checks. The recommended next development
+checkout, then try the library in a real project. Before publishing, complete the
+[release checklist](RELEASING.md). The recommended next development
 work should come from actual application integration; screen-reader support and
 renderer-group integration remain separate, larger milestones.

@@ -6,7 +6,7 @@ use iced::advanced::{
     widget::{Tree, tree},
 };
 use iced::{Length, Rectangle, Renderer, Size, mouse};
-use iced_material::{Element, Theme};
+use iced_m3::{Element, Theme};
 use std::sync::OnceLock;
 
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -115,8 +115,8 @@ impl<Message> Widget<Message, Theme, Renderer> for Icon {
         _: mouse::Cursor,
         viewport: &Rectangle,
     ) {
-        <iced_material::Icon as Widget<Message, Theme, Renderer>>::draw(
-            &iced_material::icon(self.handle().clone()),
+        <iced_m3::Icon as Widget<Message, Theme, Renderer>>::draw(
+            &iced_m3::icon(self.handle().clone()),
             tree,
             renderer,
             theme,
@@ -138,7 +138,7 @@ impl<'a, Message: 'a> From<Icon> for Element<'a, Message> {
 mod tests {
     use super::*;
     use iced::advanced::{Renderer as _, renderer::Headless};
-    use iced_material::{ButtonVariant, icon_button};
+    use iced_m3::{ButtonVariant, icon_button};
 
     #[test]
     fn icon_ink_is_centered_inside_the_button_outline() {

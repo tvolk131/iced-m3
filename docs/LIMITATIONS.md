@@ -1,6 +1,6 @@
 # Support and limitations
 
-This is an unpublished desktop beta with an evolving API. Full M3 conformance
+This is a desktop beta with an evolving API. Full M3 conformance
 and native accessibility are not claimed. See [beta validation](BETA_READINESS.md)
 for the minimum Rust version and platform checks actually completed.
 

@@ -1,5 +1,41 @@
 # Validation report
 
+## First release preparation — 2026-09-15
+
+The release candidate is `iced-m3` **0.1.0-beta.1** (`iced_m3` in Rust).
+Manifests, both lockfiles, imports, examples and package tooling use that identity;
+no dependency version or component behavior changed. Public metadata, registry
+installation examples, a compatibility policy and release notes are present.
+The README remains concise at 115 lines and uses public source/image links.
+
+- The renamed archive passes all **261 ordinary tests** and **14 doctests**.
+  The independent consumer passes its **five flows in each renderer configuration**
+  against the extracted archive. It contains 161 files, approximately **1.82 MB
+  compressed**, retaining licenses and release notes while excluding reference PNGs.
+- Current-stable Rust **1.98.1** Clippy passes for the library and consumer with
+  warnings denied. All library/consumer targets check on Rust **1.88.0**, with
+  default and software-only features; transitive versions in both lockfiles are
+  unchanged. Software-only rustdoc builds with warnings denied locally.
+- A link audit checks **399 links** across consumer Markdown and generated API
+  pages, including the renamed crate module, public-source destinations and anchors.
+- `cargo publish --dry-run --locked --allow-dirty` succeeds, including registry
+  checks, packaging and verification. Cargo explicitly aborts the upload for the
+  dry run. **Nothing was published or tagged.** The manifest now permits crates.io
+  so this verification works; the independent consumer remains non-publishable.
+- Before the rename, all five remote jobs passed at `4332143` in
+  [run 34933165692](https://github.com/tvolk131/iced-m3/actions/runs/34933165692),
+  including Windows/Linux/macOS, MSRV, packaged consumer and all 2,665 visual
+  references. The release candidate's CI additionally checks the docs.rs Linux
+  target/features and a clean-checkout publication dry run. Require a successful
+  run for the exact release commit before uploading; see
+  [current CI runs](https://github.com/tvolk131/iced-m3/actions).
+
+Local logs are in `target/release-preparation/`. Hosted docs.rs remains pending
+publication; native Windows/Linux interaction remains outside the headless CI
+evidence. See [release preparation](RELEASING.md) for the remaining upload steps.
+Older entries below are historical snapshots, including their earlier package
+name and publication/CI status; this entry supersedes those readiness statements.
+
 ## Consumer documentation — 2026-09-15
 
 The README is now 112 lines, down from 648, with one screenshot, a complete

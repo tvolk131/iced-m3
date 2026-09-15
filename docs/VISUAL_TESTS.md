@@ -153,7 +153,8 @@ suite always selects Tiny Skia. See [SHEETS.md](SHEETS.md) for the component sco
 References were captured on Apple Silicon, macOS 26.6.2, Rust 1.92.0, with the
 checked-in Cargo.lock, bundled Roboto, Tiny Skia and a fixed 2× scale. The visual
 CI job uses the macOS 26 Arm64 runner and the same compiler, lockfile, fonts,
-renderer and scale. It is configured but has not yet executed on a remote runner.
+renderer and scale. All 2,665 references passed in
+[the first successful remote run](https://github.com/tvolk131/iced-m3/actions/runs/34933165692).
 OS image updates can still affect rendering; inspect such differences before
 refreshing references. Exact cross-platform or cross-renderer equality is not
 promised. GPU blending is deliberately not compared to software golden pixels.

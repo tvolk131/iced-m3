@@ -15,7 +15,7 @@ Inputs are pinned to Material Components for Android revision
 
 The data and reference SVGs are Apache-2.0 licensed. Keep `NOTICE` and
 `LICENSE-APACHE-2.0.txt` when redistributing. Application acknowledgments can use
-`iced_material::loading::{LICENSE, NOTICE}`. The library's own code remains MIT.
+`iced_m3::loading::{LICENSE, NOTICE}`. The library's own code remains MIT.
 
 ## Regeneration
 

@@ -19,7 +19,7 @@ use iced::{
     Alignment, Color, Length, Size,
     widget::{self, column, container, responsive, row, scrollable, space},
 };
-use iced_material::{
+use iced_m3::{
     AppBar, Button, ButtonVariant, Element, FabColor, FabSize, MenuItem, NavigationItem,
     NavigationLayout, RadioOption, Segment, SegmentSelection, SelectOption, SurfaceVariant, Tab,
     TabVariant, Theme, TypeScale, app_bar, assist_chip, badge, bottom_sheet, button, checkbox,
@@ -91,14 +91,14 @@ struct Gallery {
     fab_menu_open: bool,
     extended_action: bool,
     drag_height: f32,
-    calendar_month: iced_material::Date,
-    calendar_selection: iced_material::DateSelection,
+    calendar_month: iced_m3::Date,
+    calendar_selection: iced_m3::DateSelection,
     calendar_years: bool,
     calendar_range: bool,
     calendar_text: String,
     calendar_end: String,
-    clock_time: iced_material::Time,
-    clock_part: iced_material::TimePart,
+    clock_time: iced_m3::Time,
+    clock_part: iced_m3::TimePart,
     clock_text: String,
     clock24: bool,
     clock_input: bool,
@@ -183,16 +183,16 @@ impl Default for Gallery {
             fab_menu_open: false,
             extended_action: true,
             drag_height: 520.0,
-            calendar_month: iced_material::Date::new(2026, 9, 1).unwrap(),
-            calendar_selection: iced_material::DateSelection::Single(Some(
-                iced_material::Date::new(2026, 9, 18).unwrap(),
+            calendar_month: iced_m3::Date::new(2026, 9, 1).unwrap(),
+            calendar_selection: iced_m3::DateSelection::Single(Some(
+                iced_m3::Date::new(2026, 9, 18).unwrap(),
             )),
             calendar_years: false,
             calendar_range: false,
             calendar_text: "2026-09-18".into(),
             calendar_end: String::new(),
-            clock_time: iced_material::Time::new(10, 30).unwrap(),
-            clock_part: iced_material::TimePart::Hour,
+            clock_time: iced_m3::Time::new(10, 30).unwrap(),
+            clock_part: iced_m3::TimePart::Hour,
             clock_text: "10:30".into(),
             clock24: false,
             clock_input: false,
@@ -280,14 +280,14 @@ enum Message {
     FabMenu,
     ExtendedAction(bool),
     SheetHeight(f32),
-    Calendar(iced_material::DateSelection),
-    CalendarMonth(iced_material::Date),
+    Calendar(iced_m3::DateSelection),
+    CalendarMonth(iced_m3::Date),
     CalendarYears,
     CalendarRange(bool),
     CalendarText(String),
     CalendarEnd(String),
-    Clock(iced_material::Time),
-    ClockPart(iced_material::TimePart),
+    Clock(iced_m3::Time),
+    ClockPart(iced_m3::TimePart),
     ClockText(String),
     Clock24(bool),
     ClockInput,
@@ -408,11 +408,11 @@ impl Gallery {
             Message::Calendar(selection) => {
                 self.calendar_selection = selection;
                 match selection {
-                    iced_material::DateSelection::Single(date) => {
+                    iced_m3::DateSelection::Single(date) => {
                         self.calendar_text = date.map(|d| d.to_string()).unwrap_or_default();
                         self.calendar_end.clear();
                     }
-                    iced_material::DateSelection::Range { start, end } => {
+                    iced_m3::DateSelection::Range { start, end } => {
                         self.calendar_text = start.map(|d| d.to_string()).unwrap_or_default();
                         self.calendar_end = end.map(|d| d.to_string()).unwrap_or_default();
                     }
@@ -423,32 +423,32 @@ impl Gallery {
             Message::CalendarRange(range) => {
                 self.calendar_range = range;
                 self.calendar_selection = if range {
-                    iced_material::DateSelection::Range {
+                    iced_m3::DateSelection::Range {
                         start: self.calendar_text.parse().ok(),
                         end: None,
                     }
                 } else {
-                    iced_material::DateSelection::Single(self.calendar_text.parse().ok())
+                    iced_m3::DateSelection::Single(self.calendar_text.parse().ok())
                 };
                 self.calendar_end.clear();
             }
             Message::CalendarText(value) => {
                 self.calendar_text = value;
                 self.calendar_selection = if self.calendar_range {
-                    iced_material::DateSelection::Range {
+                    iced_m3::DateSelection::Range {
                         start: self.calendar_text.parse().ok(),
                         end: self.calendar_end.parse().ok(),
                     }
                 } else {
-                    iced_material::DateSelection::Single(self.calendar_text.parse().ok())
+                    iced_m3::DateSelection::Single(self.calendar_text.parse().ok())
                 };
-                if let Ok(date) = self.calendar_text.parse::<iced_material::Date>() {
+                if let Ok(date) = self.calendar_text.parse::<iced_m3::Date>() {
                     self.calendar_month = date.first_of_month();
                 }
             }
             Message::CalendarEnd(value) => {
                 self.calendar_end = value;
-                self.calendar_selection = iced_material::DateSelection::Range {
+                self.calendar_selection = iced_m3::DateSelection::Range {
                     start: self.calendar_text.parse().ok(),
                     end: self.calendar_end.parse().ok(),
                 };
@@ -888,7 +888,7 @@ impl Gallery {
             .open(self.details_open)
             .on_dismiss(Message::CloseDetails);
             sheet::host(
-                iced_material::snackbar::host(
+                iced_m3::snackbar::host(
                     background,
                     self.notice.as_ref().or(self.exiting_notice.as_ref()).map(
                         |(id, text, undo)| {
@@ -907,7 +907,7 @@ impl Gallery {
                 panel,
             )
         });
-        let content = iced_material::modal_navigation_rail(
+        let content = iced_m3::modal_navigation_rail(
             content,
             navigation_rail(
                 [
@@ -930,7 +930,7 @@ impl Gallery {
             self.navigation_modal_open,
             Message::NavigationModal(false),
         );
-        iced_material::focus::scope(iced_material::dialog::stack(
+        iced_m3::focus::scope(iced_m3::dialog::stack(
             content,
             [
                 (
@@ -941,7 +941,7 @@ impl Gallery {
                     typography("New workspace", TypeScale::HeadlineSmall),
                     muted("Give your team's next workspace a name. This demo keeps changes for this session.", TypeScale::BodyMedium),
                     text_field("Workspace name", &self.new_name).on_input(Message::NewName),
-                    iced_material::dialog::actions(row![
+                    iced_m3::dialog::actions(row![
                         button("Cancel").variant(ButtonVariant::Text).on_press(Message::CancelNew),
                         button("Create workspace").on_press(Message::CreateWorkspace).disabled(self.new_name.trim().is_empty()),
                     ].spacing(8).wrap()),
@@ -985,7 +985,7 @@ impl Gallery {
                                 },
                                 TypeScale::Supporting
                             ),
-                            iced_material::dialog::actions(container(
+                            iced_m3::dialog::actions(container(
                                 row![
                                     button("Cancel")
                                         .variant(ButtonVariant::Text)
@@ -1015,7 +1015,7 @@ impl Gallery {
                                 "Your workspace name and note have unsaved changes.",
                                 TypeScale::BodyMedium
                             ),
-                            iced_material::dialog::actions(
+                            iced_m3::dialog::actions(
                                 row![
                                     button("Keep editing")
                                         .variant(ButtonVariant::Text)
@@ -1080,8 +1080,8 @@ impl Gallery {
             ],
         ))
     }
-    fn workspace_editor(&self) -> iced_material::Dialog<'_, Message> {
-        iced_material::full_screen_dialog(
+    fn workspace_editor(&self) -> iced_m3::Dialog<'_, Message> {
+        iced_m3::full_screen_dialog(
             "Edit workspace",
             column![
                 muted(
@@ -1211,7 +1211,7 @@ impl Gallery {
         let c = self.theme().colors;
         let mut elevations = row![].spacing(24);
         for level in 0..=5 {
-            elevations = elevations.push(iced_material::elevated(
+            elevations = elevations.push(iced_m3::elevated(
                 container(typography(format!("Level {level}"), TypeScale::LabelLarge))
                     .center_x(136)
                     .center_y(80)
@@ -1294,7 +1294,7 @@ impl Gallery {
         ]
         .into_iter()
         .map(|variant| {
-            iced_material::card(
+            iced_m3::card(
                 column![
                     typography(format!("{variant:?} card"), TypeScale::TitleMedium),
                     typography("Workspace collection", TypeScale::BodyMedium)
@@ -1320,7 +1320,7 @@ impl Gallery {
                         .supporting_text("Set a budget for this workspace"),
                     text_field("Password", &self.password)
                         .on_input(Message::Password)
-                        .variant(iced_material::TextFieldVariant::Filled)
+                        .variant(iced_m3::TextFieldVariant::Filled)
                         .secure(!self.show_password)
                         .leading(Icon::Workspace)
                         .trailing_action(Icon::Visibility, Message::ShowPassword)
@@ -1330,7 +1330,7 @@ impl Gallery {
                 .spacing(24)
                 .wrap(),
                 self.access_select()
-                    .variant(iced_material::TextFieldVariant::Filled)
+                    .variant(iced_m3::TextFieldVariant::Filled)
                     .leading(Icon::Workspace)
                     .supporting_text("Choose a role for new members"),
                 row![
@@ -1372,27 +1372,27 @@ impl Gallery {
         .into()
     }
     fn schedule_valid(&self) -> bool {
-        let min = iced_material::Date::new(2026, 1, 1).unwrap();
-        let max = iced_material::Date::new(2030, 12, 31).unwrap();
+        let min = iced_m3::Date::new(2026, 1, 1).unwrap();
+        let max = iced_m3::Date::new(2030, 12, 31).unwrap();
         self.calendar_text
-            .parse::<iced_material::Date>()
+            .parse::<iced_m3::Date>()
             .is_ok_and(|start| {
                 start >= min
                     && start <= max
                     && (!self.calendar_range
                         || self
                             .calendar_end
-                            .parse::<iced_material::Date>()
+                            .parse::<iced_m3::Date>()
                             .is_ok_and(|end| end >= start && end <= max))
             })
-            && self.clock_text.parse::<iced_material::Time>().is_ok()
+            && self.clock_text.parse::<iced_m3::Time>().is_ok()
     }
     fn schedule_page(&self) -> Element<'_, Message> {
-        let min = iced_material::Date::new(2026, 1, 1).unwrap();
-        let max = iced_material::Date::new(2030, 12, 31).unwrap();
+        let min = iced_m3::Date::new(2026, 1, 1).unwrap();
+        let max = iced_m3::Date::new(2030, 12, 31).unwrap();
         let selection: Element<'_, Message> = if self.schedule_input {
             let mut inputs = column![
-                iced_material::date_input(
+                iced_m3::date_input(
                     if self.calendar_range {
                         "Start date"
                     } else {
@@ -1405,20 +1405,20 @@ impl Gallery {
             .spacing(16);
             if self.calendar_range {
                 inputs = inputs.push(
-                    iced_material::date_input("End date", &self.calendar_end)
+                    iced_m3::date_input("End date", &self.calendar_end)
                         .on_input(Message::CalendarEnd),
                 );
             }
             inputs
                 .push(
-                    iced_material::time_input("Review time", &self.clock_text)
+                    iced_m3::time_input("Review time", &self.clock_text)
                         .on_input(Message::ClockText),
                 )
                 .into()
         } else {
             row![
-                iced_material::date_picker(self.calendar_month, self.calendar_selection)
-                    .today(iced_material::Date::new(2026, 9, 13).unwrap())
+                iced_m3::date_picker(self.calendar_month, self.calendar_selection)
+                    .today(iced_m3::Date::new(2026, 9, 13).unwrap())
                     .bounds(min, max)
                     .years(self.calendar_years)
                     .on_toggle_years(Message::CalendarYears)
@@ -1428,7 +1428,7 @@ impl Gallery {
                     .on_toggle_input(Message::CalendarInput)
                     .input(&self.calendar_text, Message::CalendarText)
                     .end_input(&self.calendar_end, Message::CalendarEnd),
-                iced_material::time_picker(self.clock_time, self.clock_part)
+                iced_m3::time_picker(self.clock_time, self.clock_part)
                     .format24(self.clock24)
                     .on_change(Message::Clock)
                     .on_part(Message::ClockPart)
@@ -1455,9 +1455,9 @@ impl Gallery {
                     .on_press(Message::Clock24(!self.clock24)),
                 filter_chip("Type date and time", self.schedule_input)
                     .on_press(Message::ScheduleInput(!self.schedule_input)),
-                iced_material::docked_date_picker(
+                iced_m3::docked_date_picker(
                     typography("Open calendar", TypeScale::LabelLarge),
-                    iced_material::date_picker(self.calendar_month, self.calendar_selection)
+                    iced_m3::date_picker(self.calendar_month, self.calendar_selection)
                         .bounds(min, max)
                         .years(self.calendar_years)
                         .on_toggle_years(Message::CalendarYears)
@@ -1482,7 +1482,7 @@ impl Gallery {
     }
 
     fn modern_components(&self) -> Element<'_, Message> {
-        use iced_material::{
+        use iced_m3::{
             CarouselVariant, FabMenuItem, TextFieldVariant, button_group, fab_menu, lazy_carousel,
             loading_indicator, rich_tooltip, split_button, toolbar,
         };
@@ -1651,9 +1651,9 @@ impl Gallery {
         surface(column![
             typography("Loading with expression",TypeScale::TitleLarge),
             muted("Seven rounded shapes flow into one another. Try waves while loading, then switch to measured progress.",TypeScale::BodyLarge),
-            row![iced_material::loading_indicator().paused(self.loading_paused),
-                iced_material::loading_indicator().contained(true).paused(self.loading_paused),
-                iced_material::loading_indicator().contained(true).size(72.).paused(self.loading_paused),
+            row![iced_m3::loading_indicator().paused(self.loading_paused),
+                iced_m3::loading_indicator().contained(true).paused(self.loading_paused),
+                iced_m3::loading_indicator().contained(true).size(72.).paused(self.loading_paused),
             ].spacing(24).align_y(Alignment::Center),
             row![
                 button(if self.feedback_loading { "Show measured progress" } else { "Show loading" })
@@ -2361,7 +2361,7 @@ impl Gallery {
         .variant(SurfaceVariant::Outlined)
         .into()
     }
-    fn access_select(&self) -> iced_material::Select<'_, Access, Message> {
+    fn access_select(&self) -> iced_m3::Select<'_, Access, Message> {
         select(
             "Workspace access",
             [
@@ -2534,7 +2534,7 @@ fn main() -> iced::Result {
     iced::application(Gallery::default, Gallery::update, Gallery::view)
         .title("Material Gallery")
         .theme(Gallery::theme)
-        .default_font(iced_material::fonts::REGULAR)
+        .default_font(iced_m3::fonts::REGULAR)
         .window(iced::window::Settings {
             size: Size::new(1160.0, 920.0),
             min_size: Some(Size::new(320.0, 480.0)),
@@ -3519,12 +3519,12 @@ mod tests {
         let _ = gallery.update(Message::ClockMinute("05".into()));
         let _ = gallery.update(Message::ClockPeriod(true));
         assert_eq!(gallery.clock_time, original);
-        let _ = gallery.update(Message::Clock(iced_material::Time::new(12, 5).unwrap()));
+        let _ = gallery.update(Message::Clock(iced_m3::Time::new(12, 5).unwrap()));
         assert!(!gallery.clock_input);
         assert_eq!(gallery.clock_text, "12:05");
         let _ = gallery.update(Message::Clock24(true));
         assert_eq!(gallery.clock_hour, "12");
-        let _ = gallery.update(Message::Clock(iced_material::Time::new(0, 5).unwrap()));
+        let _ = gallery.update(Message::Clock(iced_m3::Time::new(0, 5).unwrap()));
         let _ = gallery.update(Message::Clock24(false));
         assert_eq!(gallery.clock_hour, "12");
         assert!(!gallery.clock_pm);

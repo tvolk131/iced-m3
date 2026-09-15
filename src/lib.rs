@@ -30,16 +30,19 @@
 //!
 //! # Compatibility and scope
 //!
-//! This is an unpublished desktop beta with an evolving API, requiring Rust 1.88+
+//! This is a desktop beta with an evolving API, requiring Rust 1.88+
 //! and released iced 0.14.0. The default `wgpu` feature enables the GPU renderer
 //! with software fallback; disable default features for a software-only build.
 //! Cargo may still enable GPU support through another dependency's features.
 //!
-//! Native macOS behavior has been checked locally. Windows/Linux CI is configured
-//! but has not yet run remotely. Keyboard support and reduced motion are included;
+//! CI builds and tests on macOS, Windows and Linux. Native macOS behavior has
+//! also been checked locally. Keyboard support and reduced motion are included;
 //! native screen-reader integration, full localization/RTL, arbitrary-child rounded
 //! clipping/group opacity, and some Expressive variants remain unfinished.
 //! Full M3 conformance is not claimed.
+//! Pin beta versions exactly and review the
+//! [release notes and compatibility policy](https://github.com/tvolk131/iced-m3/blob/master/CHANGELOG.md)
+//! when upgrading. Native Windows/Linux interaction remains unverified.
 //!
 //! Rust code is MIT licensed. Preserve the bundled font and loading-asset notices
 //! when redistributing them: [fonts::LICENSE], [loading::LICENSE], [loading::NOTICE].

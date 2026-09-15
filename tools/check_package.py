@@ -39,7 +39,7 @@ def main():
         members = tar.getmembers()
         names = {member.name.removeprefix(f"{stem}/") for member in members}
         required = {
-            "src/lib.rs", "README.md", "LICENSE", "NOTICE", "Cargo.lock",
+            "src/lib.rs", "README.md", "CHANGELOG.md", "LICENSE", "NOTICE", "Cargo.lock",
             "assets/fonts/Roboto-Variable.ttf", "assets/fonts/OFL.txt",
             "assets/loading/morphs.bin", "assets/loading/NOTICE",
             "assets/loading/LICENSE-APACHE-2.0.txt", "assets/loading/README.md",
@@ -83,7 +83,7 @@ def main():
             cargo("test", "--manifest-path", str(packaged / "Cargo.toml"), "--doc")
             cargo("test", "--manifest-path", str(consumer / "Cargo.toml"), "--all-targets")
             cargo("test", "--manifest-path", str(consumer / "Cargo.toml"), "--all-targets", "--no-default-features")
-            cargo("tree", "--manifest-path", str(consumer / "Cargo.toml"), "-i", "iced-material")
+            cargo("tree", "--manifest-path", str(consumer / "Cargo.toml"), "-i", package["name"])
 
     result = {
         "archive": str(archive.relative_to(repo)),

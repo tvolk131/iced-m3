@@ -14,5 +14,5 @@ It includes the weight axis used for Regular (400) and Medium (500).
 
 The library embeds the font and its license and registers the font once with
 iced's shared font database. Applications redistributing the font must retain
-its copyright and license notice. `iced_material::fonts::LICENSE` also exposes
+its copyright and license notice. `iced_m3::fonts::LICENSE` also exposes
 the notice for application acknowledgments.

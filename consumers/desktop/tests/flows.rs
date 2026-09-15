@@ -22,7 +22,7 @@ impl Client {
     fn new(dark: bool, size: Size) -> Self {
         let backend = std::env::var("ICED_TEST_BACKEND").unwrap_or_else(|_| "tiny-skia".into());
         let renderer = iced::futures::executor::block_on(<Renderer as Headless>::new(
-            iced_material::fonts::REGULAR,
+            iced_m3::fonts::REGULAR,
             16.0.into(),
             Some(&backend),
         ))
@@ -47,7 +47,7 @@ impl Client {
     fn with_ui<T>(
         &mut self,
         f: impl FnOnce(
-            &mut UserInterface<'_, Message, iced_material::Theme, Renderer>,
+            &mut UserInterface<'_, Message, iced_m3::Theme, Renderer>,
             &mut Renderer,
             mouse::Cursor,
             &mut Vec<Message>,

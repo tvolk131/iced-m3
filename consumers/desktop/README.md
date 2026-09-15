@@ -1,9 +1,9 @@
 # Northstar Studio
 
-A standalone desktop client of `iced-material`, kept in this repository for
+A standalone desktop client of `iced-m3`, kept in this repository for
 repeatable integration testing. It has its own manifest, lockfile, features and
 profiles; it does not import the gallery, library internals or private test clock.
-The two runtime dependencies are public `iced` and `iced-material` packages.
+The two runtime dependencies are public `iced` and `iced-m3` packages.
 
 From the repository root:
 

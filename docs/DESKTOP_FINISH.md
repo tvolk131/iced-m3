@@ -76,7 +76,7 @@ available. A fractional end offset maps to the last item when released there.
 `carousel(items, selected)` retains eager construction. For large collections:
 
 ```rust
-use iced_material::{lazy_carousel, button, Element};
+use iced_m3::{lazy_carousel, button, Element};
 #[derive(Clone)]
 enum Message { Select(usize), Open(usize) }
 fn collection(selected: usize) -> Element<'static, Message> {
