@@ -1,0 +1,52 @@
+[package]
+name = "iced-material"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.88"
+description = "Material 3 inspired desktop components for iced"
+license = "MIT AND Apache-2.0 AND OFL-1.1"
+readme = "README.md"
+keywords = ["iced", "material-design", "gui", "widgets"]
+categories = ["gui"]
+publish = false
+# Retain build inputs, notices and executable tests. Pixel baselines stay in the
+# source repository; they are not needed by an application depending on the crate.
+include = [
+    "/Cargo.lock", "/Cargo.toml", "/LICENSE", "/NOTICE", "/README.md",
+    "/src/**", "/assets/**", "/docs/**", "/examples/**/*.rs",
+    "/tests/**/*.rs", "/tests/visual/progress-preview.html",
+    "/tools/generate_loading_shapes.py",
+]
+
+[features]
+default = ["wgpu"]
+# iced's GPU renderer, with the software renderer as a fallback.
+wgpu = ["iced/wgpu"]
+
+[dependencies]
+iced = { version = "=0.14.0", default-features = false, features = ["advanced", "svg", "tiny-skia", "thread-pool", "x11", "wayland"] }
+material-colors = { version = "=0.4.2", default-features = false, features = ["std"] }
+unicode-segmentation = "=1.13.3"
+
+[dev-dependencies]
+base64 = "=0.22.1"
+iced_test = "=0.14.0"
+iced_tiny_skia = "=0.14.0"
+tiny-skia = { version = "=0.11.4", default-features = false }
+png = "=0.18.1"
+
+[[example]]
+name = "gallery"
+path = "examples/gallery.rs"
+
+[lints.rust]
+unsafe_code = "forbid"
+
+[lints.clippy]
+too_many_arguments = "allow"
+type_complexity = "allow"
+
+# Software rasterization must keep up with native caret blinking on Retina
+# displays. Keep this crate debuggable while optimizing rendering dependencies.
+[profile.dev.package."*"]
+opt-level = 2

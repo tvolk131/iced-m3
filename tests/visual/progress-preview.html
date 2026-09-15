@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Material linear progress — motion review</title>
+<style>
+body{font:16px/1.5 system-ui,sans-serif;background:#f6f5fa;color:#242129;max-width:720px;margin:40px auto;padding:0 24px}
+h1{font-size:28px;line-height:1.2}section{padding:24px;border:1px solid #d6d2df;border-radius:16px;margin:20px 0;background:#f9f9f9}
+section.dark{background:#131313;color:#eee}h2{font-size:16px;margin:0 0 16px}img{display:block;width:100%;max-width:640px;height:auto}
+button,input{font:inherit}button{padding:8px 18px;border-radius:20px;border:1px solid #6750a4;color:#6750a4;background:white;cursor:pointer}input{display:block;width:100%;margin:24px 0 8px}output{font-variant-numeric:tabular-nums}
+</style>
+<h1>Linear progress: stretch, contract, hand off</h1>
+<p>One segment enters and grows, its tail catches up, then a second segment enters as the first leaves. Both are briefly visible during the handoff.</p>
+<section><h2>Light theme</h2><img id="light" src="light/00.png" alt="Indeterminate progress in light theme"></section>
+<section class="dark"><h2>Dark theme</h2><img id="dark" src="dark/00.png" alt="Indeterminate progress in dark theme"></section>
+<button id="toggle" type="button">Pause</button>
+<input id="frame" type="range" min="0" max="59" value="0" aria-label="Animation frame">
+<output id="time">0 ms</output>
+<p>These are 60 captured frames from the library’s actual renderer, played over its two-second cycle. The slider pauses playback for inspection.</p>
+<p><a href="https://github.com/material-components/material-web/blob/main/progress/internal/_linear-progress.scss">Material Web motion reference</a> · <a href="../">All component references</a></p>
+<script>
+const slider=document.querySelector('#frame'),toggle=document.querySelector('#toggle'),time=document.querySelector('#time');
+const frames={light:[],dark:[]};
+for(const theme of ['light','dark'])for(let i=0;i<60;i++){const image=new Image();image.src=`${theme}/${String(i).padStart(2,'0')}.png`;frames[theme].push(image);}
+let playing=!matchMedia('(prefers-reduced-motion: reduce)').matches,epoch=performance.now(),position=0;
+function show(index){for(const theme of ['light','dark'])document.querySelector('#'+theme).src=frames[theme][index].src;slider.value=index;time.textContent=`${Math.floor(index*2000/60)} ms`;}
+function button(){toggle.textContent=playing?'Pause':'Play';}
+toggle.onclick=()=>{playing=!playing;epoch=performance.now()-position;button();};
+slider.oninput=()=>{playing=false;position=Number(slider.value)*2000/60;button();show(Number(slider.value));};
+function tick(now){if(playing){position=(now-epoch)%2000;show(Math.floor(position/2000*60));}requestAnimationFrame(tick);}
+button();requestAnimationFrame(tick);
+</script>
+</html>

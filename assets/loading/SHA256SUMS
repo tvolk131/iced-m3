@@ -1,0 +1,5 @@
+0e4510f198043e24183532029061af8048978feec7d7c84213a289ad55ef7aaf  target/material-progress-source/lib/java/com/google/android/material/shape/MaterialShapes.java
+172ca7edbe506127d71fa82aad5f7bfd080d34f093a1e457769946267613bfe7  target/material-progress-source/graphics-shapes.jar
+f31cc53f105a7e48c093683bbd5437561d1233920513774b470805641bedbc09  target/material-progress-source/kotlin-stdlib.jar
+539a43428df8a337622fb781401f5f0cdcd52d8b3615f0085af51c90002ff333  target/material-progress-source/collection-jvm.jar
+df33d5b5fa57f09873988140d943e62665953c3b42db867c574a1a5d7514215d  assets/loading/morphs.bin

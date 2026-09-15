@@ -1,0 +1,28 @@
+[package]
+name = "material-desktop-consumer"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.88"
+publish = false
+
+# Deliberately independent: no inherited dependencies, profiles or test helpers.
+[workspace]
+resolver = "3"
+
+[features]
+default = ["wgpu"]
+wgpu = ["iced-material/wgpu"]
+
+[dependencies]
+iced-material = { path = "../..", default-features = false }
+iced = { version = "=0.14.0", default-features = false, features = ["tiny-skia", "thread-pool"] }
+
+[dev-dependencies]
+iced_test = "=0.14.0"
+png = "=0.18.1"
+
+[profile.dev.package."*"]
+opt-level = 2
+
+[lints.rust]
+unsafe_code = "forbid"
