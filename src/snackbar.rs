@@ -336,10 +336,13 @@ impl<Message: Clone> Widget<Message, Theme, Renderer> for Host<'_, Message> {
             motion.snackbar_exit,
             shell,
         );
-        if self.notice.is_some() && state.presence.visible(active) && !active {
+        if let Some(notice) = self.notice.as_mut()
+            && state.presence.visible(active)
+            && !active
+        {
             over = cursor.is_over(layout.child(1).bounds()) && cursor.is_over(*viewport);
             let mut ignored = Vec::new();
-            self.notice.as_mut().unwrap().bar.as_widget_mut().update(
+            notice.bar.as_widget_mut().update(
                 &mut tree.children[1],
                 &Event::Window(window::Event::Unfocused),
                 layout.child(1),

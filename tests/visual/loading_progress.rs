@@ -131,8 +131,10 @@ fn canonical_curves_match_independent_androidx_shapes_and_morph_midpoints() {
             );
             for (pixel, (a, b)) in actual
                 .pixels
-                .chunks_exact(4)
-                .zip(expected.pixels.chunks_exact(4))
+                .as_chunks::<4>()
+                .0
+                .iter()
+                .zip(expected.pixels.as_chunks::<4>().0.iter())
                 .enumerate()
             {
                 if a == b {

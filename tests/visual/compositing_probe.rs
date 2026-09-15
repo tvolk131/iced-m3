@@ -246,14 +246,13 @@ impl Widget<Message, Theme, Renderer> for Probe {
                     let mut rgba = offscreen.screenshot(size, scale, Color::TRANSPARENT);
                     // Tiny Skia's headless bytes are premultiplied. PNG expects
                     // straight alpha; preserve partially transparent descendants.
-                    for pixel in rgba.chunks_exact_mut(4) {
+                    for pixel in rgba.as_chunks_mut::<4>().0 {
                         let alpha = pixel[3] as u32;
                         for channel in &mut pixel[..3] {
-                            *channel = if alpha == 0 {
-                                0
-                            } else {
-                                ((*channel as u32 * 255 + alpha / 2) / alpha).min(255) as u8
-                            };
+                            *channel = (*channel as u32 * 255 + alpha / 2)
+                                .checked_div(alpha)
+                                .unwrap_or(0)
+                                .min(255) as u8;
                         }
                     }
                     let uri = data_uri(&rgba, size);

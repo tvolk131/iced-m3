@@ -136,7 +136,7 @@ fn semantic_fades_stagger_reverse_without_jumps_and_finish_without_idle_frames()
             assert_eq!(view.at(1000), window::RedrawRequest::Wait);
         }
         let settled = view.frame();
-        assert!(settled.pixels.chunks_exact(4).all(|p| p[0] == 0));
+        assert!(settled.pixels.as_chunks::<4>().0.iter().all(|p| p[0] == 0));
     }
 }
 
@@ -174,7 +174,14 @@ fn dialog_actions_wait_for_their_stage_and_reduced_motion_skips_the_delay() {
         let _phase = staged::enter(phase);
         view.at(226);
     }
-    assert!(view.frame().pixels.chunks_exact(4).all(|p| p[0] == 0));
+    assert!(
+        view.frame()
+            .pixels
+            .as_chunks::<4>()
+            .0
+            .iter()
+            .all(|p| p[0] == 0)
+    );
     let _phase = staged::enter(phase);
     assert_eq!(view.at(227), window::RedrawRequest::Wait);
 }
@@ -535,8 +542,22 @@ fn disabled_button_labels_remain_distinct_from_the_fill_on_raised_surfaces() {
                 (bounds.width * 2.) as u32,
                 (bounds.height * 2.) as u32,
             );
-            let min = crop.pixels.chunks_exact(4).map(|p| p[0]).min().unwrap();
-            let max = crop.pixels.chunks_exact(4).map(|p| p[0]).max().unwrap();
+            let min = crop
+                .pixels
+                .as_chunks::<4>()
+                .0
+                .iter()
+                .map(|p| p[0])
+                .min()
+                .unwrap();
+            let max = crop
+                .pixels
+                .as_chunks::<4>()
+                .0
+                .iter()
+                .map(|p| p[0])
+                .max()
+                .unwrap();
             assert!(
                 max - min > 25,
                 "{label}: disabled foreground must not collapse onto its container (dark={dark}, range={min}..{max})"

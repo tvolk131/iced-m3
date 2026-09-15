@@ -87,7 +87,13 @@ pub fn check(name: &str, actual: &Image) {
     let dimensions_match = actual.width == expected.width && actual.height == expected.height;
     let mut difference = actual.clone();
     let mut changed = 0;
-    for (index, pixel) in difference.pixels.chunks_exact_mut(4).enumerate() {
+    for (index, pixel) in difference
+        .pixels
+        .as_chunks_mut::<4>()
+        .0
+        .iter_mut()
+        .enumerate()
+    {
         let range = index * 4..index * 4 + 4;
         let same = dimensions_match && actual.pixels[range.clone()] == expected.pixels[range];
         if same {

@@ -201,8 +201,10 @@ mod tests {
             );
             let mut extent = (80, 80, 0, 0);
             for (i, (a, b)) in pixels
-                .chunks_exact(4)
-                .zip(empty.chunks_exact(4))
+                .as_chunks::<4>()
+                .0
+                .iter()
+                .zip(empty.as_chunks::<4>().0.iter())
                 .enumerate()
             {
                 if a != b {
