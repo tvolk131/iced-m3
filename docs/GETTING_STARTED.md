@@ -6,7 +6,7 @@ messages; the widgets retain focus, editing and animation state between views.
 
 ## Install and run
 
-After the first beta is published, install from crates.io. Pin the beta exactly
+Install from crates.io. Pin the beta exactly
 so API changes arrive only when you deliberately upgrade:
 
 ```toml
@@ -85,7 +85,7 @@ iced = { version = "=0.14.0", default-features = false, features = ["tiny-skia",
 
 ## Source installation
 
-Before publication, or to work on the library, clone
+To work on the library, clone
 [the repository](https://github.com/tvolk131/iced-m3) and replace only the
 `iced-m3` dependency above with a path to your checkout:
 

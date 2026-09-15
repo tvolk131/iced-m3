@@ -1,9 +1,9 @@
 # Release notes
 
-## 0.1.0-beta.1 — first release candidate
+## 0.1.0-beta.1 — 2026-09-15
 
-Prepared for crates.io; publication is pending. The package is `iced-m3`, imported
-as `iced_m3` in Rust. Earlier development used the local name `iced-material`.
+The first desktop beta uses package name `iced-m3`, imported as `iced_m3` in Rust.
+Earlier development used the local name `iced-material`.
 
 The first desktop beta includes:
 

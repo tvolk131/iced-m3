@@ -3,8 +3,8 @@
 This milestone tests the crate as a dependency of an independent application and
 prepares a reproducible distributable. It does not certify full M3 conformance,
 native accessibility, Windows/Linux runtime behavior or a stable 1.0 API. The
-first `iced-m3` beta is prepared for publication but has not been uploaded.
-See [release preparation](RELEASING.md) for current distribution details.
+first `iced-m3` beta uses package version `0.1.0-beta.1` and Rust import `iced_m3`.
+See the [release process](RELEASING.md) for distribution checks.
 
 ## Separate application boundary
 

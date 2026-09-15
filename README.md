@@ -13,7 +13,7 @@ bundled Roboto, keyboard navigation, and animated interaction feedback.
 
 ## Quick start
 
-Registry installation (available once the first beta is published):
+Install from crates.io:
 
 ```toml
 [dependencies]
@@ -21,7 +21,7 @@ iced-m3 = "=0.1.0-beta.1"
 iced = { version = "=0.14.0", default-features = false, features = ["tiny-skia", "thread-pool"] }
 ```
 
-Until publication, use the [source installation](https://github.com/tvolk131/iced-m3/blob/master/docs/GETTING_STARTED.md#source-installation).
+For a local checkout, see [source installation](https://github.com/tvolk131/iced-m3/blob/master/docs/GETTING_STARTED.md#source-installation).
 
 ```rust,no_run
 use iced::widget::{column, container};
