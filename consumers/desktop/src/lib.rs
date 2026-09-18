@@ -379,22 +379,23 @@ impl Studio {
                 checkbox(self.draft.notifications)
                     .label("Workspace notifications")
                     .on_toggle(Message::Notifications),
-                dialog::actions(
-                    widget::row![
-                        button("Cancel")
-                            .variant(ButtonVariant::Text)
-                            .on_press(Message::Cancel),
-                        button("Save changes")
-                            .on_press(Message::Save)
-                            .disabled(!self.draft.valid()),
-                    ]
-                    .spacing(12)
-                    .wrap()
-                ),
             ]
             .spacing(20),
         )
+        .actions(
+            widget::row![
+                button("Cancel")
+                    .variant(ButtonVariant::Text)
+                    .on_press(Message::Cancel),
+                button("Save changes")
+                    .on_press(Message::Save)
+                    .disabled(!self.draft.valid()),
+            ]
+            .spacing(12)
+            .wrap(),
+        )
         .width(560.0)
+        .max_height(600)
         .on_dismiss(Message::Cancel)
     }
 

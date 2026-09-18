@@ -170,7 +170,7 @@ disabled appearance. Size icons, avatars and images before passing them in. List
 grow to fit wrapped text and compose with native scrollables; they are not virtualized.
 See navigation design and scope (`docs/NAVIGATION.md` in the source checkout).
 
-## A dialog with actions
+## A settings dialog with fixed actions
 
 Keep `modal` and its dialog content at the **root** of your view on every rebuild,
 including when closed. Change the `open` flag to animate opening and closing while
@@ -178,24 +178,36 @@ preserving widget state. The overlay covers the whole window and blocks backgrou
 input until the exit animation finishes. A dialog first mounted open starts fully
 visible; subsequent changes animate. Closing is an application message.
 
+Give `dialog(...)` the body and `.actions(...)` the footer. The dialog scrolls the
+body automatically, while Cancel and Save stay visible. `.max_height(600)` caps
+the **whole panel**, including padding and actions; a smaller window lowers that
+limit and a short form stays compact. You do not need an inner scrollable or a
+manually calculated body height.
+
 ```rust
-use iced::{Length, widget::{column, container, row}};
-use iced_m3::{button, ButtonVariant, dialog::{actions, dialog, modal}, typography, TypeScale, Element};
+use iced::widget::{column, row};
+use iced_m3::{button, text_field, ButtonVariant, dialog::{dialog, modal},
+    typography, TypeScale, Element};
 
 #[derive(Clone)]
-enum Message { Cancel, Confirm }
+enum Message { Name(String), Email(String), Note(String), Cancel, Confirm }
 
-fn view(open: bool) -> Element<'static, Message> {
+fn view<'a>(open: bool, name: &'a str, email: &'a str, note: &'a str) -> Element<'a, Message> {
     let background = typography("Workspace", TypeScale::Headline);
     modal(background,
         dialog(column![
-            typography("Save changes?", TypeScale::HeadlineSmall),
-            typography("Your preferences will be updated.", TypeScale::BodyMedium),
-            actions(container(row![
-                button("Cancel").variant(ButtonVariant::Text).on_press(Message::Cancel),
-                button("Save").variant(ButtonVariant::Text).on_press(Message::Confirm),
-            ].spacing(8)).align_right(Length::Fill)),
+            typography("Workspace settings", TypeScale::HeadlineSmall),
+            typography("Changes apply to this workspace.", TypeScale::BodyMedium),
+            text_field("Workspace name", name).on_input(Message::Name),
+            text_field("Email address", email).on_input(Message::Email)
+                .supporting_text("Used for workspace updates."),
+            text_field("Optional note", note).on_input(Message::Note),
         ].spacing(24))
+        .actions(row![
+            button("Cancel").variant(ButtonVariant::Text).on_press(Message::Cancel),
+            button("Save").variant(ButtonVariant::Text).on_press(Message::Confirm),
+        ].spacing(8).wrap())
+        .max_height(600)
         .on_dismiss(Message::Cancel)
         .dismiss_on_outside(false),
         open,
@@ -203,8 +215,22 @@ fn view(open: bool) -> Element<'static, Message> {
 }
 ```
 
-`actions(...)` marks the action row for its later entrance fade. Use
-`dialog::stack` for multiple dialogs, keeping each entry mounted with its own
+The footer is aligned to the trailing edge with a 24px gap above it. Keep it
+compact and use `.wrap()` so buttons can wrap in narrow windows. Only the body
+reserves scrollbar space, keeping full-width fields clear of the scrollbar.
+Keyboard traversal follows the body and then the actions; focusing a field below
+the visible body scrolls it into view. The title in this example is part of the
+scrolling body. For a full-window editor with a fixed header, use
+`full_screen_dialog` and its `.action(...)` builder.
+
+`.actions(...)` also applies the later action entrance fade automatically.
+The standalone `dialog::actions(content)` helper only marks an inline region for
+that animation; it does **not** make a fixed footer. Existing `dialog(content)`
+compositions still scroll all their content together. If you intentionally embed
+an independent scrollable, configure its scrollbar gutter yourself; the dialog's
+gutter only protects the outer body scroller.
+
+Use `dialog::stack` for multiple dialogs, keeping each entry mounted with its own
 open flag. If the dialog displays optional application data, retain that data
 through closing so its content remains available for the exit animation.
 

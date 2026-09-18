@@ -139,6 +139,14 @@ impl Client {
         }
     }
 
+    fn scroll_at(&mut self, position: Point, pixels: f32) {
+        self.cursor = mouse::Cursor::Available(position);
+        self.event(Event::Mouse(mouse::Event::CursorMoved { position }));
+        self.event(Event::Mouse(mouse::Event::WheelScrolled {
+            delta: mouse::ScrollDelta::Pixels { x: 0., y: pixels },
+        }));
+    }
+
     fn click(&mut self, label: &str) {
         let bounds = self
             .find(label)
@@ -257,6 +265,7 @@ fn foreign_theme_popup_and_buttons_keep_their_actions_inside_the_modal() {
             digest.y - 1.5 * digest.height,
         ));
         assert_eq!(client.app.draft.digest, Digest::Daily);
+        client.scroll_at(digest.center(), -1000.);
         client.click("Use team defaults");
         assert_eq!(client.app.draft.digest, Digest::Weekly);
         client.click_at(background);
@@ -328,6 +337,27 @@ fn keyboard_traversal_activates_material_controls_across_the_consumer_boundary()
         "initial confirmation focus keeps editing"
     );
     assert!(client.app.editing);
+}
+
+#[test]
+fn settings_footer_remains_visible_while_scrolling_and_resizing() {
+    for dark in [false, true] {
+        let mut client = Client::new(dark, Size::new(420., 380.));
+        client.click("Edit workspace");
+        let save = client.find("Save changes").expect("fixed Save action");
+        client.scroll_at(Point::new(210., 150.), -2000.);
+        assert_eq!(client.find("Save changes"), Some(save));
+        assert!(client.find("Workspace notifications").is_some());
+        client.click("Workspace notifications");
+        let notifications = client.app.draft.notifications;
+        client.size = Size::new(320., 300.);
+        let save = client.find("Save changes").expect("Save after resize");
+        assert!(save.y + save.height <= 300.);
+        client.click("Save changes");
+        assert_eq!(client.app.save_count, 1);
+        assert_eq!(client.app.saved.notifications, notifications);
+        assert!(!client.app.editing);
+    }
 }
 
 #[test]

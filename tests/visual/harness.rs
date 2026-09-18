@@ -60,6 +60,10 @@ impl<'a, Message> Harness<'a, Message> {
             &mut self.renderer,
         ));
     }
+    pub fn resize(&mut self, size: Size) {
+        self.size = size;
+        self.ui = Some(self.ui.take().unwrap().relayout(size, &mut self.renderer));
+    }
     pub fn event(&mut self, event: Event) -> window::RedrawRequest {
         let now = self.origin + Duration::from_millis(self.elapsed);
         let (state, _) = with_time(now, || {

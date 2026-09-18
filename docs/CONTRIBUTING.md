@@ -19,7 +19,7 @@ cargo doc --locked --no-deps
 
 The tests use **iced_test 0.14** and real headless rendering. They cover transitions, disabled behavior, message emission, drag cancellation, text entry/selection/focus persistence, dialog event capture, long-dialog scrolling, popup placement after scrolling, nested dialog menus, snackbar timeouts/pause/Undo, tooltip delay, radio selection, tab/rail overflow, nested list actions, navigation across gallery rebuilds, and pixel clipping.
 
-The visual regression suite compares **2,665 reference images** across every current
+The visual regression suite compares **2,679 reference images** across every current
 component family, including precisely timed hover, held-mouse, drag, release and progress frames.
 A private test clock makes animation captures independent of rendering speed.
 Run it separately on the canonical macOS 26 / Apple Silicon environment:

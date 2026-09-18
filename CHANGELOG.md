@@ -2,6 +2,19 @@
 
 ## Unreleased
 
+### Fixed dialog actions
+
+Basic dialogs accept `.actions(content)` for a fixed, trailing-aligned footer and
+`.max_height(pixels)` to cap the whole panel. The body scrolls within the remaining
+height, with a scrollbar gutter and keyboard focus reveal. Short content stays
+compact and the panel also fits the window. Footer actions receive the existing
+Material entrance animation automatically.
+
+The cookbook, gallery preferences dialog and separate desktop consumer demonstrate
+the layout without nested scrollables or manual body-height calculations.
+`dialog(content)` still scrolls all content together; the standalone
+`dialog::actions(content)` remains an animation marker for inline content.
+
 ### FAB icon guidance
 
 FAB constructor docs and the cookbook now demonstrate `icon(svg_handle)` and

@@ -1,4 +1,5 @@
 //! Root modal host with a full-window overlay and explicit event isolation.
+mod content;
 mod stack;
 use crate::{Element, Theme, activity::update_covered, tokens};
 use iced::advanced::{
@@ -14,10 +15,12 @@ pub use stack::stack;
 /// with [`modal`], keeping that host in the tree even while the dialog is closed.
 pub struct Dialog<'a, Message> {
     content: Element<'a, Message>,
+    actions: Option<Element<'a, Message>>,
     dismiss: Option<Message>,
     outside: bool,
     escape: bool,
     width: f32,
+    max_height: f32,
     full_screen: bool,
     initial_focus: Option<usize>,
 }
@@ -26,41 +29,113 @@ pub fn dialog<'a, Message: 'a>(content: impl Into<Element<'a, Message>>) -> Dial
 }
 /// Mark a basic dialog's action row for its separate Material entrance timeline.
 /// Keep the row in the dialog's normal content layout; no extra spacing is added.
+/// This marker does not fix the row in place. Prefer [`Dialog::actions`] for a
+/// fixed footer; it applies this animation automatically.
 pub fn actions<'a, Message: 'a>(content: impl Into<Element<'a, Message>>) -> Element<'a, Message> {
     crate::staged::part(content, crate::staged::Part::DialogActions)
 }
 impl<'a, Message: 'a> Dialog<'a, Message> {
-    /// Content is arbitrary iced content, commonly a column with title, body,
-    /// and a wrapping row of action buttons. Oversized content scrolls.
+    /// Content is arbitrary iced content, commonly a column with title and body.
+    /// Oversized content scrolls automatically. Use [`Self::actions`] to keep
+    /// action buttons outside that scrolling region; no inner scrollable is needed.
     pub fn new(content: impl Into<Element<'a, Message>>) -> Self {
-        // The host paints the rounded panel independently of its contents, so
-        // resizing the reveal preserves the moving bottom corners.
-        let content = widget::container(
-            widget::scrollable(content).width(Length::Fill).direction(
-                widget::scrollable::Direction::Vertical(
-                    widget::scrollable::Scrollbar::new()
-                        .width(tokens::spacing::XS)
-                        .scroller_width(tokens::spacing::XS)
-                        .spacing(tokens::spacing::SM),
-                ),
-            ),
-        )
-        .padding(tokens::spacing::LG)
-        .width(Length::Fill)
-        .style(|theme: &Theme| widget::container::Style {
-            text_color: Some(theme.colors.on_surface),
-            ..Default::default()
-        })
-        .into();
         Self {
-            content,
+            content: content.into(),
+            actions: None,
             dismiss: None,
             outside: true,
             escape: true,
             width: tokens::size::DIALOG_MAX,
+            max_height: f32::INFINITY,
             full_screen: false,
             initial_focus: None,
         }
+    }
+    /// Keep action content in a fixed, trailing-aligned footer below the scrolling
+    /// body. A 24px gap separates the regions; the footer gets the Material action
+    /// entrance animation automatically. Calling this again replaces the footer.
+    ///
+    /// Supply a compact row with `.wrap()` so actions can fit narrow windows.
+    /// The dialog measures this footer first and gives the body the remaining
+    /// height. Do not wrap the body in another scrollable just to keep actions visible.
+    /// After converting a [`FullScreenDialog`] into a `Dialog`, this adds a bottom
+    /// footer with 24px padding while preserving its fixed header and body scroller.
+    ///
+    /// ```rust
+    /// use iced::widget::{column, row};
+    /// use iced_m3::{Dialog, button, dialog, text_field};
+    ///
+    /// #[derive(Clone)]
+    /// enum Message { Name(String), Cancel, Save }
+    ///
+    /// fn settings(name: &str) -> Dialog<'_, Message> {
+    ///     dialog(column![text_field("Workspace name", name).on_input(Message::Name)])
+    ///         .actions(row![
+    ///             button("Cancel").on_press(Message::Cancel),
+    ///             button("Save").on_press(Message::Save),
+    ///         ].spacing(8).wrap())
+    ///         .max_height(600)
+    /// }
+    /// ```
+    pub fn actions(mut self, actions: impl Into<Element<'a, Message>>) -> Self {
+        self.actions = Some(actions.into());
+        self
+    }
+    /// Limit a basic dialog's total panel height, including padding and actions,
+    /// in logical pixels. It also fits the available window height; short content
+    /// stays compact instead of expanding to this limit. Defaults to no extra cap.
+    /// Negative values clamp to zero, NaN is ignored, and infinity removes the cap.
+    /// Full-screen dialogs always fill the window.
+    pub fn max_height(mut self, height: impl Into<iced::Pixels>) -> Self {
+        let height = height.into().0;
+        if !height.is_nan() {
+            self.max_height = height.max(0.0);
+        }
+        self
+    }
+    fn prepare(mut self) -> Self {
+        if self.full_screen {
+            if let Some(footer) = self.actions.take() {
+                self.content = content::with_actions(
+                    self.content,
+                    actions(
+                        widget::container(footer)
+                            .padding(24)
+                            .align_right(Length::Fill),
+                    ),
+                    0.0,
+                );
+            }
+            return self;
+        }
+        let body: Element<'a, Message> = widget::scrollable(self.content)
+            .width(Length::Fill)
+            .direction(widget::scrollable::Direction::Vertical(
+                widget::scrollable::Scrollbar::new()
+                    .width(tokens::spacing::XS)
+                    .scroller_width(tokens::spacing::XS)
+                    .spacing(tokens::spacing::SM),
+            ))
+            .into();
+        let body = if let Some(footer) = self.actions.take() {
+            content::with_actions(
+                body,
+                actions(widget::container(footer).align_right(Length::Fill)),
+                tokens::spacing::LG,
+            )
+        } else {
+            body
+        };
+        // The host paints the rounded panel independently during its reveal.
+        self.content = widget::container(body)
+            .padding(tokens::spacing::LG)
+            .width(Length::Fill)
+            .style(|theme: &Theme| widget::container::Style {
+                text_color: Some(theme.colors.on_surface),
+                ..Default::default()
+            })
+            .into();
+        self
     }
     /// Focus an enabled control when this dialog opens (zero-based traversal index).
     pub fn initial_focus(mut self, index: usize) -> Self {
@@ -117,7 +192,7 @@ pub fn modal<'a, Message: Clone + 'a>(
 ) -> Element<'a, Message> {
     Element::new(Modal {
         background: background.into(),
-        dialog,
+        dialog: dialog.prepare(),
         open,
     })
 }
@@ -413,7 +488,9 @@ impl<Message: Clone> Overlay<Message, Theme, Renderer> for DialogOverlay<'_, '_,
             self.dialog
                 .width
                 .min((bounds.width - margin * 2.0).max(0.0)),
-            (bounds.height - margin * 2.0).max(0.0),
+            self.dialog
+                .max_height
+                .min((bounds.height - margin * 2.0).max(0.0)),
         );
         let content = self.dialog.content.as_widget_mut().layout(
             self.tree,
@@ -734,10 +811,12 @@ impl<'a, Message: Clone + 'a> From<FullScreenDialog<'a, Message>> for Dialog<'a,
                 });
         Dialog {
             content: content.into(),
+            actions: None,
             dismiss: dialog.dismiss,
             outside: false,
             escape: dialog.escape,
             width: f32::INFINITY,
+            max_height: f32::INFINITY,
             full_screen: true,
             initial_focus: dialog.initial_focus,
         }

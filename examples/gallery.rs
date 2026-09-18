@@ -985,22 +985,22 @@ impl Gallery {
                                 },
                                 TypeScale::Supporting
                             ),
-                            iced_m3::dialog::actions(container(
-                                row![
-                                    button("Cancel")
-                                        .variant(ButtonVariant::Text)
-                                        .on_press(Message::Close),
-                                    button("Save preferences")
-                                        .variant(ButtonVariant::Text)
-                                        .on_press(Message::Save)
-                                ]
-                                .spacing(8)
-                                .wrap()
-                            )
-                            .align_right(Length::Fill)),
                         ]
                         .spacing(20),
                     )
+                    .actions(
+                        row![
+                            button("Cancel")
+                                .variant(ButtonVariant::Text)
+                                .on_press(Message::Close),
+                            button("Save preferences")
+                                .variant(ButtonVariant::Text)
+                                .on_press(Message::Save)
+                        ]
+                        .spacing(8)
+                        .wrap()
+                    )
+                    .max_height(600)
                     .on_dismiss(Message::Close)
                     .dismiss_on_outside(self.outside)
                         }

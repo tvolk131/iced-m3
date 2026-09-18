@@ -17,7 +17,7 @@ pub fn stack<'a, Message: Clone + 'a>(
             .into_iter()
             .map(|(mut dialog, open)| {
                 dialog.initial_focus.get_or_insert(0);
-                (dialog, open)
+                (dialog.prepare(), open)
             })
             .collect(),
     })

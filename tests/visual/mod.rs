@@ -7,6 +7,7 @@ mod desktop;
 mod desktop_completion;
 mod desktop_fidelity;
 mod desktop_finish;
+mod dialog_actions;
 mod dialog_regressions;
 mod fidelity;
 mod loading_progress;

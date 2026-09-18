@@ -1,7 +1,7 @@
 # Visual regression tests
 
 Every current component family has reference-image coverage. The suite stores
-2,665 PNGs across component states, timed animation frames and gallery
+2,679 PNGs across component states, timed animation frames and gallery
 compositions. These complement the ordinary interaction tests. A passing comparison means the rendered pixels match the
 reviewed reference; it does not establish complete Material 3 compliance.
 
@@ -94,7 +94,7 @@ pointer exit must clear both effects. It can also run against wgpu/Metal via
 | Tabs | Primary/secondary, icons, badges and disabled items; moving indicator at 0/50/100/200 ms |
 | Rail, app bar, lists | Selection, hover, long title ellipsis, supporting text, child controls and a trailing menu |
 | Menus, context menus, selects | Edge placement, selected/disabled/destructive items, shortcuts and a select above a dialog |
-| Dialogs | Narrow composition and layering above a snackbar, with a nested popup |
+| Dialogs | Narrow composition, nested popups and snackbar layering; fixed actions during entrance, scrolling, resizing and action-row wrapping |
 | Tooltips | Just before the 500 ms delay, visible at 500 ms, dismissed by pressing |
 | Snackbars | Opaque surface over background text, narrow action/wrapping, 3999 ms before timeout and 4000 ms dismissal |
 | Sliders | Continuous/stepped, hover/press, held mid-drag, release, endpoints and disabled states in both themes |
@@ -326,3 +326,13 @@ The `finish-*` groups add 118 component frames; `gallery-finish` adds four
 and errors, slider hover scaling/held feedback, and progress extrema and motion.
 The full suite now has 34 strict reference functions. See
 [DESKTOP_FIDELITY.md](DESKTOP_FIDELITY.md) for sources and renderer assertions.
+
+### Fixed dialog footers
+
+`dialog-fixed-actions-{light,dark}` covers the automatic action entrance at
+149ms, 225ms and 275ms, the settled 400px panel, a scrolled body, a short window, and
+an extra-narrow window with wrapped footer actions. Behavioral tests verify
+body-first keyboard traversal, offscreen focus reveal, the reserved scrollbar
+gutter, nested select dismissal, fixed actions after resizing, and blocked
+activation during exit in both `modal` and `stack`. The independent desktop
+consumer also scrolls, resizes and saves a real settings form through this API.

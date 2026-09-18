@@ -4,7 +4,7 @@
 | --- | --- | --- |
 | Buttons | `button(label)`, `Button::new(content)` | Filled, elevated, outlined, text, tonal; disabled, hover and pressed states; animated tonal release |
 | Text fields | `text_field(label, value)` | Outlined/filled fields, floating label; supporting/error text; secure entry; native selection, clipboard, editing, focus, submit and IME forwarding |
-| Dialogs | `dialog(content)`, `dialog::modal(background, dialog, open)`, `dialog::stack`, `full_screen_dialog` | Retained entrance/exit, nested focus restoration, scrim, Escape/outside dismissal and scrollable long content |
+| Dialogs | `dialog(content)`, `dialog::modal(background, dialog, open)`, `dialog::stack`, `full_screen_dialog` | Retained entrance/exit, nested focus restoration, scrim, Escape/outside dismissal and scrollable long content; `.actions(...)` pins a footer and `.max_height(...)` caps the panel |
 | Typography | `typography(text, TypeScale)` | All 15 baseline M3 roles; bundled Roboto Regular/Medium; returns an iced `Text` |
 | Surfaces/cards | `surface(content)`, `card(content)` | Filled, outlined, elevated; arbitrary children, width and padding; interactive cards support disabled/dragged states |
 | Dividers | `divider()` | Semantic outline-variant role |
