@@ -1,6 +1,6 @@
 # Release process
 
-The first desktop beta is **`iced-m3` 0.1.0-beta.1**, imported as `iced_m3`.
+The current desktop beta candidate is **`iced-m3` 0.1.0-beta.2**, imported as `iced_m3`.
 The repository is [tvolk131/iced-m3](https://github.com/tvolk131/iced-m3), on `master`.
 The manifest permits the crates.io registry. CI verifies publication using a
 dry run; uploads and release tagging are explicit maintainer actions.
@@ -38,7 +38,7 @@ localization and remaining renderer/fidelity work remain documented limitations.
 ## Hosted documentation
 
 The API destination for this beta is
-[docs.rs/iced-m3/0.1.0-beta.1](https://docs.rs/iced-m3/0.1.0-beta.1/iced_m3/).
+[docs.rs/iced-m3/0.1.0-beta.2](https://docs.rs/iced-m3/0.1.0-beta.2/iced_m3/).
 It becomes available only after publication and a successful docs.rs build.
 The metadata uses `x86_64-unknown-linux-gnu` and disables default features to
 document the same public API without the optional GPU backend. Linux CI checks
@@ -57,7 +57,7 @@ cargo publish --locked --registry crates-io
 
 Verify the registry version, its archived source revision, an independent
 application using the registry dependency, and the hosted documentation. Then
-create the matching `v0.1.0-beta.1` Git tag and GitHub prerelease from that exact
+create the matching `v0.1.0-beta.2` Git tag and GitHub prerelease from that exact
 commit. Keep later documentation changes separate from the released source.
 
 ## References

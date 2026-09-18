@@ -1,6 +1,27 @@
 # Release notes
 
-## Unreleased
+## 0.1.0-beta.2 — 2026-09-18
+
+This beta simplifies the dialog lifecycle, adds fixed dialog actions and bounded
+body scrolling, improves software repainting and clarifies FAB icon usage.
+**Upgrading from beta.1 requires migrating single-dialog construction below.**
+The iced 0.14.0 dependency and Rust 1.88 minimum are unchanged.
+
+### Breaking: one animated single-dialog API
+
+`dialog::modal(background, dialog, open)` replaces both previous single-dialog
+hosts. It retains the dialog's widget state and animates opening and closing.
+
+- Replace `dialog::host(background, dialog, open)` with
+  `dialog::modal(background, dialog, open)`.
+- Replace the old two-argument `dialog::modal(background, Some(dialog))` with
+  `dialog::modal(background, dialog, true)`. To close, keep constructing the
+  dialog and pass `false` instead of removing it with `None`.
+- Keep the host mounted, including while closed. A host first mounted open starts
+  fully visible; changes to `open` animate. Keep any data used by the closing
+  dialog available through its exit animation. Reduced motion remains supported.
+- `dialog::stack` is unchanged for multiple dialogs. There is no compatibility
+  alias or separate immediate-removal dialog API.
 
 ### Software dialog repainting
 
@@ -35,22 +56,6 @@ label expansion/collapse. Text-plus FAB test fixtures use SVGs, with rendered
 alignment checks through expansion and collapse. The public API and layout are
 unchanged.
 
-### Breaking: one animated single-dialog API
-
-`dialog::modal(background, dialog, open)` replaces both previous single-dialog
-hosts. It retains the dialog's widget state and animates opening and closing.
-
-- Replace `dialog::host(background, dialog, open)` with
-  `dialog::modal(background, dialog, open)`.
-- Replace the old two-argument `dialog::modal(background, Some(dialog))` with
-  `dialog::modal(background, dialog, true)`. To close, keep constructing the
-  dialog and pass `false` instead of removing it with `None`.
-- Keep the host mounted, including while closed. A host first mounted open starts
-  fully visible; changes to `open` animate. Keep any data used by the closing
-  dialog available through its exit animation. Reduced motion remains supported.
-- `dialog::stack` is unchanged for multiple dialogs. There is no compatibility
-  alias or separate immediate-removal dialog API.
-
 ## 0.1.0-beta.1 — 2026-09-15
 
 The first desktop beta uses package name `iced-m3`, imported as `iced_m3` in Rust.
@@ -83,7 +88,7 @@ This release does not claim complete Material 3 conformance or a stable 1.0 API.
 ## Compatibility
 
 - **During beta:** public APIs may change between prereleases. Pin
-  `iced-m3 = "=0.1.0-beta.1"` and upgrade deliberately; subsequent release notes
+  `iced-m3 = "=0.1.0-beta.2"` and upgrade deliberately; subsequent release notes
   will identify breaking changes and migration steps.
 - **After beta:** compatible fixes stay within a `0.x` minor series. Breaking
   public API changes advance the minor version while the crate remains below

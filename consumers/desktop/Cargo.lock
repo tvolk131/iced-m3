@@ -1063,7 +1063,7 @@ dependencies = [
 
 [[package]]
 name = "iced-m3"
-version = "0.1.0-beta.1"
+version = "0.1.0-beta.2"
 dependencies = [
  "iced",
  "material-colors",

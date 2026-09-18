@@ -11,7 +11,7 @@ so API changes arrive only when you deliberately upgrade:
 
 ```toml
 [dependencies]
-iced-m3 = "=0.1.0-beta.1"
+iced-m3 = "=0.1.0-beta.2"
 iced = { version = "=0.14.0", default-features = false, features = ["tiny-skia", "thread-pool"] }
 ```
 
@@ -79,7 +79,7 @@ your application's manifest as well:
 
 ```toml
 [dependencies]
-iced-m3 = { version = "=0.1.0-beta.1", default-features = false }
+iced-m3 = { version = "=0.1.0-beta.2", default-features = false }
 iced = { version = "=0.14.0", default-features = false, features = ["tiny-skia", "thread-pool"] }
 ```
 
