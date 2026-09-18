@@ -451,7 +451,8 @@ fn root_dialog_blocks_slider_and_segmented_actions() {
     let mut ui = Harness::new(
         crate::dialog::modal(
             background(),
-            Some(crate::dialog(typography("Modal", TypeScale::TitleLarge))),
+            crate::dialog(typography("Modal", TypeScale::TitleLarge)),
+            true,
         ),
         Size::new(400.0, 500.0),
         Theme::light(),

@@ -211,11 +211,10 @@ fn long_rails_scroll_while_footer_actions_stay_reachable() {
 fn root_dialog_blocks_navigation_and_list_actions() {
     let mut ui = Simulator::new(iced_m3::dialog::modal(
         widget::row![rail(1), row(false)],
-        Some(
-            iced_m3::dialog::dialog("Dialog")
-                .on_dismiss(Message::Dismiss)
-                .dismiss_on_outside(false),
-        ),
+        iced_m3::dialog::dialog("Dialog")
+            .on_dismiss(Message::Dismiss)
+            .dismiss_on_outside(false),
+        true,
     ));
     ui.point_at((40.0, 135.0));
     ui.simulate(simulator::click());

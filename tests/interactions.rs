@@ -225,7 +225,8 @@ fn oversized_dialog_keeps_actions_reachable_by_scrolling() {
             container(text("Background"))
                 .width(Length::Fill)
                 .height(Length::Fill),
-            Some(dialog),
+            dialog,
+            true,
         ),
     );
     ui.point_at((150.0, 240.0));
@@ -270,15 +271,14 @@ fn modal_view(outside: bool, escape: bool) -> Element<'static, Message> {
         container(button("Background").on_press(Message::Action))
             .width(Length::Fill)
             .height(Length::Fill),
-        Some(
-            dialog(column![
-                button("Dialog action").on_press(Message::Submit),
-                text_field("Input", "").on_input(Message::Input)
-            ])
-            .on_dismiss(Message::Dismiss)
-            .dismiss_on_outside(outside)
-            .dismiss_on_escape(escape),
-        ),
+        dialog(column![
+            button("Dialog action").on_press(Message::Submit),
+            text_field("Input", "").on_input(Message::Input)
+        ])
+        .on_dismiss(Message::Dismiss)
+        .dismiss_on_outside(outside)
+        .dismiss_on_escape(escape),
+        true,
     )
 }
 
@@ -530,7 +530,8 @@ fn text_entry_inside_dialog_relayouts_and_renders_after_focus() {
         container("Background")
             .width(Length::Fill)
             .height(Length::Fill),
-        Some(dialog(content).on_dismiss(Message::Dismiss)),
+        dialog(content).on_dismiss(Message::Dismiss),
+        true,
     ));
     ui.point_at((512.0, 388.0));
     ui.simulate(simulator::click());
@@ -552,7 +553,8 @@ fn focused_modal_input_only_schedules_future_caret_redraws_after_animation() {
             container("Background")
                 .width(Length::Fill)
                 .height(Length::Fill),
-            Some(dialog(content)),
+            dialog(content),
+            true,
         ),
         Size::new(1024.0, 768.0),
         user_interface::Cache::default(),

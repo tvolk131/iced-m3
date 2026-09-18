@@ -286,7 +286,7 @@ fn range_labels_separate_while_both_handles_are_focused() {
     assert!(ui.messages.is_empty());
 }
 fn modal(open: bool) -> Element<'static, Message> {
-    crate::dialog::host(
+    crate::dialog::modal(
         widget::container(typography(
             "Background text stays covered",
             TypeScale::BodyLarge,

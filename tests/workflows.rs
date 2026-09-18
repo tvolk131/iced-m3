@@ -146,7 +146,8 @@ fn dropdown_inside_dialog_selects_and_escape_only_closes_the_menu() {
     .on_select(Message::Select);
     let mut ui = Simulator::new(modal(
         full(button("Background").on_press(Message::Background)),
-        Some(dialog(dropdown).on_dismiss(Message::Dismiss)),
+        dialog(dropdown).on_dismiss(Message::Dismiss),
+        true,
     ));
     ui.click("Access").unwrap();
     ui.click("Owner").unwrap();
@@ -526,7 +527,7 @@ fn workflow_snapshots() {
             .into(),
             "dialog-menu" => modal(
                 full("Workspace"),
-                Some(dialog(
+                dialog(
                     widget::column![
                         widget::text("Choose workspace access"),
                         select(
@@ -542,7 +543,8 @@ fn workflow_snapshots() {
                         text_field("Note", "").on_input(Message::Input)
                     ]
                     .spacing(24),
-                )),
+                ),
+                true,
             ),
             _ => widget::container(menu(
                 "Workspace actions",
@@ -591,25 +593,6 @@ fn workflow_snapshots() {
             .matches_image(format!("target/visuals/workflow-{name}.png"))
             .unwrap();
     }
-}
-
-#[test]
-fn closing_a_modal_resumes_the_snackbar_timer_without_pointer_movement() {
-    let make = |open: bool| modal(notice(1), open.then(|| dialog("Modal content")));
-    let mut ui = Harness::new(make(true));
-    ui.event(redraw(Instant::now()), None);
-    assert!(
-        ui.event(redraw(Instant::now() + Duration::from_secs(30)), None)
-            .0
-            .is_empty()
-    );
-    ui.rebuild(make(false));
-    ui.event(redraw(Instant::now()), None);
-    assert_eq!(
-        ui.event(redraw(Instant::now() + Duration::from_secs(5)), None)
-            .0,
-        [Message::Dismiss]
-    );
 }
 
 #[test]

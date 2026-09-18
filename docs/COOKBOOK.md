@@ -166,7 +166,11 @@ See navigation design and scope (`docs/NAVIGATION.md` in the source checkout).
 
 ## A dialog with actions
 
-Keep `modal` at the **root** of your view on every rebuild, including when closed. This preserves the background widget tree and lets the overlay cover the whole window. Closing is an application message, not hidden application state.
+Keep `modal` and its dialog content at the **root** of your view on every rebuild,
+including when closed. Change the `open` flag to animate opening and closing while
+preserving widget state. The overlay covers the whole window and blocks background
+input until the exit animation finishes. A dialog first mounted open starts fully
+visible; subsequent changes animate. Closing is an application message.
 
 ```rust
 use iced::{Length, widget::{column, container, row}};
@@ -177,7 +181,7 @@ enum Message { Cancel, Confirm }
 
 fn view(open: bool) -> Element<'static, Message> {
     let background = typography("Workspace", TypeScale::Headline);
-    modal(background, open.then(|| {
+    modal(background,
         dialog(column![
             typography("Save changes?", TypeScale::HeadlineSmall),
             typography("Your preferences will be updated.", TypeScale::BodyMedium),
@@ -187,12 +191,16 @@ fn view(open: bool) -> Element<'static, Message> {
             ].spacing(8)).align_right(Length::Fill)),
         ].spacing(24))
         .on_dismiss(Message::Cancel)
-        .dismiss_on_outside(false)
-    }))
+        .dismiss_on_outside(false),
+        open,
+    )
 }
 ```
 
-`actions(...)` marks the action row for its later entrance fade. For animated dismissal, keep the dialog mounted with `dialog::stack` and an open flag.
+`actions(...)` marks the action row for its later entrance fade. Use
+`dialog::stack` for multiple dialogs, keeping each entry mounted with its own
+open flag. If the dialog displays optional application data, retain that data
+through closing so its content remains available for the exit animation.
 
 `dismiss_on_escape(false)` disables Escape independently. Missing `on_dismiss` means no implicit dismissal. Scrim dismissal requires a left press **and release** outside, so dragging from the dialog does not dismiss it. Input events are captured even when dismissal is disabled. Background raw-event subscriptions are still application code: if you use `iced::event::listen_raw`, respect captured events and your dialog-open state.
 
@@ -283,7 +291,7 @@ application subscription is needed for their delay.
 
 ```rust
 use iced::{Length, widget::container};
-use iced_m3::{Element, snackbar, dialog::modal};
+use iced_m3::{Element, snackbar};
 
 #[derive(Clone)]
 enum Message { Undo, Dismiss(u64) }
@@ -294,11 +302,12 @@ fn view(notice_id: Option<u64>) -> Element<'static, Message> {
         .id(id)
         .action("Undo", Message::Undo)
         .on_dismiss(Message::Dismiss(id)));
-    modal(snackbar::host(page, notice), None)
+    snackbar::host(page, notice)
 }
 ```
 
-Keep `snackbar::host` mounted and put it **inside** the root `modal` host. The app
+Keep `snackbar::host` mounted. If the page also has dialogs, put it **inside**
+`dialog::modal(background, dialog, open)` or `dialog::stack`. The app
 owns the current `Option<Snackbar>`; clear it on the action or dismissal message.
 Increment `.id(...)` for each notification, including repeated identical text.
 The gallery checks that a dismissal ID matches the current notice before clearing
@@ -351,7 +360,7 @@ let editor = full_screen_dialog("Workspace details", typography("Review before s
     .on_dismiss(Message::Close)
     .action(button("Save").on_press(Message::Save));
 let open = true; // Application state; set false to animate closing.
-let _: Element<'_, Message> = focus::scope(dialog::host(actions, editor.into(), open));
+let _: Element<'_, Message> = focus::scope(dialog::modal(actions, editor.into(), open));
 ```
 
 A docked calendar retains month navigation across app updates and closes after
@@ -373,8 +382,7 @@ modal rail. Keep the host mounted through closing, and handle destination
 selection and dismissal in application state. Desktop behavior and limits (`docs/DESKTOP.md` in the source checkout)
 includes keyboard commands, initial focus and the gallery walkthrough.
 
-For animated dialog dismissal, retain the dialog in `dialog::host(background,
-dialog, open)`. The compatibility `dialog::modal(background, Option<Dialog>)` API
-still opens/removes immediately. Snackbar hosts similarly retain an outgoing
+For animated dialog dismissal, retain the dialog in `dialog::modal(background,
+dialog, open)` and set `open` to false. Snackbar hosts similarly retain an outgoing
 notice with `.visible(false)`; passing `None` removes it immediately. See
 motion and desktop interactions (`docs/MOTION_POLISH.md` in the source checkout) for timings and scope.

@@ -261,7 +261,7 @@ fn cascade_hover_delay_siblings_and_window_edge_flip() {
 fn submenu_escape_does_not_dismiss_containing_dialog() {
     let dialog = crate::dialog(cascade()).on_dismiss(Message::Close);
     let mut ui = ui(
-        focus::scope(crate::dialog::modal(button("Background"), Some(dialog))),
+        focus::scope(crate::dialog::modal(button("Background"), dialog, true)),
         Size::new(700.0, 400.0),
     );
     ui.click("Actions");
@@ -291,7 +291,8 @@ fn full_screen_dialog_keeps_header_visible_while_focusing_scrolled_body() {
     let mut ui = ui(
         focus::scope(crate::dialog::modal(
             button("Background").on_press(Message::Action(9)),
-            Some(dialog),
+            dialog,
+            true,
         )),
         Size::new(390.0, 500.0),
     );
@@ -541,7 +542,7 @@ fn visual_references_desktop_variants_and_motion() {
             )
             .into();
             let mut ui = Harness::new(
-                focus::scope(crate::dialog::modal(button("Background"), Some(dialog))),
+                focus::scope(crate::dialog::modal(button("Background"), dialog, true)),
                 Size::new(width, 500.0),
                 theme(dark),
             );

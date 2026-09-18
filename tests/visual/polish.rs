@@ -247,7 +247,7 @@ fn dialog(open: bool, full: bool) -> Element<'static, Message> {
     } else {
         crate::dialog(content).on_dismiss(Message::Close)
     };
-    focus::scope(crate::dialog::host(
+    focus::scope(crate::dialog::modal(
         widget::container(button("Background").on_press(Message::Action(9)))
             .width(Length::Fill)
             .height(Length::Fill),

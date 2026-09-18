@@ -374,10 +374,9 @@ fn a_root_dialog_cancels_sheet_gestures_and_hides_nested_sheet_menus() {
     let scene = |open: bool| {
         crate::dialog::modal(
             fixture("side", true, false, true),
-            open.then(|| {
-                crate::dialog::dialog(button("Dialog action").on_press(Message::Background))
-                    .on_dismiss(Message::Dismiss)
-            }),
+            crate::dialog::dialog(button("Dialog action").on_press(Message::Background))
+                .on_dismiss(Message::Dismiss),
+            open,
         )
     };
     let mut ui = Harness::new(scene(false), Size::new(720.0, 560.0), Theme::light());
@@ -391,17 +390,19 @@ fn a_root_dialog_cancels_sheet_gestures_and_hides_nested_sheet_menus() {
     ui.at(400);
     ui.up();
     assert!(ui.messages.is_empty());
+    ui.at(900);
     ui.click("Dialog action");
     assert_eq!(ui.messages, [Message::Background]);
     ui.messages.clear();
     ui.rebuild(scene(false));
-    ui.at(800);
+    ui.at(900);
     ui.move_to(point);
     ui.up();
     assert!(ui.messages.is_empty());
+    ui.at(1400);
     ui.click("Sheet menu");
     ui.rebuild(scene(true));
-    ui.at(800);
+    ui.at(1400);
     ui.event(escape());
     assert_eq!(ui.messages, [Message::Dismiss]);
 }

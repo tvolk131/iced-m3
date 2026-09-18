@@ -72,7 +72,7 @@ the close action. Basic dialogs also offer this explicit initial-focus setting.
 The gallery's **More → Edit workspace details** keeps a separate draft. Closing an edited draft now opens a discard confirmation; Keep editing preserves it.
 Save validates the name and commits both fields.
 Basic/full-screen dialog entrance/exit animation is available through the retained
-`dialog::host` API. The subsequent [desktop completion pass](DESKTOP_COMPLETION.md)
+`dialog::modal` API. The subsequent [desktop completion pass](DESKTOP_COMPLETION.md)
 adds `dialog::stack` for retained nested dialogs, including focus/caret restoration.
 Very long app-bar titles now ellipsize within the space left by actions.
 

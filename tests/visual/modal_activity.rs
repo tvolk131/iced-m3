@@ -51,7 +51,7 @@ fn fixture(host: &str, open: bool, paused: bool) -> Element<'static, Message> {
     let content = || typography("Modal content", TypeScale::HeadlineSmall);
     let dialog = || crate::dialog(content()).width(280.);
     match host {
-        "dialog" => crate::dialog::host(background, dialog(), open),
+        "dialog" => crate::dialog::modal(background, dialog(), open),
         "stack" => crate::dialog::stack(background, [(dialog(), open)]),
         "nested" => crate::dialog::stack(
             widget::space().width(Length::Fill).height(Length::Fill),
@@ -74,10 +74,10 @@ fn fixture(host: &str, open: bool, paused: bool) -> Element<'static, Message> {
         // A closed inner modal host must inherit the outer host's real window
         // activity instead of mistaking cancellation for app deactivation.
         "mixed" => crate::sheet::host(
-            crate::dialog::host(background, dialog(), false),
+            crate::dialog::modal(background, dialog(), false),
             crate::side_sheet(content()).modal().width(280.).open(open),
         ),
-        "dialog-over-sheet" => crate::dialog::host(
+        "dialog-over-sheet" => crate::dialog::modal(
             crate::sheet::host(
                 background,
                 crate::side_sheet(content()).width(200.).open(true),
@@ -162,6 +162,34 @@ fn visible_progress_keeps_moving_behind_modals_without_background_actions() {
             );
         }
     }
+}
+
+#[test]
+fn closing_a_modal_resumes_the_snackbar_timer_without_pointer_movement() {
+    // Use the runtime harness's scoped clock so synthetic focus events and
+    // redraws share the same timeline throughout the retained dialog's exit.
+    let mut ui = ui("dialog", true, true, theme(false));
+    ui.at(30000);
+    assert!(ui.messages.is_empty());
+    ui.rebuild(fixture("dialog", false, true));
+    ui.at(30000);
+    ui.at(30075);
+    assert!(ui.messages.is_empty(), "The timer stays paused during exit");
+    ui.at(31000);
+    assert!(
+        ui.messages.is_empty(),
+        "Exit resumes the remaining duration"
+    );
+    ui.at(32999);
+    assert!(ui.messages.is_empty());
+    ui.at(33001);
+    assert_eq!(ui.messages, [Message::Expired]);
+    ui.at(40000);
+    assert_eq!(
+        ui.messages,
+        [Message::Expired],
+        "Expiration is emitted once"
+    );
 }
 
 #[test]

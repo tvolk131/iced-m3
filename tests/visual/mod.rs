@@ -792,7 +792,7 @@ fn visual_references_overlays() {
         )
         .on_dismiss(Message::Dismiss);
         let mut ui = Harness::new(
-            crate::dialog::modal(notice(true), Some(dialog)),
+            crate::dialog::modal(notice(true), dialog, true),
             Size::new(390.0, 460.0),
             theme(dark),
         );

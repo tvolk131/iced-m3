@@ -27,7 +27,7 @@ Use `dialog::stack(background, [(parent, parent_open), (child, child_open)])`.
 Entries are ordered bottom to top. Keep entries mounted in stable order and
 change their flags; removing/reordering them discards their positional state and
 cannot preserve an exit animation. Basic and full-screen dialogs can be mixed.
-Existing `dialog::modal` and `dialog::host` remain available for single dialogs.
+Use `dialog::modal(background, dialog, open)` for a single retained dialog.
 
 - Only the top visible dialog accepts input or participates in focus operations.
 - Tab/Shift+Tab wrap in that dialog. Escape and scrim dismissal affect it alone.

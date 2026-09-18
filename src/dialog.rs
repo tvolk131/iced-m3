@@ -86,38 +86,45 @@ impl<'a, Message: 'a> Dialog<'a, Message> {
     }
 }
 
-/// A root host. `None` removes the dialog immediately. For animated dismissal,
-/// use [`host`] and retain the dialog content while changing its open flag.
+/// Show a dialog over the application with animated opening and closing.
+///
+/// Keep this root host and its dialog content in the view even while closed;
+/// change `open` to animate visibility and preserve the child widget state.
+/// Background input stays blocked through the exit animation, and closing
+/// content cannot publish actions. A host first mounted open starts fully visible;
+/// subsequent changes to `open` animate. The theme's reduced-motion setting is
+/// respected. Use [`stack`] for multiple dialogs.
+///
+/// ```rust
+/// use iced_m3::{Element, button, dialog};
+///
+/// #[derive(Clone)]
+/// enum Message { Open, Close }
+///
+/// fn view(open: bool) -> Element<'static, Message> {
+///     dialog::modal(
+///         button("Open dialog").on_press(Message::Open),
+///         dialog(button("Close").on_press(Message::Close))
+///             .on_dismiss(Message::Close),
+///         open,
+///     )
+/// }
+/// ```
 pub fn modal<'a, Message: Clone + 'a>(
-    background: impl Into<Element<'a, Message>>,
-    dialog: Option<Dialog<'a, Message>>,
-) -> Element<'a, Message> {
-    Element::new(Modal {
-        background: background.into(),
-        open: dialog.is_some(),
-        animate: false,
-        dialog,
-    })
-}
-/// Retain the dialog while opening/closing it. Background input stays blocked
-/// through the exit animation; closing content cannot publish actions.
-pub fn host<'a, Message: Clone + 'a>(
     background: impl Into<Element<'a, Message>>,
     dialog: Dialog<'a, Message>,
     open: bool,
 ) -> Element<'a, Message> {
     Element::new(Modal {
         background: background.into(),
-        dialog: Some(dialog),
+        dialog,
         open,
-        animate: true,
     })
 }
 struct Modal<'a, Message> {
     background: Element<'a, Message>,
-    dialog: Option<Dialog<'a, Message>>,
+    dialog: Dialog<'a, Message>,
     open: bool,
-    animate: bool,
 }
 #[derive(Default)]
 struct State {
@@ -146,19 +153,13 @@ impl<Message: Clone> Widget<Message, Theme, Renderer> for Modal<'_, Message> {
         })
     }
     fn children(&self) -> Vec<Tree> {
-        let mut children = vec![Tree::new(&self.background)];
-        if let Some(dialog) = &self.dialog {
-            children.push(Tree::new(&dialog.content));
-        }
-        children
+        vec![Tree::new(&self.background), Tree::new(&self.dialog.content)]
     }
     fn diff(&self, tree: &mut Tree) {
         tree.children[0].diff(&self.background);
+        tree.children[1].diff(&self.dialog.content);
         let state = tree.state.downcast_mut::<State>();
         let open = self.open;
-        if !self.animate {
-            state.presence = crate::presence::Presence::new(open);
-        }
         if open != state.was_open {
             state.outside_pressed = false;
             state.cancel_background = open;
@@ -166,16 +167,6 @@ impl<Message: Clone> Widget<Message, Theme, Renderer> for Modal<'_, Message> {
             state.resume_background = !open;
             state.cancel_dialog = !open;
             state.was_open = open;
-        }
-        if let Some(dialog) = &self.dialog {
-            if tree.children.len() == 1 {
-                tree.children.push(Tree::new(&dialog.content));
-            } else {
-                tree.children[1].diff(&dialog.content);
-            }
-        } else {
-            tree.children.truncate(1);
-            state.presence = crate::presence::Presence::default();
         }
     }
     fn size(&self) -> Size<Length> {
@@ -375,10 +366,9 @@ impl<Message: Clone> Widget<Message, Theme, Renderer> for Modal<'_, Message> {
             .downcast_ref::<State>()
             .presence
             .visible(self.open)
-            && let Some(dialog) = &mut self.dialog
         {
             Some(overlay::Element::new(Box::new(DialogOverlay {
-                dialog,
+                dialog: &mut self.dialog,
                 tree: &mut tree.children[1],
                 state: tree.state.downcast_mut::<State>(),
                 open: self.open,

@@ -132,19 +132,19 @@ fn modal_tab_is_trapped_and_escape_restores_invoker() {
     fn fixture(open: bool) -> Element<'static, Message> {
         focus::scope(crate::dialog::modal(
             button("Outside").on_press(Message::Action(1)),
-            open.then(|| {
-                crate::dialog(widget::row![
-                    button("Cancel").on_press(Message::Close),
-                    button("Save").on_press(Message::Action(2))
-                ])
-                .on_dismiss(Message::Close)
-            }),
+            crate::dialog(widget::row![
+                button("Cancel").on_press(Message::Close),
+                button("Save").on_press(Message::Action(2))
+            ])
+            .on_dismiss(Message::Close),
+            open,
         ))
     }
     let mut ui = make_ui(fixture(false), Size::new(500.0, 300.0), false);
     press(&mut ui, Named::Tab);
     ui.rebuild(fixture(true));
     ui.at(0);
+    ui.at(500);
     for _ in 0..3 {
         press(&mut ui, Named::Tab);
     }
@@ -152,6 +152,10 @@ fn modal_tab_is_trapped_and_escape_restores_invoker() {
     assert_eq!(ui.messages, [Message::Close]);
     ui.messages.clear();
     ui.rebuild(fixture(false));
+    ui.at(500);
+    activate(&mut ui);
+    assert!(ui.messages.is_empty(), "Background input waits for exit");
+    ui.at(1000);
     activate(&mut ui);
     assert_eq!(ui.messages, [Message::Action(1)]);
 }

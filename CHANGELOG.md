@@ -1,5 +1,23 @@
 # Release notes
 
+## Unreleased
+
+### Breaking: one animated single-dialog API
+
+`dialog::modal(background, dialog, open)` replaces both previous single-dialog
+hosts. It retains the dialog's widget state and animates opening and closing.
+
+- Replace `dialog::host(background, dialog, open)` with
+  `dialog::modal(background, dialog, open)`.
+- Replace the old two-argument `dialog::modal(background, Some(dialog))` with
+  `dialog::modal(background, dialog, true)`. To close, keep constructing the
+  dialog and pass `false` instead of removing it with `None`.
+- Keep the host mounted, including while closed. A host first mounted open starts
+  fully visible; changes to `open` animate. Keep any data used by the closing
+  dialog available through its exit animation. Reduced motion remains supported.
+- `dialog::stack` is unchanged for multiple dialogs. There is no compatibility
+  alias or separate immediate-removal dialog API.
+
 ## 0.1.0-beta.1 — 2026-09-15
 
 The first desktop beta uses package name `iced-m3`, imported as `iced_m3` in Rust.

@@ -160,7 +160,7 @@ fn ripple_dialog_with_paused_progress(
         if stacked {
             crate::dialog::stack(background, [(dialog, open)])
         } else {
-            crate::dialog::host(background, dialog, open)
+            crate::dialog::modal(background, dialog, open)
         }
     }
 }
@@ -353,7 +353,7 @@ fn dialog(open: bool, stacked: bool) -> Element<'static, Message> {
     if stacked {
         crate::dialog::stack(background, [(dialog, open)])
     } else {
-        crate::dialog::host(background, dialog, open)
+        crate::dialog::modal(background, dialog, open)
     }
 }
 fn ui(open: bool, stacked: bool, theme: Theme) -> Harness<'static, Message> {

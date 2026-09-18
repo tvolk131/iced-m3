@@ -316,12 +316,12 @@ fn wavy_and_loader_frames_ignore_clock_origin_and_survive_overlay_coverage() {
         || widget::column![content(), progress(false, 0., true, false, 0.)].spacing(20);
     let dialog = || crate::dialog(widget::space().width(80).height(40));
     let mut a = ui(
-        crate::dialog::host(background(), dialog(), false),
+        crate::dialog::modal(background(), dialog(), false),
         Size::new(320., 260.),
         false,
     );
     let mut b = ui(
-        crate::dialog::host(background(), dialog(), false),
+        crate::dialog::modal(background(), dialog(), false),
         Size::new(320., 260.),
         false,
     );
@@ -332,7 +332,7 @@ fn wavy_and_loader_frames_ignore_clock_origin_and_survive_overlay_coverage() {
     a.at(400);
     b.at(5400);
     assert!(a.frame() == b.frame());
-    a.rebuild(host(crate::dialog::host(background(), dialog(), true)));
+    a.rebuild(host(crate::dialog::modal(background(), dialog(), true)));
     a.at(1000);
     let first = a.frame();
     a.at(1300);

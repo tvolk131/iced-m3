@@ -40,11 +40,10 @@ content, so we do not claim Material Web's full opacity/stagger choreography.
 Standard easing is used for these transitions; Expressive spring/shape motion is
 still separate work.
 
-Use `dialog::host(background, dialog, open)` to retain the dialog through exit.
+Use `dialog::modal(background, dialog, open)` to retain the dialog through exit.
 Closing children cannot publish actions, and background input remains blocked
 until exit finishes. The host restores the retained invoker and resumes suspended
-background timers. Reopening reverses from the current position. The existing
-`dialog::modal(background, Option<Dialog>)` API preserves its immediate behavior.
+background timers. Reopening reverses from the current position.
 A host initially mounted open is already settled; changes to its flag animate.
 
 Keep outgoing snackbar data and pass `.visible(false)` to animate removal.
