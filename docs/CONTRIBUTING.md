@@ -47,6 +47,13 @@ ICED_TEST_BACKEND=wgpu cargo test --locked --example gallery gallery_snapshots -
 
 Outputs are in `target/visuals/`. These are visual inspection artifacts, not portable pixel-golden assertions. See [docs/VALIDATION.md](VALIDATION.md) for the executed checks, native inspection, and remaining platform limits.
 
+## Performance
+
+Normal tests check bounded shadow work, cache reuse, idle damage and incremental
+repaint correctness. For release CPU/GPU timing comparisons and the dialog
+investigation, see [rendering performance](PERFORMANCE.md). Run the ignored
+benchmark explicitly on a consistent machine; shared CI has no wall-clock gates.
+
 ## Documentation
 
 The README is the short consumer introduction. Getting-started, cookbook and

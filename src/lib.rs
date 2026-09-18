@@ -153,3 +153,7 @@ pub use expressive::{
 };
 
 pub use loading::{LoadingIndicator, loading_indicator};
+
+#[cfg(test)]
+#[path = "../tests/performance/mod.rs"]
+mod performance;

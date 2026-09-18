@@ -1,5 +1,24 @@
 # Validation report
 
+## Software dialog repainting — 2026-09-18
+
+The matched release benchmark measured a software dialog median of 77.00ms
+before tighter shadow clipping and 53.99ms after; GPU medians were 1.46ms and
+1.47ms. Native iced scenes also reproduce the remaining fragmented-repaint cost.
+See [the methodology, measurements and upstream reproduction](PERFORMANCE.md).
+
+- All 272 ordinary repository tests pass in default and software-only builds.
+- The independent desktop consumer passes all 6 tests in its software-only build.
+- All 18 doctests, strict rustdoc, both Clippy feature configurations, formatting
+  and example builds pass.
+- All 46 canonical reference functions pass: 2,679 PNGs with no baseline changes.
+- The resizing-shadow pixel/cache check also passes on wgpu/Metal.
+- New tests check viewport parity, bounded shadow repaint work, invisible-shadow
+  skips, incremental pixel correctness at three scales and zero idle damage.
+- Timing benchmarks are explicit release diagnostics and introduce no CI timing
+  thresholds. Native-window input latency and Windows/Linux GPU performance were
+  not measured in this investigation.
+
 ## First release preparation — 2026-09-15
 
 The release candidate is `iced-m3` **0.1.0-beta.1** (`iced_m3` in Rust).

@@ -2,6 +2,17 @@
 
 ## Unreleased
 
+### Software dialog repainting
+
+Tightened cached shadow-edge clipping so scrolling a dialog body does not repaint
+transparent shadow interiors. Disabled or transparent shadows record no shadow
+layers. The matched local software benchmark improved from about 77ms to 54ms
+median repaint, with unchanged visual references and roughly 1.5ms GPU repaint.
+
+Added a release CPU/GPU benchmark, deterministic rendering-work tests and a
+[performance investigation](docs/PERFORMANCE.md). A separate upstream software
+cost remains around fragmented damage and large overlapping backgrounds.
+
 ### Fixed dialog actions
 
 Basic dialogs accept `.actions(content)` for a fixed, trailing-aligned footer and

@@ -81,6 +81,7 @@ pub(crate) fn draw(
     cache: &Cache,
 ) {
     if !theme.shadows
+        || theme.colors.shadow.a <= 0.
         || !level.is_finite()
         || level <= 0.
         || bounds.width <= 0.
@@ -180,6 +181,15 @@ pub(crate) fn draw_resizing(
     cache: &Cache,
 ) {
     use iced::advanced::Renderer as _;
+    if !theme.shadows
+        || theme.colors.shadow.a <= 0.
+        || !level.is_finite()
+        || level <= 0.
+        || bounds.width <= 0.
+        || bounds.height <= 0.
+    {
+        return;
+    }
     let extent = layers(level)
         .iter()
         .map(|l| l.y.abs() + l.spread + 1.5 * l.blur)
@@ -215,13 +225,39 @@ pub(crate) fn draw_resizing(
             // the shadow itself keeps its original fractional translation.
             let left = (bounds.x + x).round();
             let top = (bounds.y + y).round();
-            let Some(clip) = (Rectangle {
+            // The SVG has a transparent hole inside the surface. Tighten each
+            // tile's clip to its ink-bearing perimeter, instead of including a
+            // wide transparent band over the body. Tiny Skia repaints any image
+            // whose layer intersects damage, even when that intersection only
+            // contains transparent pixels. Keep a guard for raster edge rounding.
+            let guard = 2.0;
+            let mut ink = Rectangle {
                 x: left,
                 y: top,
                 width: (bounds.x + x + w).round() - left,
                 height: (bounds.y + y + h).round() - top,
-            })
-            .intersection(&viewport) else {
+            };
+            // Corner tiles must keep their full extents: their blur also covers
+            // the straight perimeter up to the neighboring edge tile.
+            if yi > 0 && yi + 1 < ys.len() {
+                if xi == 0 {
+                    ink.width = ink.width.min((bounds.x + guard).ceil() - ink.x);
+                } else if xi + 1 == xs.len() {
+                    let right = ink.x + ink.width;
+                    ink.x = ink.x.max((bounds.x + bounds.width - guard).floor());
+                    ink.width = right - ink.x;
+                }
+            }
+            if xi > 0 && xi + 1 < xs.len() {
+                if yi == 0 {
+                    ink.height = ink.height.min((bounds.y + guard).ceil() - ink.y);
+                } else if yi + 1 == ys.len() {
+                    let bottom = ink.y + ink.height;
+                    ink.y = ink.y.max((bounds.y + bounds.height - guard).floor());
+                    ink.height = bottom - ink.y;
+                }
+            }
+            let Some(clip) = ink.intersection(&viewport) else {
                 continue;
             };
             renderer.with_layer(clip, |renderer| {
