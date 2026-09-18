@@ -35,6 +35,13 @@
 
 `Button::new` and icon buttons accept passive custom content such as an icon/text row. Interactive child controls are not supported inside a button. Icon buttons provide a centered 24×24px content area. The gallery uses small vector drawings that inherit the button foreground, including disabled/selected colors; the library does not impose an icon pack. Text symbols can appear off-center because their font baseline and line height differ from their visible shape.
 
+For FABs, prefer `fab(icon(svg_handle))` or `extended_fab(icon(svg_handle), "New note")`.
+Supply a 24×24 logical-pixel icon for small, regular and extended FABs, or
+`icon(svg_handle).size(36)` for `FabSize::Large`. The FAB centers the supplied
+widget's layout box; it does not scale the artwork or correct text-glyph alignment.
+Use centered artwork in a square SVG view box. See the
+[FAB recipe](COOKBOOK.md#sheets-and-primary-actions).
+
 Icon buttons keep the `ButtonVariant` API: `Text` means standard. Calling
 `.selected(bool)` opts into toggle styling; omitting it creates an ordinary action.
 Filled/tonal toggles use a neutral container when unselected and their respective

@@ -123,13 +123,9 @@ fn ripple_dialog_with_paused_progress(
     paused: bool,
 ) -> Element<'static, Message> {
     let launcher = widget::column![
-        crate::fab(
-            typography("+", TypeScale::HeadlineLarge)
-                .width(36)
-                .height(36)
-        )
-        .size(crate::FabSize::Large)
-        .on_press(Message::Open),
+        crate::fab(widget::container(super::icon::add().size(36)).id("launcher-icon"))
+            .size(crate::FabSize::Large)
+            .on_press(Message::Open),
         crate::circular_progress(0.)
             .indeterminate(true)
             .paused(paused),
@@ -177,12 +173,24 @@ fn ripple_ui(open: bool, stacked: bool, nested: bool, dark: bool) -> Harness<'st
     ui
 }
 
+fn launcher_center(ui: &mut Harness<'_, Message>) -> iced::Point {
+    use iced::advanced::widget::{Operation, operation};
+    let mut query = iced_test::Selector::find(widget::Id::new("launcher-icon"));
+    ui.operate(&mut iced::advanced::widget::operation::black_box(
+        &mut query,
+    ));
+    match query.finish() {
+        operation::Outcome::Some(Some(found)) => found.visible_bounds().unwrap().center(),
+        _ => panic!("Missing FAB icon"),
+    }
+}
+
 #[test]
 fn fab_ripple_finishes_under_a_dialog_without_reactivating_the_background() {
     for (stacked, nested) in [(false, false), (true, false), (true, true)] {
         for dark in [false, true] {
             let mut ui = ripple_ui(false, stacked, nested, dark);
-            let center = ui.find("+").center();
+            let center = launcher_center(&mut ui);
             let crop = |image: reference::Image| {
                 image.crop(
                     ((center.x - 48.) * 2.) as u32,
@@ -237,7 +245,7 @@ fn fab_ripple_finishes_under_a_dialog_without_reactivating_the_background() {
 fn covering_a_held_fab_finishes_its_cancellation_without_replaying_the_release() {
     for (stacked, nested) in [(false, false), (true, false), (true, true)] {
         let mut ui = ripple_ui(false, stacked, nested, false);
-        let center = ui.find("+").center();
+        let center = launcher_center(&mut ui);
         ui.move_to(center);
         ui.down();
         ui.at(20);
@@ -271,7 +279,7 @@ fn instant_dialog_keeps_scheduling_until_the_invoker_feedback_finishes() {
         );
         ui.at(0);
         ui.frame();
-        let center = ui.find("+").center();
+        let center = launcher_center(&mut ui);
         ui.move_to(center);
         ui.down();
         ui.at(10);
@@ -302,7 +310,7 @@ fn visual_references_modal_ripple() {
     ] {
         for dark in [false, true] {
             let mut ui = ripple_ui(false, stacked, nested, dark);
-            let center = ui.find("+").center();
+            let center = launcher_center(&mut ui);
             ui.move_to((center.x + 28., center.y + 28.));
             ui.at(200);
             ui.down();

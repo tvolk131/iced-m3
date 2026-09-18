@@ -79,19 +79,19 @@ by timed tests. Details and examples (`docs/LOADING_PROGRESS.md` in the source c
 ## Sheets and primary actions
 
 ```rust
-use iced::{Length, widget::column};
-use iced_m3::{Element, Theme, TypeScale, button, extended_fab,
+use iced::{Length, widget::{column, svg::Handle}};
+use iced_m3::{Element, Theme, TypeScale, button, extended_fab, icon,
     sheet, side_sheet, text_field, typography};
 
 #[derive(Clone)]
 enum Message { OpenDetails, CloseDetails, Note(String), NewWorkspace }
 
-fn workspace<'a>(open: bool, note: &'a str, add_icon: Element<'a, Message>)
+fn workspace<'a>(open: bool, note: &'a str, add_svg: Handle)
     -> Element<'a, Message>
 {
     let background = column![
         button("File details").on_press(Message::OpenDetails),
-        extended_fab(add_icon, "New workspace").on_press(Message::NewWorkspace),
+        extended_fab(icon(add_svg), "New workspace").on_press(Message::NewWorkspace),
     ].spacing(24).width(Length::Fill).height(Length::Fill);
     sheet::host(background, side_sheet(column![
         typography("File details", TypeScale::HeadlineSmall),
@@ -106,8 +106,14 @@ the exit can finish. Standard side sheets reserve space for the panel and keep
 the background interactive. `.modal()` adds a scrim and blocks background input
 until the exit ends; `bottom_sheet` is always modal. Put an enclosing dialog host
 outside the sheet host, and snackbars inside it to pause their timers while modal.
-Supply 24px FAB icons, or 36px for `FabSize::Large`; extended FABs always use a
-24px icon and 56px height. The app owns placement, including any floating stack.
+Use `icon(svg_handle)` with centered artwork in a square SVG view box. Supply
+24×24 logical-pixel icons for small, regular and extended FABs; use
+`fab(icon(svg_handle).size(36)).size(FabSize::Large)` for a large FAB. Extended
+FABs keep their 24×24 icon and 56px height when collapsed. Custom widgets remain
+supported, but the FAB centers the supplied layout box without scaling the artwork
+or adjusting its optical alignment. Text glyphs such as `text("+")` can look
+off-center because of their font baseline and line height. The app owns placement,
+including any floating stack.
 See sheet and FAB behavior, tokens, and limits (`docs/SHEETS.md` in the source checkout).
 
 ## Navigation and list composition

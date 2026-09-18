@@ -96,8 +96,12 @@ This milestone intentionally uses close buttons, Escape and outside-click
 dismissal. Drag/swipe dismissal, snap points, left-edge/detached sheets, animated
 extended-FAB expansion, FAB menus, focus trapping/restoration and screen-reader
 integration remain outside scope. The sheet host is not intended inside an
-unbounded scroll region. Custom FAB children are passive; their sizing is owned
-by the caller, and the component centers them without distorting them.
+unbounded scroll region. For FAB content, prefer `icon(svg_handle)` with centered
+artwork in a square SVG view box: 24×24 logical pixels for small, regular and
+extended FABs, or `.size(36)` for large FABs. Custom children are passive and sized
+by the caller. The FAB centers their layout box without scaling the artwork or
+adjusting its optical alignment; a text glyph's baseline and line height can make
+its visible ink look off-center.
 
 ## Validation
 

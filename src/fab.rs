@@ -28,6 +28,24 @@ pub struct Fab<'a, Message> {
     extended: bool,
     lowered: bool,
 }
+/// An icon-only floating action button. Prefer [`icon`](fn@crate::icon) for SVG content:
+///
+/// ```rust
+/// use iced::widget::svg::Handle;
+/// use iced_m3::{Element, FabSize, fab, icon};
+///
+/// let add = Handle::from_memory(br#"<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M11 4h2v7h7v2h-7v7h-2v-7H4v-2h7z"/></svg>"#);
+/// let regular: Element<'_, ()> = fab(icon(add.clone())).on_press(()).into();
+/// let large: Element<'_, ()> = fab(icon(add).size(36))
+///     .size(FabSize::Large).on_press(()).into();
+/// ```
+///
+/// Supply passive icon content sized to **24×24 logical pixels** for Small or
+/// Regular (the default), or **36×36** for Large. Custom widgets are supported;
+/// the FAB centers their layout box without scaling their artwork or correcting
+/// its optical alignment. Text glyphs such as `text("+")` can look off-center
+/// because font baselines and line heights do not center the visible ink.
+/// SVG artwork should be centered within a square view box.
 pub fn fab<'a, Message: 'a>(icon: impl Into<Element<'a, Message>>) -> Fab<'a, Message> {
     Fab {
         icon: icon.into(),
@@ -39,7 +57,24 @@ pub fn fab<'a, Message: 'a>(icon: impl Into<Element<'a, Message>>) -> Fab<'a, Me
         lowered: false,
     }
 }
-/// Extended FABs have a 56px height, a 24px icon, and LabelLarge typography.
+/// A floating action button with a label. Prefer [`icon`](fn@crate::icon) for SVG content:
+///
+/// ```rust
+/// use iced::widget::svg::Handle;
+/// use iced_m3::{Element, extended_fab, icon};
+///
+/// let add = Handle::from_memory(br#"<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M11 4h2v7h7v2h-7v7h-2v-7H4v-2h7z"/></svg>"#);
+/// let action: Element<'_, ()> = extended_fab(icon(add), "New note")
+///     .on_press(()).into();
+/// ```
+///
+/// Supply passive icon content sized to **24×24 logical pixels**, including when
+/// collapsed with [`Fab::extended(false)`](Fab::extended). The button is 56 logical
+/// pixels tall and uses LabelLarge typography. Custom widgets are supported;
+/// the FAB centers their layout box without scaling their artwork or correcting
+/// its optical alignment. Text glyphs such as `text("+")` can look off-center
+/// because font baselines and line heights do not center the visible ink.
+/// SVG artwork should be centered within a square view box.
 pub fn extended_fab<'a, Message: 'a>(
     icon: impl Into<Element<'a, Message>>,
     label: impl widget::text::IntoFragment<'a>,
@@ -50,13 +85,20 @@ pub fn extended_fab<'a, Message: 'a>(
     }
 }
 impl<'a, Message: 'a> Fab<'a, Message> {
-    /// Icon-only size. Supply a 24px icon, or 36px for Large; content is centered
-    /// in that slot without distorting arbitrary child widgets. Extended FABs
-    /// always use Regular dimensions.
+    /// Animate showing or hiding an extended FAB's label. Keep the widget in
+    /// the tree and change this flag to expand or collapse it. The icon remains
+    /// 24 logical pixels and the button remains 56 logical pixels tall.
+    /// This has no effect on an icon-only [`fab`].
     pub fn extended(mut self, extended: bool) -> Self {
         self.extended = extended;
         self
     }
+    /// Set the icon-only button size. Supply a 24×24 logical-pixel icon for
+    /// [`FabSize::Small`] or [`FabSize::Regular`], or 36×36 for [`FabSize::Large`]
+    /// (for example, `fab(icon(handle).size(36)).size(FabSize::Large)`).
+    /// This changes the button dimensions, not the supplied artwork's size.
+    /// Extended FABs always use Regular dimensions and a 24×24 icon, even when
+    /// their label is collapsed; this setting has no effect on them.
     pub fn size(mut self, size: FabSize) -> Self {
         self.size = size;
         self

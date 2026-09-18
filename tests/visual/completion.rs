@@ -254,24 +254,106 @@ fn visual_references_completion_variants() {
             ui.at(t);
             reference::check(&format!("{case}/frame-{t:04}ms"), &ui.frame());
         }
-        fn fab(open: bool) -> Element<'static, Message> {
-            crate::extended_fab(typography("+", TypeScale::TitleLarge), "Create collection")
-                .extended(open)
-                .on_press(Message::Action)
-                .into()
+    }
+}
+
+fn extended_action(open: bool, blank: bool) -> Element<'static, Message> {
+    let icon: Element<'static, Message> = if blank {
+        widget::space().width(24).height(24).into()
+    } else {
+        super::icon::add().into()
+    };
+    widget::container(
+        crate::extended_fab(icon, "Create collection")
+            .extended(open)
+            .on_press(Message::Action),
+    )
+    .padding(20)
+    .width(Length::Fill)
+    .into()
+}
+
+#[test]
+fn extended_fab_svg_ink_stays_centered_through_collapse_and_expansion() {
+    for dark in [false, true] {
+        let mut with_icon = make_ui(
+            extended_action(true, false),
+            Size::new(340., 96.),
+            theme(dark),
+        );
+        let mut without_icon = make_ui(
+            extended_action(true, true),
+            Size::new(340., 96.),
+            theme(dark),
+        );
+        for ui in [&mut with_icon, &mut without_icon] {
+            ui.at(0);
+            ui.frame();
         }
+        for (base, expanded) in [(0, false), (400, true)] {
+            with_icon.rebuild(extended_action(expanded, false));
+            without_icon.rebuild(extended_action(expanded, true));
+            for ms in [0, 50, 100, 200, 400] {
+                with_icon.at(base + ms);
+                without_icon.at(base + ms);
+                let image = with_icon.frame();
+                let blank = without_icon.frame();
+                // Subtract the identical button/label to measure actual SVG ink,
+                // including antialiasing, independently of its widget layout box.
+                let mut extent = (image.width, image.height, 0, 0);
+                let mut painted = 0;
+                for (i, (pixel, background)) in image
+                    .pixels
+                    .as_chunks::<4>()
+                    .0
+                    .iter()
+                    .zip(blank.pixels.as_chunks::<4>().0.iter())
+                    .enumerate()
+                {
+                    if pixel != background {
+                        let x = i as u32 % image.width;
+                        let y = i as u32 / image.width;
+                        extent = (
+                            extent.0.min(x),
+                            extent.1.min(y),
+                            extent.2.max(x),
+                            extent.3.max(y),
+                        );
+                        painted += 1;
+                    }
+                }
+                assert!(painted > 0, "The SVG must paint visible ink");
+                // 20px outer padding + 16px leading inset + half the 24px slot;
+                // vertically: 20px padding + half the 56px FAB. Captured at 2x.
+                let x = (extent.0 + extent.2 + 1) as f32 / 2.;
+                let y = (extent.1 + extent.3 + 1) as f32 / 2.;
+                assert!((x - 96.).abs() <= 1., "Horizontal ink center: {x}");
+                assert!((y - 96.).abs() <= 1., "Vertical ink center: {y}");
+                assert!(
+                    (31..=33).contains(&(extent.2 - extent.0 + 1)),
+                    "SVG width must stay 16 logical pixels"
+                );
+                assert!(
+                    (31..=33).contains(&(extent.3 - extent.1 + 1)),
+                    "SVG height must stay 16 logical pixels"
+                );
+            }
+        }
+    }
+}
+
+#[test]
+#[ignore = "reference suite; run with --ignored"]
+fn visual_references_extended_fab() {
+    for dark in [false, true] {
         let mut ui = make_ui(
-            widget::container(fab(true)).padding(20).width(Length::Fill),
-            Size::new(340.0, 96.0),
+            extended_action(true, false),
+            Size::new(340., 96.),
             theme(dark),
         );
         ui.at(0);
         ui.frame();
-        ui.rebuild(
-            widget::container(fab(false))
-                .padding(20)
-                .width(Length::Fill),
-        );
+        ui.rebuild(extended_action(false, false));
         let case = themed_name("completion-fab", dark);
         for t in [0, 50, 100, 200, 400] {
             ui.at(t);

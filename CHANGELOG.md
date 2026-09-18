@@ -2,6 +2,15 @@
 
 ## Unreleased
 
+### FAB icon guidance
+
+FAB constructor docs and the cookbook now demonstrate `icon(svg_handle)` and
+explain icon dimensions, layout-box centering and text-glyph alignment pitfalls.
+The sizing documentation is attached to `.size()`, and `.extended()` documents
+label expansion/collapse. Text-plus FAB test fixtures use SVGs, with rendered
+alignment checks through expansion and collapse. The public API and layout are
+unchanged.
+
 ### Breaking: one animated single-dialog API
 
 `dialog::modal(background, dialog, open)` replaces both previous single-dialog

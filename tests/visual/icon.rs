@@ -3,6 +3,12 @@ use iced::advanced::{Layout, Widget, layout, renderer, svg::Handle, widget::Tree
 use iced::{Length, Rectangle, Renderer, Size, mouse};
 use std::sync::OnceLock;
 
+/// Centered artwork shared by the FAB fixtures, using the public icon helper.
+pub fn add() -> crate::Icon {
+    static ADD: OnceLock<Handle> = OnceLock::new();
+    crate::icon(ADD.get_or_init(|| Handle::from_memory(br#"<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M11 4h2v7h7v2h-7v7h-2v-7H4v-2h7z"/></svg>"#)).clone())
+}
+
 pub struct Icon;
 pub struct LargeIcon;
 impl<Message> Widget<Message, Theme, Renderer> for LargeIcon {
