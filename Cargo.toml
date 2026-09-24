@@ -33,8 +33,8 @@ wgpu = ["iced/wgpu"]
 
 [dependencies]
 iced = { version = "=0.14.0", default-features = false, features = ["advanced", "svg", "tiny-skia", "thread-pool", "x11", "wayland"] }
-material-colors = { version = "=0.4.2", default-features = false, features = ["std"] }
-unicode-segmentation = "=1.13.3"
+material-colors = { version = "0.4.2", default-features = false, features = ["std"] }
+unicode-segmentation = "1.13.3"
 
 [dev-dependencies]
 base64 = "=0.22.1"
