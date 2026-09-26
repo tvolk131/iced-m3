@@ -98,10 +98,11 @@ sections use a shrinking rounded mark. Custom pathological amplitudes/wavelength
 are bounded to avoid inverted circular radii and unbounded path counts.
 
 Each widget caches its current SVG geometry; color/alpha are applied at draw
-time. Updates use actual widget redraw timestamps. Pausing or window inactivity
-discards the inactive interval on resume. Covered widgets continue advancing
-behind a dialog/sheet because modal input isolation does not mark the window
-inactive. Native text editing and overlay focus behavior are unchanged.
+time. Updates use actual widget redraw timestamps. Explicit pausing or viewport clipping
+discards that interval on resume. Visible indicators continue advancing in
+unfocused windows and behind dialogs/sheets. Native text editing, gesture
+cancellation and overlay focus remain governed by interaction focus. iced 0.14
+does not expose OS window occlusion to these widgets.
 
 Reduced motion holds a static loading pose, suppresses wave travel and settles
 measured transitions immediately. This milestone does not add native screen-reader

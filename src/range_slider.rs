@@ -18,6 +18,7 @@ pub struct RangeSlider<'a, Message> {
     labeled: bool,
     labels: Option<(String, String)>,
     on_change: Option<Box<dyn Fn((f32, f32)) -> Message + 'a>>,
+    disabled: bool,
     on_release: Option<Message>,
     width: Length,
 }
@@ -36,6 +37,7 @@ pub fn range_slider<'a, Message>(
         labeled: false,
         labels: None,
         on_change: None,
+        disabled: false,
         on_release: None,
         width: Length::Fill,
     }
@@ -50,10 +52,11 @@ impl<'a, Message> RangeSlider<'a, Message> {
         self.on_release = Some(message);
         self
     }
+    /// Disable interaction without discarding the handler (default: false).
+    /// Builder order does not affect this override. Clearing it still requires
+    /// a handler before the control can respond.
     pub fn disabled(mut self, disabled: bool) -> Self {
-        if disabled {
-            self.on_change = None;
-        }
+        self.disabled = disabled;
         self
     }
     pub fn step(mut self, step: f32) -> Self {
@@ -80,7 +83,7 @@ impl<'a, Message> RangeSlider<'a, Message> {
         self
     }
     fn enabled(&self) -> bool {
-        self.scale.valid() && self.on_change.is_some()
+        !self.disabled && self.scale.valid() && self.on_change.is_some()
     }
     fn values(&self) -> (f32, f32) {
         if !self.scale.valid() {

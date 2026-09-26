@@ -25,6 +25,7 @@ pub struct Fab<'a, Message> {
     size: FabSize,
     color: FabColor,
     action: Option<Message>,
+    disabled: bool,
     extended: bool,
     lowered: bool,
 }
@@ -53,6 +54,7 @@ pub fn fab<'a, Message: 'a>(icon: impl Into<Element<'a, Message>>) -> Fab<'a, Me
         size: FabSize::Regular,
         color: FabColor::Primary,
         action: None,
+        disabled: false,
         extended: true,
         lowered: false,
     }
@@ -122,10 +124,9 @@ impl<'a, Message: 'a> Fab<'a, Message> {
     }
     /// Omitting the action also disables the button. Disabled FABs are a library
     /// convenience; apps should normally hide unavailable primary actions.
+    /// This override retains the action and is independent of builder order.
     pub fn disabled(mut self, disabled: bool) -> Self {
-        if disabled {
-            self.action = None;
-        }
+        self.disabled = disabled;
         self
     }
 }
@@ -200,6 +201,7 @@ impl<'a, Message: Clone + 'a> From<Fab<'a, Message>> for Element<'a, Message> {
                 }
             })
             .on_press_maybe(value.action)
+            .disabled(value.disabled)
             .into()
     }
 }

@@ -24,6 +24,7 @@ pub struct Checkbox<'a, Message> {
     error: bool,
     label: Option<text::Fragment<'a>>,
     on_toggle: Option<Box<dyn Fn(bool) -> Message + 'a>>,
+    disabled: bool,
     width: Length,
     size: f32,
     spacing: f32,
@@ -45,6 +46,7 @@ pub fn checkbox<'a, Message>(checked: bool) -> Checkbox<'a, Message> {
         error: false,
         label: None,
         on_toggle: None,
+        disabled: false,
         width: Length::Shrink,
         size: tokens::size::CHECKBOX,
         spacing: tokens::spacing::XS,
@@ -57,6 +59,9 @@ pub fn checkbox<'a, Message>(checked: bool) -> Checkbox<'a, Message> {
 }
 
 impl<'a, Message> Checkbox<'a, Message> {
+    fn enabled(&self) -> bool {
+        !self.disabled && self.on_toggle.is_some()
+    }
     pub(crate) fn switch_icons(mut self, icons: bool) -> Self {
         self.switch_icons = icons;
         self
@@ -84,10 +89,11 @@ impl<'a, Message> Checkbox<'a, Message> {
         self.on_toggle = handler.map(|f| Box::new(f) as _);
         self
     }
+    /// Disable interaction without discarding the handler (default: false).
+    /// Builder order does not affect this override. Clearing it still requires
+    /// a handler before the control can respond.
     pub fn disabled(mut self, disabled: bool) -> Self {
-        if disabled {
-            self.on_toggle = None;
-        }
+        self.disabled = disabled;
         self
     }
     /// Display a mixed selection. The application still owns the Boolean value.
@@ -137,7 +143,7 @@ impl<'a, Message> Checkbox<'a, Message> {
 
 impl<'a, Message: 'a> From<Checkbox<'a, Message>> for Element<'a, Message> {
     fn from(checkbox: Checkbox<'a, Message>) -> Self {
-        let enabled = checkbox.on_toggle.is_some();
+        let enabled = checkbox.enabled();
         let has_label = checkbox.label.is_some();
         let label = widget::text(checkbox.label.unwrap_or_else(|| "".into()))
             .font(checkbox.font)
@@ -161,7 +167,11 @@ impl<'a, Message: 'a> From<Checkbox<'a, Message>> for Element<'a, Message> {
             error: checkbox.error,
             label: label.into(),
             has_label,
-            on_toggle: checkbox.on_toggle,
+            on_toggle: if checkbox.disabled {
+                None
+            } else {
+                checkbox.on_toggle
+            },
             width: checkbox.width,
             size: checkbox.size,
             spacing: checkbox.spacing,

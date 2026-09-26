@@ -163,6 +163,7 @@ pub struct Switch<'a, Message> {
     checked: bool,
     label: Option<String>,
     on_toggle: Option<Box<dyn Fn(bool) -> Message + 'a>>,
+    disabled: bool,
     width: Length,
 }
 pub fn switch<'a, Message>(checked: bool) -> Switch<'a, Message> {
@@ -171,6 +172,7 @@ pub fn switch<'a, Message>(checked: bool) -> Switch<'a, Message> {
         checked,
         label: None,
         on_toggle: None,
+        disabled: false,
         width: Length::Shrink,
     }
 }
@@ -187,10 +189,11 @@ impl<'a, Message> Switch<'a, Message> {
         self.on_toggle = Some(Box::new(callback));
         self
     }
+    /// Disable interaction without discarding the handler (default: false).
+    /// Builder order does not affect this override. Clearing it still requires
+    /// a handler before the control can respond.
     pub fn disabled(mut self, disabled: bool) -> Self {
-        if disabled {
-            self.on_toggle = None;
-        }
+        self.disabled = disabled;
         self
     }
     pub fn width(mut self, width: impl Into<Length>) -> Self {
@@ -203,6 +206,7 @@ impl<'a, Message: 'a> From<Switch<'a, Message>> for Element<'a, Message> {
         let mut control = crate::checkbox(value.checked)
             .into_switch()
             .switch_icons(value.icons)
+            .disabled(value.disabled)
             .width(value.width);
         if let Some(label) = value.label {
             control = control.label(label);

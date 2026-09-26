@@ -194,7 +194,8 @@ by the application. Passive icons are replaced by a fixed-size check slot.
 
 Progress indicators use redraw timestamps and the same private test clock as
 finite motion. Determinate progress settles; indeterminate progress schedules
-frames only while visible, focused and unpaused. Paused intervals are omitted
+frames only while inside the widget viewport and unpaused (unless reduced motion
+is enabled). Keyboard window focus does not pause visual animation. Paused intervals are omitted
 when resumed. Linear drawing uses quads; circular arcs use cached SVG handles,
 following the existing scroll-safe glyph path. No timer dependency, runtime
 subscription or upstream fork was introduced. Gallery work is a separate,

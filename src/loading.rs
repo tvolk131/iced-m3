@@ -45,6 +45,9 @@ impl LoadingIndicator {
         self.contained = contained;
         self
     }
+    /// Freeze at the current pose (default: false), omitting paused time on resume.
+    /// Viewport clipping and reduced motion also stop continuous redraws.
+    /// A visible indicator keeps animating when its window loses keyboard focus.
     pub fn paused(mut self, paused: bool) -> Self {
         self.paused = paused;
         self
@@ -53,7 +56,6 @@ impl LoadingIndicator {
 struct State {
     elapsed: Duration,
     last: Option<Instant>,
-    focused: bool,
     motion: Cell<tokens::Motion>,
     path: RefCell<Option<(u64, Handle)>>,
 }
@@ -65,7 +67,6 @@ impl Widget<(), Theme, Renderer> for LoadingIndicator {
         tree::State::new(State {
             elapsed: Duration::ZERO,
             last: None,
-            focused: true,
             motion: Cell::new(tokens::Motion::default()),
             path: RefCell::new(None),
         })
@@ -88,18 +89,8 @@ impl Widget<(), Theme, Renderer> for LoadingIndicator {
         v: &Rectangle,
     ) {
         let state = t.state.downcast_mut::<State>();
-        if let Some(focused) = crate::activity::window_focus(e) {
-            if state.focused != focused {
-                state.last = None;
-                if focused {
-                    s.request_redraw();
-                }
-            }
-            state.focused = focused;
-        }
         if let Event::Window(window::Event::RedrawRequested(now)) = e {
-            if state.focused
-                && !self.paused
+            if !self.paused
                 && !state.motion.get().medium.is_zero()
                 && l.bounds()
                     .intersection(v)

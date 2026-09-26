@@ -34,6 +34,8 @@ pub struct TextField<'a, Message> {
     supporting: Option<String>,
     error: bool,
     enabled: bool,
+    disabled: bool,
+    on_input: Option<std::rc::Rc<dyn Fn(String) -> Message + 'a>>,
     width: Length,
     background: Option<Box<dyn Fn(&Theme) -> Color + 'a>>,
     font: iced::Font,
@@ -109,6 +111,8 @@ impl<'a, Message: Clone + 'a> TextField<'a, Message> {
             supporting: None,
             error: false,
             enabled: false,
+            disabled: false,
+            on_input: None,
             width: Length::Fill,
             background: None,
             font: crate::fonts::REGULAR,
@@ -160,7 +164,8 @@ impl<'a, Message: Clone + 'a> TextField<'a, Message> {
     // focus target instead of focusing the native text editor or starting an IME.
     pub(crate) fn on_activate(mut self, message: Option<Message>) -> Self {
         self.selection_only = true;
-        self.enabled = message.is_some();
+        self.activate = message;
+        self = self.sync_enabled();
         let enabled = self.enabled;
         // A selection-only field never updates/focuses the native editor, so its
         // cached native status stays Disabled. Its visual status belongs to us.
@@ -176,8 +181,6 @@ impl<'a, Message: Clone + 'a> TextField<'a, Message> {
             },
             selection: theme.colors.primary_container,
         });
-        self.activate = message;
-        self.trailing = self.trailing.sync(self.enabled);
         self
     }
     pub fn variant(mut self, variant: TextFieldVariant) -> Self {
@@ -195,10 +198,8 @@ impl<'a, Message: Clone + 'a> TextField<'a, Message> {
         self
     }
     pub fn on_input(mut self, handler: impl Fn(String) -> Message + 'a) -> Self {
-        self.input = self.input.on_input(handler);
-        self.enabled = true;
-        self.trailing = self.trailing.sync(true);
-        self
+        self.on_input = Some(std::rc::Rc::new(handler));
+        self.sync_enabled()
     }
     pub fn on_submit(mut self, message: Message) -> Self {
         self.input = self.input.on_submit(message);
@@ -236,13 +237,20 @@ impl<'a, Message: Clone + 'a> TextField<'a, Message> {
         self.error = true;
         self
     }
+    /// Disable editing and trailing actions without discarding callbacks.
+    /// The override defaults to false and is independent of builder order.
+    /// Clearing it enables editing only if an input callback was supplied.
     pub fn disabled(mut self, disabled: bool) -> Self {
-        if disabled {
-            self.input = self.input.on_input_maybe(None::<fn(String) -> Message>);
-            self.enabled = false;
-            self.activate = None;
-            self.trailing = self.trailing.sync(false);
-        }
+        self.disabled = disabled;
+        self.sync_enabled()
+    }
+    fn sync_enabled(mut self) -> Self {
+        self.enabled = !self.disabled && (self.on_input.is_some() || self.activate.is_some());
+        let handler = self.on_input.as_ref().filter(|_| !self.disabled).cloned();
+        self.input = self
+            .input
+            .on_input_maybe(handler.map(|handler| move |text| handler(text)));
+        self.trailing = self.trailing.sync(self.enabled);
         self
     }
     /// Set an explicit field fill. Outlined fields are transparent by default;
@@ -447,8 +455,12 @@ impl<'a, Message: Clone + 'a> Widget<Message, Theme, Renderer> for TextField<'a,
             operation.text(None, layout.child(0).bounds(), &self.label);
             operation.text(None, layout.child(0).bounds(), &self.value);
         } else {
-            self.input
-                .operate(&mut tree.children[0], layout.child(0), renderer, operation);
+            // Native TextInput exposes focus operations even without on_input.
+            // Disabled Material fields must not become Tab/ID focus targets.
+            if self.enabled {
+                self.input
+                    .operate(&mut tree.children[0], layout.child(0), renderer, operation);
+            }
             if self.enabled && matches!(self.trailing, Trailing::Action(..)) {
                 self.trailing.widget_mut().operate(
                     &mut tree.children[2],
@@ -541,8 +553,9 @@ impl<'a, Message: Clone + 'a> Widget<Message, Theme, Renderer> for TextField<'a,
                     viewport,
                 );
             }
-            if !(shell.is_event_captured()
-                || over_slot && matches!(event, Event::Mouse(mouse::Event::ButtonPressed(_))))
+            if (self.enabled || matches!(event, Event::Window(_)))
+                && !(shell.is_event_captured()
+                    || over_slot && matches!(event, Event::Mouse(mouse::Event::ButtonPressed(_))))
             {
                 self.input.update(
                     &mut tree.children[0],

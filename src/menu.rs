@@ -894,6 +894,7 @@ pub struct Select<'a, Value, Message> {
     options: Vec<SelectOption<Value>>,
     selected: Option<Value>,
     handler: Option<Box<dyn Fn(Value) -> Message + 'a>>,
+    disabled: bool,
     width: f32,
     variant: crate::TextFieldVariant,
     supporting: Option<String>,
@@ -911,6 +912,7 @@ pub fn select<'a, Value, Message>(
         options: options.into_iter().collect(),
         selected,
         handler: None,
+        disabled: false,
         width: 240.0,
         variant: crate::TextFieldVariant::Outlined,
         supporting: None,
@@ -953,10 +955,11 @@ impl<'a, Value, Message> Select<'a, Value, Message> {
         self.handler = Some(Box::new(handler));
         self
     }
+    /// Disable interaction without discarding the handler (default: false).
+    /// Builder order does not affect this override. Clearing it still requires
+    /// a handler before the control can respond.
     pub fn disabled(mut self, disabled: bool) -> Self {
-        if disabled {
-            self.handler = None;
-        }
+        self.disabled = disabled;
         self
     }
     pub fn width(mut self, width: f32) -> Self {
@@ -974,13 +977,14 @@ impl<'a, Value: Clone + PartialEq + 'a, Message: Clone + 'a> From<Select<'a, Val
             .find(|option| select.selected.as_ref() == Some(&option.value))
             .map(|option| option.label.clone())
             .unwrap_or_default();
-        let disabled =
-            select.handler.is_none() || select.options.iter().all(|option| option.disabled);
+        let disabled = select.disabled
+            || select.handler.is_none()
+            || select.options.iter().all(|option| option.disabled);
         let items = select.options.into_iter().map(|option| MenuItem {
             children: None,
             disabled: option.disabled,
             selected: select.selected.as_ref() == Some(&option.value),
-            action: if option.disabled {
+            action: if disabled || option.disabled {
                 None
             } else {
                 select.handler.as_ref().map(|handler| handler(option.value))

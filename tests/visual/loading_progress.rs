@@ -238,8 +238,11 @@ fn loading_and_waves_pause_resume_and_obey_reduced_motion() {
             assert!(moving != view.frame());
             view.event(Event::Window(window::Event::Unfocused));
             let frozen = view.frame();
-            assert_eq!(view.at(12000), window::RedrawRequest::Wait);
-            assert!(frozen == view.frame());
+            assert_eq!(view.at(12000), window::RedrawRequest::NextFrame);
+            assert!(
+                frozen != view.frame(),
+                "Visible waves continue when unfocused"
+            );
         }
     }
     let mut loader = ui(loading_indicator(), Size::new(100., 100.), false);

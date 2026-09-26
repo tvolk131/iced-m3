@@ -312,6 +312,7 @@ pub(crate) fn select_all<Message>(
 }
 /// Wrap the app root to enable Tab/Shift+Tab traversal. Modal components provide
 /// their own scope, keeping focus out of covered content.
+/// Primary clicks move/clear focus; secondary clicks preserve editing focus.
 pub fn scope<'a, Message: 'a>(content: impl Into<Element<'a, Message>>) -> Element<'a, Message> {
     Element::new(Scope {
         content: content.into(),
@@ -321,7 +322,9 @@ pub fn scope<'a, Message: 'a>(content: impl Into<Element<'a, Message>>) -> Eleme
     })
 }
 /// A single Tab stop whose enabled controls can be traversed with arrow keys.
-/// Enter/Space activate. Focus returns to the most recently focused item.
+/// Children get first refusal so editors and sliders keep their editing keys.
+/// Unhandled arrows and Home/End navigate the group. Enter/Space activate.
+/// Focus returns to the most recently focused item; Tab leaves the group.
 pub fn group<'a, Message: 'a>(content: impl Into<Element<'a, Message>>) -> Element<'a, Message> {
     group_with_active(content, 0)
 }
@@ -454,6 +457,14 @@ impl<Message> Widget<Message, Theme, Renderer> for Scope<'_, Message> {
         if !self.arrows && tab(&mut self.content, &mut t.children[0], l, r, e, s) {
             return;
         }
+        if self.arrows {
+            self.content
+                .as_widget_mut()
+                .update(&mut t.children[0], e, l, c, r, cb, s, v);
+            if s.is_event_captured() {
+                return;
+            }
+        }
         if self.arrows
             && let Event::Keyboard(keyboard::Event::KeyPressed {
                 key: keyboard::Key::Named(key),
@@ -523,12 +534,17 @@ impl<Message> Widget<Message, Theme, Renderer> for Scope<'_, Message> {
                 return;
             }
         }
-        if !self.arrows && matches!(e, Event::Mouse(mouse::Event::ButtonPressed(_))) {
-            clear(&mut self.content, &mut t.children[0], l, r);
+        if !self.arrows {
+            if matches!(
+                e,
+                Event::Mouse(mouse::Event::ButtonPressed(mouse::Button::Left))
+            ) {
+                clear(&mut self.content, &mut t.children[0], l, r);
+            }
+            self.content
+                .as_widget_mut()
+                .update(&mut t.children[0], e, l, c, r, cb, s, v);
         }
-        self.content
-            .as_widget_mut()
-            .update(&mut t.children[0], e, l, c, r, cb, s, v);
         if !self.arrows && matches!(e, Event::Keyboard(keyboard::Event::KeyPressed { .. })) {
             reveal(&mut self.content, &mut t.children[0], l, r);
         }

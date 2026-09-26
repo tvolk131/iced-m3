@@ -1,7 +1,7 @@
 //! Modal input suspension is distinct from real window activity. iced has no
 //! custom widget event, so private, synchronous update scopes carry that context.
-//! Native controls still receive cancellation; opt-in animation clocks can use
-//! the actual window focus. Scopes nest and restore even during unwinding.
+//! Native controls still receive cancellation; modal hosts track actual window
+//! focus separately. Visual animation clocks do not depend on keyboard focus. Scopes nest and restore even during unwinding.
 use crate::Element;
 use iced::advanced::{Clipboard, Layout, Shell, widget::Tree};
 use iced::{Event, Rectangle, Renderer, mouse, window};
@@ -36,7 +36,7 @@ pub(crate) fn interaction<T>(f: impl FnOnce() -> T) -> T {
 pub(crate) fn is_covered() -> bool {
     matches!(CONTEXT.get(), Context::Covered { .. })
 }
-/// Only modal hosts and independent progress clocks opt into this distinction.
+/// Modal hosts use this distinction to preserve native input suspension.
 /// Other widgets keep treating synthetic Unfocused as interaction suspension.
 pub(crate) fn window_focus(event: &Event) -> Option<bool> {
     match CONTEXT.get() {
@@ -51,8 +51,8 @@ pub(crate) fn window_focus(event: &Event) -> Option<bool> {
 }
 
 /// Update visible covered content without permitting actions, input capture or
-/// IME. Actual focus changes reach animation clocks, while native inputs and
-/// timeout-driven interaction widgets continue receiving Unfocused.
+/// IME. Animation redraws continue, while native inputs and timeout-driven
+/// interaction widgets continue receiving Unfocused.
 pub(crate) fn update_covered<Message>(
     content: &mut Element<'_, Message>,
     tree: &mut Tree,

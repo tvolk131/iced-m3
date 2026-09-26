@@ -28,6 +28,7 @@ pub enum ButtonVariant {
 pub struct Button<'a, Message> {
     content: Element<'a, Message>,
     on_press: Option<Message>,
+    disabled: bool,
     variant: ButtonVariant,
     width: Length,
     height: Length,
@@ -67,6 +68,7 @@ impl<'a, Message: 'a> Button<'a, Message> {
         Self {
             content: content.into(),
             on_press: None,
+            disabled: false,
             variant: ButtonVariant::Filled,
             width: Length::Shrink,
             height: Length::Shrink,
@@ -92,6 +94,9 @@ impl<'a, Message: 'a> Button<'a, Message> {
             outline_color: None,
         }
     }
+    fn enabled(&self) -> bool {
+        !self.disabled && self.on_press.is_some()
+    }
     /// Override enabled background and foreground while retaining state layers.
     pub fn palette(mut self, palette: impl Fn(&Theme) -> (Color, Color) + 'a) -> Self {
         self.palette = Some(Box::new(palette));
@@ -105,10 +110,11 @@ impl<'a, Message: 'a> Button<'a, Message> {
         self.on_press = message;
         self
     }
+    /// Disable interaction without discarding the handler (default: false).
+    /// Builder order does not affect this override. Clearing it still requires
+    /// a handler before the control can respond.
     pub fn disabled(mut self, disabled: bool) -> Self {
-        if disabled {
-            self.on_press = None;
-        }
+        self.disabled = disabled;
         self
     }
     pub fn variant(mut self, variant: ButtonVariant) -> Self {
@@ -261,9 +267,7 @@ impl<Message: Clone> Widget<Message, Theme, Renderer> for Button<'_, Message> {
         if self.content_disabled && !tree.state.downcast_ref::<State>().content_disabled {
             tree.children[0] = Tree::new(&self.content);
         }
-        if self.on_press.is_none()
-            && !(self.chip && self.interactive_content && !self.content_disabled)
-        {
+        if !self.enabled() && !(self.chip && self.interactive_content && !self.content_disabled) {
             *tree.state.downcast_mut::<State>() = State::default();
         }
         tree.state.downcast_mut::<State>().content_disabled = self.content_disabled;
@@ -308,7 +312,7 @@ impl<Message: Clone> Widget<Message, Theme, Renderer> for Button<'_, Message> {
         renderer: &Renderer,
         operation: &mut dyn Operation,
     ) {
-        if self.on_press.is_some() {
+        if self.enabled() {
             let state = tree.state.downcast_mut::<State>();
             let id = state.focus.id.clone();
             operation.focusable(Some(&id), layout.bounds(), &mut state.focus);
@@ -367,9 +371,7 @@ impl<Message: Clone> Widget<Message, Theme, Renderer> for Button<'_, Message> {
         if child_captured {
             state.pressed = false;
         }
-        if self.on_press.is_none()
-            && !(self.chip && self.interactive_content && !self.content_disabled)
-        {
+        if !self.enabled() && !(self.chip && self.interactive_content && !self.content_disabled) {
             return;
         }
         let child_target = self.interactive_content
@@ -407,7 +409,7 @@ impl<Message: Clone> Widget<Message, Theme, Renderer> for Button<'_, Message> {
                 repeat,
                 ..
             }) if state.focus.focused
-                && self.on_press.is_some()
+                && self.enabled()
                 && matches!(
                     key,
                     iced::keyboard::key::Named::Enter | iced::keyboard::key::Named::Space
@@ -439,7 +441,7 @@ impl<Message: Clone> Widget<Message, Theme, Renderer> for Button<'_, Message> {
                 shell.request_redraw();
             }
             Event::Mouse(mouse::Event::ButtonPressed(mouse::Button::Left))
-                if over && self.on_press.is_some() =>
+                if over && self.enabled() =>
             {
                 state.pressed = true;
                 state.focus.focused = true;
@@ -520,8 +522,7 @@ impl<Message: Clone> Widget<Message, Theme, Renderer> for Button<'_, Message> {
         let state = tree.state.downcast_ref::<State>();
         state.motion.set(theme.motion);
         let c = theme.colors;
-        let enabled =
-            self.on_press.is_some() || (self.interactive_content && !self.content_disabled);
+        let enabled = self.enabled() || (self.interactive_content && !self.content_disabled);
         let focused = state.focus.focused && state.focus.visible && !state.focus.suppressed;
         let layer_opacity = if focused {
             if self.icon && self.variant == ButtonVariant::Outlined {
@@ -857,7 +858,7 @@ impl<Message: Clone> Widget<Message, Theme, Renderer> for Button<'_, Message> {
                 return interaction;
             }
         }
-        if self.on_press.is_some() && cursor.is_over(layout.bounds()) && cursor.is_over(*viewport) {
+        if self.enabled() && cursor.is_over(layout.bounds()) && cursor.is_over(*viewport) {
             mouse::Interaction::Pointer
         } else {
             mouse::Interaction::None

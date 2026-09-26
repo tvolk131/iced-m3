@@ -10,6 +10,7 @@ mod desktop_finish;
 mod dialog_actions;
 mod dialog_regressions;
 mod fidelity;
+mod interaction_contracts;
 mod loading_progress;
 mod modal_activity;
 mod pickers;

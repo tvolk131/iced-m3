@@ -108,3 +108,15 @@ Keep dialog, sheet and snackbar hosts mounted across view rebuilds. Use their
 open/visible flags when you want exit animations; removing an element immediately
 also removes its retained animation state. Keep durable form values in your app.
 The cookbook includes complete overlay recipes.
+
+## Disabled controls and keyboard interaction
+
+Omitting a control's action/input callback disables it. `.disabled(true)` adds an
+independent override and retains that callback, regardless of builder order.
+`.disabled(false)` clears the override; it does not supply a missing callback.
+For example, `button("Save").disabled(true).on_press(Message::Save)` stays disabled.
+
+Wrap the application root with `focus::scope(...)` for Tab traversal. Toolbars
+form one Tab stop and use unhandled arrows/Home/End to move between controls.
+Focused fields and sliders consume their own editing keys first; Tab exits the
+group. A secondary click inside a field preserves its caret and editing focus.

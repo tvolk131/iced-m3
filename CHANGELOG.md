@@ -1,5 +1,19 @@
 # Release notes
 
+## Unreleased
+
+- Focus groups let focused children consume editing keys before arrow/Home/End
+  traversal. Text fields and sliders work inside toolbars; Tab still leaves the
+  group. Context clicks no longer clear focus in the root focus scope.
+- Disabled builders retain callbacks and apply an independent override across
+  buttons, FABs, fields, selection controls, selects and sliders. Builder order
+  no longer changes disabled state; `.disabled(false)` restores supplied handlers.
+  Omitting the handler still leaves a control disabled.
+- Visible progress and loading indicators keep animating when the window loses
+  keyboard focus. Explicit pause, viewport clipping and reduced motion still
+  stop continuous redraws. Input cancellation and snackbar timeout pauses remain
+  tied to interaction focus; OS window occlusion is not exposed by iced 0.14.
+
 ## 0.1.0-beta.2 — 2026-09-18
 
 This beta simplifies the dialog lifecycle, adds fixed dialog actions and bounded

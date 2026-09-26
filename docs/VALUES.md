@@ -97,10 +97,12 @@ grow/shrink phases over 5400ms. Measured updates use a critically damped spring
 scaled by the shared motion setting. Circular drawing uses cached SVG geometry
 to preserve correct scroll transforms on both renderers.
 
-`.paused(true)` freezes indeterminate motion. Invisible or unfocused indicators
-stop requesting frames and discard the inactive interval when resumed. Modal
-input isolation preserves background animation; only actual window inactivity
-pauses it. Setting
+`.paused(true)` freezes indeterminate motion. Indicators outside the widget viewport
+stop requesting frames and discard that hidden interval when resumed. Visible
+indicators keep animating when the window loses keyboard focus, including behind
+modals. Widget visibility is not OS window occlusion: iced 0.14 does not forward
+occlusion events to widgets. Applications can use explicit pause when they know
+their content is hidden. Setting
 `motion.medium` to zero holds a visible static indeterminate frame (linear uses a mid-cycle pose). Linear `.width` and
 `.size` control width and thickness; circular `.size` controls its square size.
 Buffer tracks and custom color cycles are available. `.wavy(true)` opts into

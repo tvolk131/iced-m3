@@ -71,6 +71,9 @@ pub struct Toolbar<'a, Message> {
     floating: bool,
     vertical: bool,
 }
+/// A row or column of controls sharing one Tab stop. Unhandled arrows/Home/End
+/// move focus; focused editors and sliders retain their editing keys. Tab exits
+/// the group. Defaults to a horizontal, non-floating toolbar.
 pub fn toolbar<'a, Message>(
     items: impl IntoIterator<Item = Element<'a, Message>>,
 ) -> Toolbar<'a, Message> {

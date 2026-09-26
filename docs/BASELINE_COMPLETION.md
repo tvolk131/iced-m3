@@ -42,12 +42,12 @@ capture and IME requests remain isolated. Existing gesture cancellation, native
 caret suspension, tooltip suppression and snackbar timeout pauses are preserved.
 
 Private synchronous update scopes distinguish interaction-only cancellation from
-actual window deactivation; they do not change iced's event API. Only modal hosts
-and Material progress/loading clocks opt into that distinction. Covered native
+actual window deactivation; they do not change iced's event API. Modal hosts
+use that distinction for input suspension; visual animation ignores keyboard focus. Covered native
 controls never receive a real focus-restoration event just to restart a spinner.
 Nested hosts inherit the outer host's window activity. Explicit pause, viewport
-clipping and reduced motion remain respected; deactivating the app pauses progress
-without counting inactive wall time when it resumes.
+clipping and reduced motion remain respected. Visible progress continues when
+the app loses keyboard focus.
 
 Tests cover quick taps, held gesture cancellation, finite ripple scheduling with
 an instant dialog, all three indicator types behind seven overlay compositions,
@@ -87,8 +87,8 @@ loading before applying the latest measured value:
   at most one cycle.
 - The measured spring then starts from zero. A delayed frame integrates the
   elapsed time after completion too; sparse and dense redraws agree.
-- Restarting loading during completion retains continuity. Paused, hidden,
-  unfocused and reduced-motion indicators skip a requested handoff and show the
+- Restarting loading during completion retains continuity. Paused, hidden
+  and reduced-motion indicators skip a requested handoff and show the
   measured value. Settled indicators stop scheduling redraws.
 
 References: [Android determinate drawable](https://github.com/material-components/material-components-android/blob/d12048664f383e88148afb18e971aa6dd24ed42e/lib/java/com/google/android/material/progressindicator/DeterminateDrawable.java),

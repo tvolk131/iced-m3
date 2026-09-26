@@ -118,7 +118,7 @@ of duplicating every frame for each helper built on them.
 rebuilds, step deduplication, endpoint clamps, cancellation, disabled/invalid
 input, root-dialog blocking, controlled single/multiple selection and idle frame
 scheduling. Indeterminate frames must be identical under two independent clock
-origins. Paused, unfocused, invisible and zero-motion indicators stop requesting
+origins. Paused, viewport-clipped and zero-motion indicators stop requesting
 animation frames, and resuming excludes the paused interval.
 
 A selected-segment border regression failed before the foreground outline layer

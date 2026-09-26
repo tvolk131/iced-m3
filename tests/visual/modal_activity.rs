@@ -238,27 +238,28 @@ fn covered_fields_stay_suspended_after_the_real_window_regains_focus() {
 }
 
 #[test]
-fn covered_progress_obeys_window_focus_pause_and_reduced_motion() {
+fn covered_progress_keeps_animating_unfocused_but_obeys_pause_and_reduced_motion() {
     for host in HOSTS {
         let mut ui = ui(host, true, false, theme(false));
         ui.at(700);
         let moving = indicators(host, ui.frame());
         ui.event(Event::Window(window::Event::Unfocused));
-        assert_eq!(ui.at(4000), window::RedrawRequest::Wait, "{host}");
+        assert_eq!(ui.at(4000), window::RedrawRequest::NextFrame, "{host}");
         assert!(
-            moving == indicators(host, ui.frame()),
-            "App deactivation pauses {host}"
+            moving != indicators(host, ui.frame()),
+            "Unfocused visible indicators keep moving: {host}"
         );
+        let unfocused = indicators(host, ui.frame());
         ui.event(Event::Window(window::Event::Focused));
         ui.at(4000);
         assert!(
-            moving == indicators(host, ui.frame()),
-            "Inactive time must not advance {host}"
+            unfocused == indicators(host, ui.frame()),
+            "Focus alone must not jump the clock: {host}"
         );
         ui.at(4237);
         assert!(
-            moving != indicators(host, ui.frame()),
-            "Real focus resumes {host}"
+            unfocused != indicators(host, ui.frame()),
+            "Animation continues: {host}"
         );
         ui.rebuild(fixture(host, true, true));
         ui.at(4237);

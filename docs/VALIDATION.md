@@ -1,5 +1,32 @@
 # Validation report
 
+## Interaction contracts and window activity — 2026-09-26
+
+Regressions use iced's actual headless UI event dispatcher, pointer events and
+keyboard events, then inspect application messages and timed rendered frames.
+The initial run failed for toolbar slider/caret editing, right-click text entry,
+and order-dependent disabled builders; ordinary toolbar button navigation passed.
+The new unfocused-animation expectation also failed before changing clock policy.
+
+- Eight new tests cover editing keys and toolbar traversal, context-click focus,
+  110 disabled-builder/pointer/keyboard combinations across 11 control types,
+  held-press cancellation, restored field actions, and indicator viewport clipping.
+- The field-action test also exposed disabled native text inputs accepting focus
+  and Enter submission. Material fields now exclude disabled focus targets and
+  suppress disabled editing events while retaining their configured callbacks.
+- All 280 ordinary tests pass with default features and software-only features.
+  All 18 doctests, default-feature Clippy and rustdoc with warnings denied, and
+  formatting pass. The independent desktop consumer passes all six tests.
+- All 46 canonical reference functions pass (2,679 PNGs); no goldens changed.
+- The unfocused animation test also passes on wgpu/Metal across seven modal host
+  compositions. Explicit pause, reduced motion, covered-input suspension and
+  snackbar timeout behavior keep their separate tests.
+
+Visible progress/loading clocks now ignore keyboard focus. Viewport clipping
+still suppresses continuous redraws; this is widget clipping, not OS occlusion,
+which iced 0.14 does not expose to widgets. Native window-manager interaction was
+not exercised by these headless regressions. Logs: `target/interaction-contracts/`.
+
 ## Software dialog repainting — 2026-09-18
 
 The matched release benchmark measured a software dialog median of 77.00ms

@@ -99,7 +99,7 @@ impl Progress {
     }
     /// Wave travel in logical pixels per second. Zero (Material's default) keeps
     /// the wave pattern stationary. Negative values reverse its direction.
-    /// Travel pauses with `.paused(true)`, window inactivity and reduced motion.
+    /// Travel pauses with `.paused(true)`, viewport clipping and reduced motion.
     pub fn wave_speed(mut self, speed: f32) -> Self {
         if speed.is_finite() {
             self.wave_speed = speed.clamp(-10000.0, 10000.0);
@@ -161,13 +161,15 @@ impl Progress {
     /// On exit, finish the current loading sequence before animating the measured
     /// value: 333ms for baseline circular / 500ms for wavy circular, the rest of
     /// the linear cycle (2s baseline / 1.8s wavy).
-    /// Reduced motion, paused, hidden and unfocused indicators skip this handoff.
+    /// Reduced motion, paused and viewport-clipped indicators skip this handoff.
     pub fn indeterminate(mut self, indeterminate: bool) -> Self {
         self.indeterminate = indeterminate;
         self
     }
     /// Freeze loading and wave travel without removing their current frame.
     /// Measured value changes still update.
+    /// Visible indicators keep animating in unfocused windows; viewport clipping
+    /// and reduced motion stop continuous redraws independently of this flag.
     pub fn paused(mut self, paused: bool) -> Self {
         self.paused = paused;
         self
@@ -203,7 +205,6 @@ struct State {
     elapsed: Duration,
     animation_origin: Instant,
     last: Option<Instant>,
-    focused: bool,
     motion: Cell<tokens::Motion>,
     arc: ArcCache,
     track_arc: ArcCache,
@@ -225,7 +226,6 @@ impl Widget<(), Theme, Renderer> for Progress {
             elapsed: Duration::ZERO,
             animation_origin: crate::motion::now(),
             last: None,
-            focused: true,
             motion: Cell::new(tokens::Motion::default()),
             arc: RefCell::new(None),
             track_arc: RefCell::new(None),
@@ -263,16 +263,6 @@ impl Widget<(), Theme, Renderer> for Progress {
         viewport: &Rectangle,
     ) {
         let state = tree.state.downcast_mut::<State>();
-        if let Some(focused) = crate::activity::window_focus(event) {
-            if state.focused != focused {
-                state.last = None;
-                state.wave_last = None;
-                if focused {
-                    shell.request_redraw();
-                }
-            }
-            state.focused = focused;
-        }
         let now = match event {
             Event::Window(window::Event::RedrawRequested(now)) => *now,
             _ => crate::motion::now(),
@@ -287,7 +277,7 @@ impl Widget<(), Theme, Renderer> for Progress {
         } else {
             layout.bounds().width
         };
-        let animate = visible && state.focused && !self.paused && !motion.medium.is_zero();
+        let animate = visible && !self.paused && !motion.medium.is_zero();
         let circular_finish = motion.medium.mul_f32(if self.wavy {
             500.0 / 200.0
         } else {
@@ -382,7 +372,7 @@ impl Widget<(), Theme, Renderer> for Progress {
             }
         }
         if !state.indeterminate {
-            if visible && state.focused {
+            if visible {
                 let changed = state
                     .progress
                     .set(self.value(), now, motion.medium, track_length);

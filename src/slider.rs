@@ -15,6 +15,7 @@ pub struct Slider<'a, Message> {
     labeled: bool,
     label: Option<String>,
     on_change: Option<Box<dyn Fn(f32) -> Message + 'a>>,
+    disabled: bool,
     on_release: Option<Message>,
     width: Length,
 }
@@ -28,6 +29,7 @@ pub fn slider<'a, Message>(range: RangeInclusive<f32>, value: f32) -> Slider<'a,
         labeled: false,
         label: None,
         on_change: None,
+        disabled: false,
         on_release: None,
         width: Length::Fill,
     }
@@ -42,10 +44,11 @@ impl<'a, Message> Slider<'a, Message> {
         self.on_release = Some(message);
         self
     }
+    /// Disable interaction without discarding the handler (default: false).
+    /// Builder order does not affect this override. Clearing it still requires
+    /// a handler before the control can respond.
     pub fn disabled(mut self, disabled: bool) -> Self {
-        if disabled {
-            self.on_change = None;
-        }
+        self.disabled = disabled;
         self
     }
     /// Snap to steps measured from the minimum. Both endpoints remain reachable.
@@ -78,7 +81,7 @@ impl<'a, Message> Slider<'a, Message> {
             && self.range.end() > self.range.start()
     }
     pub(crate) fn enabled(&self) -> bool {
-        self.valid() && self.on_change.is_some()
+        !self.disabled && self.valid() && self.on_change.is_some()
     }
     pub(crate) fn keyboard_value(
         &self,

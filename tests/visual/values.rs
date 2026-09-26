@@ -237,8 +237,11 @@ fn progress_pauses_resumes_and_finishes_without_idle_redraws() {
         assert!(ui.frame() != moving);
         ui.event(Event::Window(window::Event::Unfocused));
         let unfocused = ui.frame();
-        assert_eq!(ui.at(2000), window::RedrawRequest::Wait);
-        assert!(ui.frame() == unfocused);
+        assert_eq!(ui.at(2000), window::RedrawRequest::NextFrame);
+        assert!(
+            ui.frame() != unfocused,
+            "Visible unfocused windows keep animating"
+        );
         ui.event(Event::Window(window::Event::Focused));
         ui.at(2200);
         ui.rebuild(progress_view(circular, 0.5, false, false));
