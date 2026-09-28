@@ -7,6 +7,7 @@ use iced::advanced::{
 use iced::time::{Duration, Instant};
 use iced::{Color, Event, Length, Point, Rectangle, Renderer, Size, Vector, mouse, widget, window};
 
+/// See the [rendered examples](crate::guide::components::snackbar).
 pub struct Snackbar<Message> {
     text: String,
     id: u64,
@@ -16,6 +17,7 @@ pub struct Snackbar<Message> {
     visible: bool,
 }
 /// A concise message. Add `on_dismiss` for automatic timeout; otherwise it persists.
+#[cfg_attr(iced_m3_doc_media, doc = include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/docs/generated/snackbar-primary.md")))]
 pub fn snackbar<Message>(text: impl Into<String>) -> Snackbar<Message> {
     Snackbar {
         text: text.into(),

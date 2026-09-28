@@ -24,6 +24,7 @@ enum Kind {
     Circular,
 }
 /// `value` is a fraction in 0..=1. Values outside it are clamped; NaN means zero.
+/// See the [rendered examples](crate::guide::components::linear_progress).
 pub struct Progress {
     kind: Kind,
     value: f32,
@@ -39,6 +40,7 @@ pub struct Progress {
     wavelength: Option<f32>,
     wave_speed: f32,
 }
+#[cfg_attr(iced_m3_doc_media, doc = include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/docs/generated/linear_progress-primary.md")))]
 pub fn linear_progress(value: f32) -> Progress {
     Progress {
         kind: Kind::Linear,
@@ -56,6 +58,7 @@ pub fn linear_progress(value: f32) -> Progress {
         wave_speed: 0.0,
     }
 }
+#[cfg_attr(iced_m3_doc_media, doc = include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/docs/generated/circular_progress-primary.md")))]
 pub fn circular_progress(value: f32) -> Progress {
     Progress {
         kind: Kind::Circular,

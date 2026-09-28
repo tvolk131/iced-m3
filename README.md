@@ -17,7 +17,7 @@ Install from crates.io:
 
 ```toml
 [dependencies]
-iced-m3 = "=0.1.0-beta.2"
+iced-m3 = "=0.1.0-beta.3"
 iced = { version = "=0.14.0", default-features = false, features = ["tiny-skia", "thread-pool"] }
 ```
 
@@ -103,6 +103,8 @@ cargo run --locked --example gallery
 - [Documentation index](https://github.com/tvolk131/iced-m3/blob/master/docs/README.md) — API docs, development and reference guides.
 
 Run `cargo doc --open --no-deps` for the API reference and embedded consumer guides.
+
+For contributors: [development](https://github.com/tvolk131/iced-m3/blob/master/docs/CONTRIBUTING.md) · [release procedure](https://github.com/tvolk131/iced-m3/blob/master/docs/RELEASING.md).
 
 ## Support and license
 

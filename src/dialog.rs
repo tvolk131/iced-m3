@@ -13,6 +13,7 @@ pub use stack::stack;
 
 /// Dialog content with configurable dismissal. Place it over your application
 /// with [`modal`], keeping that host in the tree even while the dialog is closed.
+/// See the [visual examples and variants](crate::guide::components::dialog).
 pub struct Dialog<'a, Message> {
     content: Element<'a, Message>,
     actions: Option<Element<'a, Message>>,
@@ -24,6 +25,8 @@ pub struct Dialog<'a, Message> {
     full_screen: bool,
     initial_focus: Option<usize>,
 }
+/// See the [component showcase](crate::guide::components::dialog) for variants and motion.
+#[cfg_attr(iced_m3_doc_media, doc = include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/docs/generated/dialog-primary.md")))]
 pub fn dialog<'a, Message: 'a>(content: impl Into<Element<'a, Message>>) -> Dialog<'a, Message> {
     Dialog::new(content)
 }
@@ -739,6 +742,7 @@ fn is_input(event: &Event) -> bool {
 
 /// A full-window task dialog with a fixed title/action bar and a scrolling body.
 /// Convert to [`Dialog`] with `.into()` when passing it to [`modal`].
+/// See the [rendered examples](crate::guide::components::full_screen_dialog).
 pub struct FullScreenDialog<'a, Message> {
     title: String,
     body: Element<'a, Message>,
@@ -747,6 +751,7 @@ pub struct FullScreenDialog<'a, Message> {
     escape: bool,
     initial_focus: Option<usize>,
 }
+#[cfg_attr(iced_m3_doc_media, doc = include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/docs/generated/full_screen_dialog-primary.md")))]
 pub fn full_screen_dialog<'a, Message>(
     title: impl Into<String>,
     body: impl Into<Element<'a, Message>>,

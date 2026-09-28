@@ -27,6 +27,16 @@ impl<'a, Message> Harness<'a, Message> {
     ) -> Self {
         Self::with_backend(element, size, theme, "tiny-skia")
     }
+    /// Opt-in backend selection for release motion checks. Pixel-reference tests
+    /// keep `new` pinned to TinySkia regardless of the environment.
+    pub fn configured(
+        element: impl Into<iced::Element<'a, Message, Theme>>,
+        size: Size,
+        theme: Theme,
+    ) -> Self {
+        let backend = std::env::var("ICED_TEST_BACKEND").unwrap_or_else(|_| "tiny-skia".into());
+        Self::with_backend(element, size, theme, &backend)
+    }
     pub fn with_backend(
         element: impl Into<iced::Element<'a, Message, Theme>>,
         size: Size,
@@ -132,6 +142,11 @@ impl<'a, Message> Harness<'a, Message> {
         self.up();
     }
     pub fn frame(&mut self) -> Image {
+        self.frame_at_scale(2.0)
+    }
+    /// Render at a documentation/export scale without resampling existing pixels.
+    pub fn frame_at_scale(&mut self, scale: f32) -> Image {
+        assert!(scale.is_finite() && scale > 0.0);
         self.ui.as_mut().unwrap().draw(
             &mut self.renderer,
             &self.theme,
@@ -141,15 +156,15 @@ impl<'a, Message> Harness<'a, Message> {
             self.cursor,
         );
         let size = Size::new(
-            (self.size.width * 2.0) as u32,
-            (self.size.height * 2.0) as u32,
+            (self.size.width * scale) as u32,
+            (self.size.height * scale) as u32,
         );
         Image {
             width: size.width,
             height: size.height,
             pixels: self
                 .renderer
-                .screenshot(size, 2.0, self.theme.colors.surface),
+                .screenshot(size, scale, self.theme.colors.surface),
         }
     }
 }

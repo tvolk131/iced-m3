@@ -31,6 +31,7 @@ impl<'a, Value, Message> NavigationItem<'a, Value, Message> {
         self
     }
 }
+/// See the [rendered examples](crate::guide::components::navigation_rail).
 pub struct NavigationRail<'a, Value, Message> {
     items: Vec<NavigationItem<'a, Value, Message>>,
     selected: Option<Value>,
@@ -41,6 +42,7 @@ pub struct NavigationRail<'a, Value, Message> {
     expanded: bool,
     modal_surface: bool,
 }
+#[cfg_attr(iced_m3_doc_media, doc = include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/docs/generated/navigation_rail-primary.md")))]
 pub fn navigation_rail<'a, Value, Message>(
     items: impl IntoIterator<Item = NavigationItem<'a, Value, Message>>,
     selected: Option<Value>,
@@ -105,18 +107,21 @@ impl NavigationLayout {
     }
 }
 /// Rebuild a navigation composition when its available size changes.
+/// See the [component showcase](crate::guide::components::navigation_bar) for rendered family examples.
 pub fn adaptive_navigation<'a, Message: 'a>(
     view: impl Fn(NavigationLayout) -> Element<'a, Message> + 'a,
 ) -> Element<'a, Message> {
     widget::responsive(move |size| view(NavigationLayout::for_width(size.width))).into()
 }
 /// Bottom navigation for three to five top-level destinations.
+/// See the [rendered examples](crate::guide::components::navigation_bar).
 pub struct NavigationBar<'a, Value, Message> {
     items: Vec<NavigationItem<'a, Value, Message>>,
     selected: Option<Value>,
     handler: Option<Box<dyn Fn(Value) -> Message + 'a>>,
     disabled: bool,
 }
+#[cfg_attr(iced_m3_doc_media, doc = include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/docs/generated/navigation_bar-primary.md")))]
 pub fn navigation_bar<'a, Value, Message>(
     items: impl IntoIterator<Item = NavigationItem<'a, Value, Message>>,
     selected: Option<Value>,
@@ -369,6 +374,7 @@ impl<'a, Value: PartialEq + 'a, Message: Clone + 'a> From<NavigationRail<'a, Val
 /// An expanded rail presented over the leading edge with a scrim. Visibility and
 /// selection remain app-owned; keep this host mounted through its exit animation.
 /// A destination action does not implicitly close it: update `open` in your app.
+/// See the [component showcase](crate::guide::components::navigation_rail) for rendered family examples.
 pub fn modal_navigation_rail<'a, Value: PartialEq + 'a, Message: Clone + 'a>(
     background: impl Into<Element<'a, Message>>,
     mut rail: NavigationRail<'a, Value, Message>,

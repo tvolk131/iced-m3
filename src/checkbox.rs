@@ -15,6 +15,7 @@ use crate::ripple::PressRipple;
 
 /// A controlled checkbox. Omitting `on_toggle` makes it disabled.
 /// The label and 48px target both activate on a matching pointer press/release.
+/// See the [rendered examples](crate::guide::components::checkbox) for appearance variants and interaction.
 pub struct Checkbox<'a, Message> {
     checked: bool,
     radio: bool,
@@ -35,6 +36,7 @@ pub struct Checkbox<'a, Message> {
     wrapping: text::Wrapping,
 }
 
+#[cfg_attr(iced_m3_doc_media, doc = include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/docs/generated/checkbox-primary.md")))]
 pub fn checkbox<'a, Message>(checked: bool) -> Checkbox<'a, Message> {
     fonts::ensure_loaded();
     Checkbox {

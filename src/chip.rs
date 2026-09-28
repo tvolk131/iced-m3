@@ -13,6 +13,7 @@ pub enum ChipVariant {
 
 /// A compact action with an optional independent remove target.
 /// Omit callbacks to disable actions. Icons should be passive, 18px content.
+/// See the [rendered examples](crate::guide::components::filter_chip).
 pub struct Chip<'a, Message> {
     label: String,
     variant: ChipVariant,
@@ -26,15 +27,19 @@ pub struct Chip<'a, Message> {
     avatar: bool,
     dropdown: bool,
 }
+/// See the [component showcase](crate::guide::components::filter_chip) for rendered family examples.
 pub fn assist_chip<'a, Message>(label: impl Into<String>) -> Chip<'a, Message> {
     Chip::new(label, ChipVariant::Assist, false)
 }
+/// See the [component showcase](crate::guide::components::filter_chip) for rendered family examples.
 pub fn suggestion_chip<'a, Message>(label: impl Into<String>) -> Chip<'a, Message> {
     Chip::new(label, ChipVariant::Suggestion, false)
 }
+#[cfg_attr(iced_m3_doc_media, doc = include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/docs/generated/filter_chip-primary.md")))]
 pub fn filter_chip<'a, Message>(label: impl Into<String>, selected: bool) -> Chip<'a, Message> {
     Chip::new(label, ChipVariant::Filter, selected)
 }
+/// See the [component showcase](crate::guide::components::filter_chip) for rendered family examples.
 pub fn input_chip<'a, Message>(label: impl Into<String>) -> Chip<'a, Message> {
     Chip::new(label, ChipVariant::Input, false)
 }

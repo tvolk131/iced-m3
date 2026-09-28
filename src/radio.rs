@@ -3,12 +3,14 @@ use crate::{Element, checkbox::Checkbox};
 use iced::Length;
 use std::rc::Rc;
 
+/// See the [rendered examples](crate::guide::components::radio) for appearance variants and interaction.
 pub struct Radio<'a, Value, Message> {
     control: Checkbox<'a, Message>,
     value: Value,
 }
 
 /// Select one value. Selecting the current value produces no message.
+#[cfg_attr(iced_m3_doc_media, doc = include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/docs/generated/radio-primary.md")))]
 pub fn radio<'a, Value: PartialEq, Message>(
     label: impl iced::widget::text::IntoFragment<'a>,
     value: Value,
@@ -69,6 +71,7 @@ pub struct RadioGroup<'a, Value, Message> {
     width: Length,
     spacing: f32,
 }
+/// See the [component showcase](crate::guide::components::radio) for rendered family examples.
 pub fn radio_group<'a, Value, Message>(
     options: impl IntoIterator<Item = RadioOption<Value>>,
     selected: Option<Value>,

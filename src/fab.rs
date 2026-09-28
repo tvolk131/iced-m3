@@ -19,6 +19,7 @@ pub enum FabColor {
 }
 /// A primary action with passive icon content and optional label. The app owns
 /// placement; use ordinary iced layout/stack widgets to float it over content.
+/// See the [rendered examples](crate::guide::components::fab) for appearance variants and interaction.
 pub struct Fab<'a, Message> {
     icon: Element<'a, Message>,
     label: Option<Element<'a, Message>>,
@@ -47,6 +48,7 @@ pub struct Fab<'a, Message> {
 /// its optical alignment. Text glyphs such as `text("+")` can look off-center
 /// because font baselines and line heights do not center the visible ink.
 /// SVG artwork should be centered within a square view box.
+#[cfg_attr(iced_m3_doc_media, doc = include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/docs/generated/fab-primary.md")))]
 pub fn fab<'a, Message: 'a>(icon: impl Into<Element<'a, Message>>) -> Fab<'a, Message> {
     Fab {
         icon: icon.into(),
@@ -77,6 +79,7 @@ pub fn fab<'a, Message: 'a>(icon: impl Into<Element<'a, Message>>) -> Fab<'a, Me
 /// its optical alignment. Text glyphs such as `text("+")` can look off-center
 /// because font baselines and line heights do not center the visible ink.
 /// SVG artwork should be centered within a square view box.
+/// See the [FAB showcase](crate::guide::components::fab) for extended and icon-only variants.
 pub fn extended_fab<'a, Message: 'a>(
     icon: impl Into<Element<'a, Message>>,
     label: impl widget::text::IntoFragment<'a>,

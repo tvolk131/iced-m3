@@ -68,13 +68,13 @@ the archive, with runtime notice constants available for application acknowledgm
 The package is now `iced-m3`, with public repository and documentation metadata.
 Both manifests/lockfiles and all executable examples use the release name.
 
-`python3 tools/check_package.py` runs Cargo's package verification, checks required
+`cargo xtask check-package` runs Cargo's package verification, checks required
 assets/notices and the absence of heavyweight development files, executes ordinary
 tests from the extracted archive, then tests a copied consumer against that archive
 in both renderer configurations. Its temporary dependency path cannot fall back to
 the source checkout. `--offline` uses cached dependencies; omit it on a clean host.
-The report is `target/beta-package-report.json`. Python 3.9+ is needed only for
-this development check; it is not a library/application dependency.
+The report is `target/beta-package-report.json`. The unpublished Rust `xtask`
+performs this development check without adding dependencies to the library.
 
 The procedure follows Cargo's documented
 [package verification](https://doc.rust-lang.org/cargo/commands/cargo-package.html),

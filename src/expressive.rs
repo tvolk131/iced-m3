@@ -4,6 +4,7 @@ use iced::{Border, Length, widget};
 mod group;
 /// Equal-width actions with retained press expansion and neighbor compression.
 /// Children keep their widget/focus state while their layout changes.
+/// See the [visual examples and variants](crate::guide::components::button_group).
 pub struct ButtonGroup<'a, Message> {
     buttons: Vec<Button<'a, Message>>,
     connected: bool,
@@ -12,6 +13,8 @@ pub struct ButtonGroup<'a, Message> {
 /// Group actions with a 15% requested press expansion. The resting target is
 /// bounded by neighboring padding; springs retain overshoot and release rebound
 /// while spare padding protects the original space available to child content.
+/// See the [component showcase](crate::guide::components::button_group) for variants and motion.
+#[cfg_attr(iced_m3_doc_media, doc = include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/docs/generated/button_group-primary.md")))]
 pub fn button_group<'a, Message>(
     buttons: impl IntoIterator<Item = Button<'a, Message>>,
 ) -> ButtonGroup<'a, Message> {
@@ -77,6 +80,7 @@ impl<'a, Message: Clone + 'a> From<ButtonGroup<'a, Message>> for Element<'a, Mes
         }))
     }
 }
+#[cfg_attr(iced_m3_doc_media, doc = include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/docs/generated/split_button-primary.md")))]
 pub fn split_button<'a, Message: Clone + 'a>(
     label: impl widget::text::IntoFragment<'a>,
     action: Message,
@@ -97,6 +101,7 @@ pub fn split_button<'a, Message: Clone + 'a>(
     .spacing(2)
     .into()
 }
+/// See the [rendered examples](crate::guide::components::toolbar).
 pub struct Toolbar<'a, Message> {
     items: Vec<Element<'a, Message>>,
     floating: bool,
@@ -105,6 +110,7 @@ pub struct Toolbar<'a, Message> {
 /// A row or column of controls sharing one Tab stop. Unhandled arrows/Home/End
 /// move focus; focused editors and sliders retain their editing keys. Tab exits
 /// the group. Defaults to a horizontal, non-floating toolbar.
+#[cfg_attr(iced_m3_doc_media, doc = include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/docs/generated/toolbar-primary.md")))]
 pub fn toolbar<'a, Message>(
     items: impl IntoIterator<Item = Element<'a, Message>>,
 ) -> Toolbar<'a, Message> {
@@ -158,6 +164,7 @@ impl<'a, Message: 'a> From<Toolbar<'a, Message>> for Element<'a, Message> {
         ))
     }
 }
+/// See the [rendered examples](crate::guide::components::fab_menu).
 pub struct FabMenuItem<'a, Message> {
     label: String,
     icon: Element<'a, Message>,
@@ -178,6 +185,7 @@ impl<'a, Message> FabMenuItem<'a, Message> {
 }
 /// Keep the menu in the tree while closed for exit animation. App messages close
 /// it after choosing an action. Position this composition at the bottom end.
+#[cfg_attr(iced_m3_doc_media, doc = include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/docs/generated/fab_menu-primary.md")))]
 pub fn fab_menu<'a, Message: Clone + 'a>(
     icon: impl Into<Element<'a, Message>>,
     open: bool,

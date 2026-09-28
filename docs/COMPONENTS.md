@@ -1,5 +1,9 @@
 # Component catalog
 
+Every family below has an executable visual showcase in `guide::components`.
+Run `cargo xtask doc-media build` for the illustrated reference; see
+[visual documentation](DOC_MEDIA.md) for coverage, generation, and validation.
+
 | Component | Public API | Behavior |
 | --- | --- | --- |
 | Buttons | `button(label)`, `Button::new(content)` | Filled, elevated, outlined, text, tonal; disabled, hover and pressed states; animated tonal release |

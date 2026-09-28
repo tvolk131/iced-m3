@@ -120,7 +120,7 @@ fn group_motion_keeps_the_spring_shape_at_compact_and_desktop_widths() {
 fn group_motion_release_moves_immediately_and_keeps_the_rebound() {
     for connected in [false, true] {
         for pressed in 0..3 {
-            let mut ui = Harness::new(
+            let mut ui = Harness::configured(
                 motion_group(connected),
                 Size::new(1100., 80.),
                 Theme::light().expressive(),
@@ -157,7 +157,7 @@ fn group_motion_release_moves_immediately_and_keeps_the_rebound() {
 #[test]
 fn group_motion_quick_release_and_neighbor_repress_are_continuous() {
     for connected in [false, true] {
-        let mut ui = Harness::new(
+        let mut ui = Harness::configured(
             motion_group(connected),
             Size::new(1100., 80.),
             Theme::light().expressive(),
@@ -199,7 +199,7 @@ fn group_motion_quick_release_and_neighbor_repress_are_continuous() {
 fn group_motion_is_independent_of_frame_cadence() {
     let mut samples = Vec::new();
     for step in [8, 16, 33, 140] {
-        let mut ui = Harness::new(
+        let mut ui = Harness::configured(
             motion_group(false),
             Size::new(1100., 80.),
             Theme::light().expressive(),
@@ -263,7 +263,7 @@ fn group_motion_preserves_content_space_in_narrow_and_asymmetric_layouts() {
                 }))
                 .connected(connected)
                 .expanded_ratio(ratio);
-                let mut ui = Harness::new(
+                let mut ui = Harness::configured(
                     content,
                     Size::new(width, 80.),
                     Theme::light().expressive().motion_scheme(scheme),
@@ -367,7 +367,7 @@ fn reduced_motion_round_trip_preserves_application_timings() {
 
 #[test]
 fn pressed_group_button_expands_and_only_its_neighbors_compress() {
-    let mut ui = Harness::new(group(), Size::new(500., 100.), Theme::light());
+    let mut ui = Harness::configured(group(), Size::new(500., 100.), Theme::light());
     ui.frame();
     let before = bounds(&mut ui);
     ui.move_to(before[0].center());
@@ -453,7 +453,7 @@ fn size_recipes_preserve_label_roles_and_icon_container_dimensions() {
         (Large, 96., [64., 96., 128.]),
         (ExtraLarge, 136., [104., 136., 184.]),
     ] {
-        let mut ui = Harness::new(
+        let mut ui = Harness::configured(
             action(None, size, false),
             Size::new(600., 200.),
             Theme::light(),
@@ -473,7 +473,7 @@ fn size_recipes_preserve_label_roles_and_icon_container_dimensions() {
                 } else {
                     icon.size(size).icon_width(width)
                 };
-                let mut ui = Harness::new(host(icon), Size::new(300., 200.), Theme::light());
+                let mut ui = Harness::configured(host(icon), Size::new(300., 200.), Theme::light());
                 let b = bounds(&mut ui)[0];
                 assert_eq!((b.width, b.height), (expected, height));
             }
@@ -493,7 +493,7 @@ fn reduced_motion_wins_over_local_springs_and_group_expansion_is_immediate() {
         theme.clone().reduced_motion(false).motion.short.as_millis(),
         437
     );
-    let mut ui = Harness::new(group(), Size::new(500., 100.), theme);
+    let mut ui = Harness::configured(group(), Size::new(500., 100.), theme);
     ui.frame();
     let before = bounds(&mut ui);
     ui.move_to(before[1].center());
@@ -510,7 +510,7 @@ fn reduced_motion_wins_over_local_springs_and_group_expansion_is_immediate() {
 
 #[test]
 fn reversing_group_motion_keeps_focus_and_disabled_press_never_activates() {
-    let mut ui = Harness::new(group(), Size::new(500., 100.), Theme::light().expressive());
+    let mut ui = Harness::configured(group(), Size::new(500., 100.), Theme::light().expressive());
     ui.frame();
     let original = bounds(&mut ui);
     ui.move_to(original[0].center());
@@ -543,7 +543,8 @@ fn empty_single_and_narrow_groups_have_finite_nonnegative_geometry() {
         for width in [0., 10., 50., 500.] {
             let content: Element<'_, u8> =
                 button_group((0..count).map(|i| button("A").on_press(i))).into();
-            let mut ui = Harness::new(content, Size::new(width, 100.), Theme::light().expressive());
+            let mut ui =
+                Harness::configured(content, Size::new(width, 100.), Theme::light().expressive());
             if width > 0. {
                 ui.frame();
             }
@@ -585,7 +586,7 @@ fn key(named: iced::keyboard::key::Named, release: bool) -> iced::Event {
 #[test]
 fn group_keyboard_press_expands_and_rebuild_retains_active_focus() {
     use iced::keyboard::key::Named;
-    let mut ui = Harness::new(group(), Size::new(500., 100.), Theme::light().expressive());
+    let mut ui = Harness::configured(group(), Size::new(500., 100.), Theme::light().expressive());
     ui.frame();
     let original = bounds(&mut ui);
     for k in [Named::Tab, Named::ArrowRight] {
@@ -611,7 +612,7 @@ fn local_spring_override_has_precedence_over_theme_and_reduced_motion_has_final_
                 .on_press(1)
                 .motion_scheme(crate::MotionScheme::standard()),
         );
-        let mut ui = Harness::new(content, Size::new(250., 120.), theme);
+        let mut ui = Harness::configured(content, Size::new(250., 120.), theme);
         ui.frame();
         let point = bounds(&mut ui)[0].center();
         ui.move_to(point);
@@ -648,7 +649,7 @@ fn expressive_dialog_presence_reverses_without_losing_the_host() {
             open,
         )
     };
-    let mut ui = Harness::new(
+    let mut ui = Harness::configured(
         content(false),
         Size::new(600., 320.),
         Theme::light().expressive(),
@@ -795,7 +796,7 @@ fn controls(selected: bool) -> Element<'static, u8> {
 fn shared_spring_controls_render_through_overshoot_and_reversal() {
     for dark in [false, true] {
         let theme = if dark { Theme::dark() } else { Theme::light() }.expressive();
-        let mut ui = Harness::new(controls(false), Size::new(450., 330.), theme);
+        let mut ui = Harness::configured(controls(false), Size::new(450., 330.), theme);
         let start = ui.frame();
         ui.at(0);
         ui.rebuild(controls(true));
@@ -926,6 +927,122 @@ fn visual_references_expressive_controls() {
                 &format!("expressive-controls/{name}/02-deselect-{ms:04}"),
                 &ui.frame(),
             );
+        }
+    }
+}
+
+/// Contact sheets for the release review; every cell is a real, timed render.
+/// Columns: initial, moving, reversed/held, response, late response, settled.
+#[test]
+#[ignore = "release review artifacts; run on TinySkia and wgpu explicitly"]
+fn expressive_release_review() {
+    use super::reference::Image;
+    use std::path::PathBuf;
+    fn strip(frames: &[Image]) -> Image {
+        let width = frames.iter().map(|f| f.width).sum();
+        let height = frames[0].height;
+        let mut image = Image {
+            width,
+            height,
+            pixels: vec![0; (width * height * 4) as usize],
+        };
+        let mut x = 0;
+        for frame in frames {
+            assert_eq!(frame.height, height);
+            for y in 0..height {
+                let dst = ((y * width + x) * 4) as usize;
+                let src = (y * frame.width * 4) as usize;
+                image.pixels[dst..dst + frame.width as usize * 4]
+                    .copy_from_slice(&frame.pixels[src..src + frame.width as usize * 4]);
+            }
+            x += frame.width;
+        }
+        image
+    }
+    let backend = std::env::var("ICED_TEST_BACKEND").unwrap_or_else(|_| "tiny-skia".into());
+    for dark in [false, true] {
+        for scheme in ["standard", "expressive", "reduced"] {
+            let theme = if dark { Theme::dark() } else { Theme::light() }
+                .expressive()
+                .motion_scheme(if scheme == "standard" {
+                    crate::MotionScheme::standard()
+                } else {
+                    crate::MotionScheme::expressive()
+                })
+                .reduced_motion(scheme == "reduced");
+            let root = PathBuf::from(format!(
+                "target/beta3-motion-review/{backend}/{scheme}-{}",
+                if dark { "dark" } else { "light" }
+            ));
+            let mut ui =
+                Harness::configured(motion_group(false), Size::new(500., 80.), theme.clone());
+            let mut frames = vec![ui.frame_at_scale(1.)];
+            let initial = bounds(&mut ui);
+            ui.move_to(initial[1].center());
+            ui.down();
+            for ms in [40, 1000] {
+                ui.at(ms);
+                frames.push(ui.frame_at_scale(1.));
+            }
+            ui.up();
+            for ms in [1020, 1140, 3000] {
+                ui.at(ms);
+                frames.push(ui.frame_at_scale(1.));
+            }
+            assert_eq!(bounds(&mut ui), initial);
+            assert_eq!(ui.messages, [1]);
+            assert_eq!(ui.at(3016), iced::window::RedrawRequest::Wait);
+            strip(&frames).write(&root.join("group-hold-release.png"));
+
+            let mut ui = Harness::configured(controls(false), Size::new(450., 330.), theme.clone());
+            let mut frames = vec![ui.frame_at_scale(1.)];
+            ui.rebuild(controls(true));
+            ui.at(0);
+            for ms in [40, 140] {
+                ui.at(ms);
+                frames.push(ui.frame_at_scale(1.));
+            }
+            ui.rebuild(controls(false));
+            ui.at(140);
+            for ms in [160, 280, 3000] {
+                ui.at(ms);
+                frames.push(ui.frame_at_scale(1.));
+            }
+            assert!(
+                frames.first() == frames.last(),
+                "controls settle back to their initial pixels"
+            );
+            strip(&frames).write(&root.join("controls-reversal.png"));
+
+            let content = |open| {
+                crate::dialog::modal(
+                    host(button("Background").on_press(1)),
+                    crate::dialog(crate::typography(
+                        "Spring dialog",
+                        crate::TypeScale::TitleLarge,
+                    ))
+                    .actions(button("Close").on_press(2))
+                    .width(360.),
+                    open,
+                )
+            };
+            let mut ui = Harness::configured(content(false), Size::new(500., 280.), theme);
+            let closed = ui.frame_at_scale(1.);
+            ui.rebuild(content(true));
+            ui.at(0);
+            ui.at(2000);
+            let mut frames = vec![ui.frame_at_scale(1.)];
+            ui.rebuild(content(false));
+            ui.at(2000);
+            for ms in [2040, 2100, 2140, 2200, 4000] {
+                ui.at(ms);
+                frames.push(ui.frame_at_scale(1.));
+            }
+            assert!(
+                frames.last() == Some(&closed),
+                "dialog leaves no residual rectangle"
+            );
+            strip(&frames).write(&root.join("dialog-exit.png"));
         }
     }
 }

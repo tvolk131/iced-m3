@@ -56,6 +56,10 @@ benchmark explicitly on a consistent machine; shared CI has no wall-clock gates.
 
 ## Documentation
 
+For executable component previews, run `cargo xtask doc-media build`.
+See [generated visual documentation](DOC_MEDIA.md) for the macro registry,
+variant policy, CI checks, and preview workflow. Generated images stay out of Git.
+
 The README is the short consumer introduction. Getting-started, cookbook and
 theming pages also appear under `guide` in rustdoc, with compiled examples.
 Use absolute public links in the README so it renders on crates.io; source-only
@@ -74,7 +78,7 @@ RUSTDOCFLAGS="-D warnings" cargo doc --locked --no-deps
 ## Verify the distributable
 
 ```sh
-python3 tools/check_package.py
+cargo xtask check-package
 cargo publish --dry-run --locked
 ```
 

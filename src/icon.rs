@@ -10,6 +10,7 @@ pub struct Icon {
     size: f32,
 }
 
+/// See the [component showcase](crate::guide::components::icon_button) for rendered family examples.
 pub fn icon(handle: impl Into<svg::Handle>) -> Icon {
     Icon {
         handle: handle.into(),

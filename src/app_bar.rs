@@ -10,6 +10,7 @@ pub enum AppBarVariant {
     Medium,
     Large,
 }
+/// See the [rendered examples](crate::guide::components::app_bar).
 pub struct AppBar<'a, Message> {
     title: String,
     leading: Option<Element<'a, Message>>,
@@ -18,6 +19,7 @@ pub struct AppBar<'a, Message> {
     variant: AppBarVariant,
     collapse: f32,
 }
+#[cfg_attr(iced_m3_doc_media, doc = include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/docs/generated/app_bar-primary.md")))]
 pub fn app_bar<'a, Message>(title: impl Into<String>) -> AppBar<'a, Message> {
     AppBar {
         title: title.into(),

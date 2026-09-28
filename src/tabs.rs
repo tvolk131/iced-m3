@@ -48,6 +48,7 @@ impl<'a, Value, Message> Tab<'a, Value, Message> {
         self
     }
 }
+/// See the [rendered examples](crate::guide::components::tabs).
 pub struct Tabs<'a, Value, Message> {
     items: Vec<Tab<'a, Value, Message>>,
     selected: Option<Value>,
@@ -58,6 +59,7 @@ pub struct Tabs<'a, Value, Message> {
     width: Length,
     background: Option<Box<dyn Fn(&Theme) -> Background + 'a>>,
 }
+#[cfg_attr(iced_m3_doc_media, doc = include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/docs/generated/tabs-primary.md")))]
 pub fn tabs<'a, Value, Message>(
     items: impl IntoIterator<Item = Tab<'a, Value, Message>>,
     selected: Option<Value>,

@@ -22,11 +22,14 @@ pub const NOTICE: &str = include_str!("../assets/loading/NOTICE");
 pub(crate) fn reference_shape(shape: usize, amount: f32) -> Handle {
     Handle::from_memory(format!("<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48'><path transform='translate(24 24) rotate(-90) scale(17)' d='{}'/></svg>", shapes::path(shape, amount)).into_bytes())
 }
+/// See the [visual examples and variants](crate::guide::components::loading_indicator).
 pub struct LoadingIndicator {
     size: f32,
     contained: bool,
     paused: bool,
 }
+/// See the [component showcase](crate::guide::components::loading_indicator) for variants and motion.
+#[cfg_attr(iced_m3_doc_media, doc = include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/docs/generated/loading_indicator-primary.md")))]
 pub fn loading_indicator() -> LoadingIndicator {
     LoadingIndicator {
         size: 48.0,

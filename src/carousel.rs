@@ -20,6 +20,7 @@ pub enum CarouselVariant {
     Uncontained,
     FullScreen,
 }
+/// See the [rendered examples](crate::guide::components::carousel).
 pub struct Carousel<'a, Message> {
     items: RefCell<Vec<Element<'a, Message>>>,
     count: usize,
@@ -32,6 +33,7 @@ pub struct Carousel<'a, Message> {
     spacing: f32,
     background: Option<iced::Color>,
 }
+#[cfg_attr(iced_m3_doc_media, doc = include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/docs/generated/carousel-primary.md")))]
 pub fn carousel<'a, Message>(
     items: impl IntoIterator<Item = Element<'a, Message>>,
     selected: usize,
@@ -53,6 +55,7 @@ pub fn carousel<'a, Message>(
 /// Build only the visible items and a small overscan region. Keep durable item
 /// values in application state; widget-local state is released when an item leaves
 /// that region. Indices must retain their meaning across view rebuilds.
+/// See the [component showcase](crate::guide::components::carousel) for rendered family examples.
 pub fn lazy_carousel<'a, Message>(
     count: usize,
     selected: usize,

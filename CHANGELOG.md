@@ -1,6 +1,33 @@
 # Release notes
 
-## Unreleased
+## 0.1.0-beta.3 — 2026-09-28
+
+This beta adds opt-in Expressive spring motion and action recipes, fixes desktop
+input contracts, and ships executable illustrated component documentation.
+Expressive coverage remains partial; the iced 0.14 dependency and Rust 1.88
+minimum are unchanged.
+
+### Compatibility
+
+`tokens::Motion` gains an optional spring scheme and no longer implements `Eq`.
+Code constructing it with struct literals must supply the new field or use
+`..Default::default()`. Custom animation code should use
+`Theme::effective_motion()` to honor reduced motion; `.reduced_motion(false)`
+now restores customized timings. See [Expressive support](docs/EXPRESSIVE.md)
+for the opt-in behavior and remaining scope.
+
+### Executable component documentation
+
+- Added 40 component showcase pages with code compiled from the same registry
+  used to render their previews. Motion examples use lossless APNGs, with static
+  reduced-motion fallbacks, light/dark variants and selected motion comparisons.
+- Added an unpublished Rust `xtask` for generation, freshness/orphan validation,
+  extracted-package checks and release preparation. Media is generated during
+  release preparation and embedded in the archive; it is not committed to Git.
+- Retired the preliminary APNG size-spike runner while retaining its findings
+  and the production encoder's pixel/timing round-trip tests.
+
+### Motion and desktop interaction
 
 - Fixed switch spring motion losing visible overshoot. Thumb position and size
   now retain their spatial spring response, while colors use bounded effects
