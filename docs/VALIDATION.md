@@ -1,5 +1,34 @@
 # Validation report
 
+## Switch spatial spring response — 2026-09-27
+
+The initial regression run reproduced the hidden selection overshoot and the
+non-immediate pressed size. Switch geometry now has separate Fast spatial
+position/diameter transitions; selection colors use Fast effects. Pressing snaps
+to the held geometry, and release/cancellation preserves spring response. Only
+physical track containment bounds extreme custom geometry. Baseline timed motion
+and public APIs are unchanged.
+
+- All **313 ordinary tests** pass with default and software-only features. Six
+  new pixel/property tests cover both toggle directions, press/cancel/release,
+  reversal continuity and momentum, keyboard activation, reduced motion, disable,
+  bounded effects timing, frame cadence and eventual idle scheduling.
+- All six new checks pass on **Tiny Skia and wgpu/Metal**. The probes allow for
+  renderer antialiasing and channel rounding while requiring visible overshoot.
+  Metal testing used native GPU access outside the process sandbox.
+- All **51 canonical reference functions** pass with updates disabled against
+  **3,047 PNGs**: 128 new switch frames, 16 updated Expressive control frames and
+  2,903 unchanged references, including the baseline switch animations. New frames
+  cover Standard/Expressive, light/dark, both starting values and optional icons.
+  References use Rust **1.92.0**, Tiny Skia and 2x scale.
+- All **20 doctests**, strict Clippy, formatting and the release Expressive
+  example build pass. Representative press/overshoot/settled filmstrips were
+  inspected, and the rebuilt native demo was reopened at the switch.
+
+Logs and a comparison filmstrip are under `target/switch-motion/`. These are
+motion/rendering regressions, not a new performance benchmark or a claim of
+pixel-identical Compose rendering.
+
 ## Button-group spring response and proactive motion checks — 2026-09-27
 
 The first regression run failed for clipped press overshoot and delayed release.

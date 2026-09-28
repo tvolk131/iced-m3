@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- Fixed switch spring motion losing visible overshoot. Thumb position and size
+  now retain their spatial spring response, while colors use bounded effects
+  motion. Spring-enabled switches snap to their held shape and spring back on
+  release; baseline timing and reduced motion remain supported.
+
 - Made the Expressive example's button-group selections independent. Added tab,
   navigation-rail, extended-FAB, switch and slider motion demos, with persistent
   comparison controls and interaction tests for independent demo state.

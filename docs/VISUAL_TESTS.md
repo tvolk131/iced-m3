@@ -1,7 +1,7 @@
 # Visual regression tests
 
 Every current component family has reference-image coverage. The suite stores
-2,919 PNGs across component states, timed animation frames and gallery
+3,047 PNGs across component states, timed animation frames and gallery
 compositions. These complement the ordinary interaction tests. A passing comparison means the rendered pixels match the
 reviewed reference; it does not establish complete Material 3 compliance.
 
@@ -107,6 +107,15 @@ fixture sends its initial redraw before changing the selected value, so it tests
 a retained transition instead of initializing directly at the new destination.
 The rail check caught a shared transition bug that restarted settled springs;
 the regression also exercises the consumer's short-circuit redraw pattern.
+
+`tests/visual/switch_motion.rs` measures the painted thumb through selection
+overshoot in both directions, immediate pressed sizing, cancellation/release
+rebound, position/velocity continuity on reversal, keyboard activation, reduced
+motion and disable. Separate checks require monotonic Fast effects colors,
+identical frames at different redraw cadences and eventual idle scheduling.
+Its 128 reference frames cover both schemes, themes, initial states and optional
+icons. These checks fail if a draw-time clamp hides the spatial overshoot even
+when the spring solver itself remains correct.
 
 For new motion or changes to existing motion, use this checklist:
 

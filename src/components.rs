@@ -158,6 +158,11 @@ pub fn badge<'a, Message: 'a>(count: u32) -> widget::Container<'a, Message, Them
 pub use crate::checkbox::checkbox;
 
 /// A Material switch: 52×32 track, changing thumb size, and internal animation.
+/// With a theme motion scheme, thumb position and size use Fast spatial springs
+/// (including overshoot), while colors use Fast effects. Pressing snaps to the
+/// enlarged thumb; releasing or cancelling springs back to its resting size.
+/// Without a scheme, the baseline duration-based motion is retained. Reduced
+/// motion makes transitions immediate.
 pub struct Switch<'a, Message> {
     icons: bool,
     checked: bool,

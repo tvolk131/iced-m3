@@ -106,6 +106,15 @@ content is absent whenever the rounded panel is translucent. This preserves the
 existing content-cover compositing approach without exposing its rectangular
 mask during exit, and does not add a second spring's settling delay.
 
+Switches use Fast spatial springs for thumb position and diameter, and Fast
+effects for selection colors. Spatial movement retains its small overshoot beyond
+the resting endpoints; only physical track containment limits extreme custom
+springs. Pressing snaps the thumb into its enlarged shape; releasing or cancelling
+springs it back, preserving velocity when a transition is retargeted. This follows
+the [official Compose switch's motion treatment](https://github.com/androidx/androidx/blob/androidx-main/compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/Switch.kt).
+The baseline duration-based theme retains its existing press/selection behavior,
+and reduced motion settles immediately.
+
 Shared schemes currently drive button state/shape feedback, selection movement,
 slider press/label feedback, floating field labels, tab indicators, chip icon
 replacement, rail/extended-label reveals, search expansion and overlay presence.

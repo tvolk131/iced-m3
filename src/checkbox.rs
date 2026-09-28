@@ -205,12 +205,29 @@ struct State {
     layer: Transition,
     ripple: PressRipple,
     pressure: Transition,
+    switch_thumb: Option<Box<SwitchThumb>>,
     pressed: bool,
     hovered: bool,
     enabled: bool,
     window_active: bool,
     motion: Cell<tokens::Motion>,
     mark: RefCell<Option<((f32, f32), Handle)>>,
+}
+
+// Separate spatial properties from selection colors. In a spring scheme the
+// thumb snaps into its pressed shape, then position and size spring to their
+// resting targets on release (including cancellation).
+struct SwitchThumb {
+    center: Transition,
+    diameter: Transition,
+}
+impl SwitchThumb {
+    fn new(checked: bool, icons: bool) -> Self {
+        Self {
+            center: Transition::new(if checked { 10.0 } else { -10.0 }),
+            diameter: Transition::new(if checked || icons { 24.0 } else { 16.0 }),
+        }
+    }
 }
 
 impl<Message> Widget<Message, Theme, Renderer> for Control<'_, Message> {
@@ -229,6 +246,9 @@ impl<Message> Widget<Message, Theme, Renderer> for Control<'_, Message> {
             layer: Transition::new(0.0),
             ripple: PressRipple::new(),
             pressure: Transition::new(0.0),
+            switch_thumb: self
+                .switch
+                .then(|| Box::new(SwitchThumb::new(self.checked, self.switch_icons))),
             pressed: false,
             hovered: false,
             enabled: self.on_toggle.is_some(),
@@ -251,6 +271,9 @@ impl<Message> Widget<Message, Theme, Renderer> for Control<'_, Message> {
             state.layer = Transition::new(0.0);
             state.ripple = PressRipple::new();
             state.pressure = Transition::new(0.0);
+            state.switch_thumb = self
+                .switch
+                .then(|| Box::new(SwitchThumb::new(self.checked, self.switch_icons)));
             state.selection = Transition::new(f32::from(self.checked || self.indeterminate));
             state.mixed = Transition::new(f32::from(self.indeterminate));
             state.opacity = Transition::linear(f32::from(self.checked || self.indeterminate));
@@ -258,6 +281,11 @@ impl<Message> Widget<Message, Theme, Renderer> for Control<'_, Message> {
             state.selected = self.checked || self.indeterminate;
         }
         state.enabled = enabled;
+        if self.switch != state.switch_thumb.is_some() {
+            state.switch_thumb = self
+                .switch
+                .then(|| Box::new(SwitchThumb::new(self.checked, self.switch_icons)));
+        }
     }
     fn size(&self) -> Size<Length> {
         Size::new(self.width, Length::Shrink)
@@ -365,7 +393,11 @@ impl<Message> Widget<Message, Theme, Renderer> for Control<'_, Message> {
                 f32::from(selected),
                 now,
                 duration,
-                state.motion.get().spatial(crate::MotionSpeed::Fast),
+                if self.switch {
+                    state.motion.get().effects(crate::MotionSpeed::Fast)
+                } else {
+                    state.motion.get().spatial(crate::MotionSpeed::Fast)
+                },
             )
         } else {
             state
@@ -470,11 +502,42 @@ impl<Message> Widget<Message, Theme, Renderer> for Control<'_, Message> {
             _ => {}
         }
         let pressing = state.pressed && (over || state.focus.key.is_some());
+        let motion = state.motion.get();
+        let spring_switch = self.switch && motion.scheme.is_some();
         changed |= state.pressure.set(
             f32::from(self.switch && pressing),
             now,
-            state.motion.get().short,
+            if spring_switch {
+                std::time::Duration::ZERO
+            } else {
+                motion.short
+            },
         );
+        if spring_switch {
+            let thumb = state.switch_thumb.as_mut().expect("switch thumb state");
+            let duration = if pressing {
+                std::time::Duration::ZERO
+            } else {
+                motion.medium
+            };
+            changed |= thumb.center.set_motion(
+                if self.checked { 10.0 } else { -10.0 },
+                now,
+                duration,
+                motion.spatial(crate::MotionSpeed::Fast),
+            ) | thumb.diameter.set_motion(
+                if pressing {
+                    28.0
+                } else if self.checked || self.switch_icons {
+                    24.0
+                } else {
+                    16.0
+                },
+                now,
+                duration,
+                motion.spatial(crate::MotionSpeed::Fast),
+            );
+        }
         if !pressing {
             state.ripple.release(now, state.motion.get(), !over);
         }
@@ -491,16 +554,33 @@ impl<Message> Widget<Message, Theme, Renderer> for Control<'_, Message> {
         );
         if let Event::Window(window::Event::RedrawRequested(_)) = event {
             // Evaluate every transition; short-circuiting would strand one.
-            let active = state.selection.tick(now)
+            let mut active = state.selection.tick(now)
                 | state.mixed.tick(now)
                 | state.opacity.tick(now)
                 | state.mark_growth.tick(now)
                 | state.layer.tick(now)
                 | state.ripple.tick(now, state.motion.get())
                 | state.pressure.tick(now);
+            if spring_switch {
+                let thumb = state.switch_thumb.as_mut().expect("switch thumb state");
+                active |= thumb.center.tick(now) | thumb.diameter.tick(now);
+            }
             if active {
                 shell.request_redraw();
             }
+        }
+        if self.switch && !spring_switch {
+            // Preserve baseline timing and pixels, and seed a subsequently
+            // enabled spring scheme from the currently visible geometry.
+            let amount = state.selection.value.clamp(0.0, 1.0);
+            let idle = if self.switch_icons {
+                24.0
+            } else {
+                16.0 + 8.0 * amount
+            };
+            let thumb = state.switch_thumb.as_mut().expect("switch thumb state");
+            thumb.center = Transition::new(-10.0 + 20.0 * amount);
+            thumb.diameter = Transition::new(idle + (28.0 - idle) * state.pressure.value);
         }
         if changed {
             shell.request_redraw();
@@ -722,12 +802,27 @@ fn draw_switch(
 ) {
     use iced::advanced::Renderer as _;
     let c = theme.colors;
+    let spring = theme.effective_motion().scheme.is_some();
     let amount = state.selection.value.clamp(0.0, 1.0);
     let track = Rectangle::new(
         Point::new(center.x - 26.0, center.y - 16.0),
         Size::new(52.0, 32.0),
     );
-    let thumb_center = Point::new(center.x - 10.0 + 20.0 * amount, center.y);
+    let idle_size = if icons { 24.0 } else { 16.0 + 8.0 * amount };
+    let (offset, diameter) = if spring {
+        let thumb = state.switch_thumb.as_ref().expect("switch thumb state");
+        // Keep real spatial overshoot. Only physical track containment limits
+        // extreme custom springs; resting endpoints are not clipping bounds.
+        let diameter = thumb.diameter.value.clamp(0.0, 32.0);
+        let edge = 26.0 - diameter / 2.0;
+        (thumb.center.value.clamp(-edge, edge), diameter)
+    } else {
+        (
+            -10.0 + 20.0 * amount,
+            idle_size + (28.0 - idle_size) * state.pressure.value,
+        )
+    };
+    let thumb_center = Point::new(center.x + offset, center.y);
     let thumb_bounds = |size| {
         Rectangle::new(
             Point::new(thumb_center.x - size / 2.0, thumb_center.y - size / 2.0),
@@ -778,8 +873,6 @@ fn draw_switch(
             ),
         );
     }
-    let idle_size = if icons { 24.0 } else { 16.0 + 8.0 * amount };
-    let diameter = idle_size + (28.0 - idle_size) * state.pressure.value;
     let thumb_color = if enabled {
         let interaction = if state.focus.focused && state.focus.visible {
             1.0
