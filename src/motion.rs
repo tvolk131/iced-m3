@@ -127,14 +127,16 @@ impl Transition {
         let Some(config) = spring.filter(|_| !duration.is_zero()) else {
             return self.set(target, now, duration);
         };
-        let unchanged = self.target == target && self.spring.is_none() && self.start.is_none();
-        if unchanged {
+        // Leave unchanged motion to tick(): consumers use it to observe value
+        // changes and invalidate layout. Sampling here can both hide that change
+        // and restart a spring that the sample just settled.
+        if self.target == target
+            && ((self.spring.is_none() && self.start.is_none())
+                || self.spring.is_some_and(|s| s.config == config))
+        {
             return false;
         }
         self.tick(now);
-        if self.target == target && self.spring.is_some_and(|s| s.config == config) {
-            return false;
-        }
         let (position, velocity) = self
             .spring
             .map_or((f64::from(self.value), 0.0), |s| (s.position, s.velocity));
@@ -221,6 +223,23 @@ impl Transition {
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn observing_a_settled_spring_does_not_restart_it() {
+        let mut transition = Transition::new(0.0);
+        let now = Instant::now();
+        let spring = Some(crate::MotionScheme::expressive().default_spatial);
+        assert!(transition.set_motion(1.0, now, Duration::from_millis(300), spring));
+        for seconds in [2, 3, 4] {
+            // Exercise the short-circuit pattern used by rail/reveal widgets.
+            let sample = now + Duration::from_secs(seconds);
+            assert!(
+                !(transition.set_motion(1.0, sample, Duration::from_millis(300), spring)
+                    || transition.tick(sample))
+            );
+            assert_eq!(transition.value, 1.0);
+            assert!(transition.spring.is_none());
+        }
+    }
     #[test]
     fn settles_and_retargets_without_jumping() {
         let now = Instant::now();

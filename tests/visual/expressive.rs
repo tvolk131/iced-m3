@@ -35,6 +35,327 @@ fn bounds(ui: &mut Harness<'_, u8>) -> Vec<Rectangle> {
     targets.0
 }
 
+fn motion_group(connected: bool) -> Element<'static, u8> {
+    button_group(
+        ["Create", "Review", "Share"]
+            .into_iter()
+            .enumerate()
+            .map(|(i, label)| {
+                button(label)
+                    .variant(crate::ButtonVariant::Tonal)
+                    .selected(i == 1)
+                    .on_press(i as u8)
+            }),
+    )
+    .connected(connected)
+    .into()
+}
+
+fn assert_group_geometry(rects: &[Rectangle], width: f32, connected: bool) {
+    let gap = if connected { 2.0_f32 } else { 12.0_f32 }.min(width / rects.len() as f32);
+    for b in rects {
+        assert!(
+            b.width.is_finite() && b.width >= 0.0,
+            "invalid button: {b:?}"
+        );
+        assert!(b.x >= -0.001 && b.x + b.width <= width + 0.001);
+    }
+    for pair in rects.windows(2) {
+        assert!((pair[1].x - pair[0].x - pair[0].width - gap).abs() < 0.001);
+    }
+    assert!(
+        (rects.iter().map(|b| b.width).sum::<f32>() + gap * (rects.len() - 1) as f32 - width).abs()
+            < 0.001
+    );
+}
+
+#[test]
+fn group_motion_keeps_the_spring_shape_at_compact_and_desktop_widths() {
+    let backend = std::env::var("ICED_TEST_BACKEND").unwrap_or_else(|_| "tiny-skia".into());
+    for width in [500., 1100.] {
+        for connected in [false, true] {
+            for pressed in 0..3 {
+                let mut ui = Harness::with_backend(
+                    motion_group(connected),
+                    Size::new(width, 80.),
+                    Theme::light().expressive(),
+                    &backend,
+                );
+                ui.frame();
+                let original = bounds(&mut ui);
+                let base = original[pressed].width;
+                let neighbors = if pressed == 1 { 2.0_f32 } else { 1.0_f32 };
+                let target = (base * 0.15 / neighbors).min(24.) * neighbors;
+                ui.move_to(original[pressed].center());
+                ui.down();
+                // Independently specified tolerances for the documented FastSpatial
+                // recipe. Checking real layout catches a correct spring hidden by clamps.
+                for (ms, low, high) in [
+                    (40, 0.37, 0.41),
+                    (100, 1.0, 1.03),
+                    (140, 1.08, 1.11),
+                    (400, 0.99, 1.01),
+                    (1000, 0.999, 1.001),
+                ] {
+                    ui.at(ms);
+                    let current = bounds(&mut ui);
+                    let fraction = (current[pressed].width - base) / target;
+                    assert!(
+                        (low..=high).contains(&fraction),
+                        "width={width}, connected={connected}, pressed={pressed}, ms={ms}: expansion {fraction} outside {low}..={high}"
+                    );
+                    assert_group_geometry(&current, width, connected);
+                    if ms == 140 {
+                        ui.frame().write(&std::path::PathBuf::from(format!(
+                            "target/group-motion/{backend}-peak-{width}-{connected}-{pressed}.png"
+                        )));
+                    }
+                }
+            }
+        }
+    }
+}
+
+#[test]
+fn group_motion_release_moves_immediately_and_keeps_the_rebound() {
+    for connected in [false, true] {
+        for pressed in 0..3 {
+            let mut ui = Harness::new(
+                motion_group(connected),
+                Size::new(1100., 80.),
+                Theme::light().expressive(),
+            );
+            ui.frame();
+            let original = bounds(&mut ui);
+            ui.move_to(original[pressed].center());
+            ui.down();
+            ui.at(1000);
+            let held = bounds(&mut ui);
+            let target = held[pressed].width - original[pressed].width;
+            ui.up();
+            assert_eq!(bounds(&mut ui), held, "release starts without a jump");
+            ui.at(1020);
+            assert!(
+                bounds(&mut ui)[pressed].width < held[pressed].width - target * 0.1,
+                "release must not stick at the expansion limit"
+            );
+            ui.at(1140);
+            let rebound = bounds(&mut ui);
+            assert!(
+                rebound[pressed].width < original[pressed].width - target * 0.08,
+                "release must retain its small spring undershoot"
+            );
+            assert_group_geometry(&rebound, 1100., connected);
+            ui.at(2000);
+            assert_eq!(ui.at(2016), iced::window::RedrawRequest::Wait);
+            assert_eq!(bounds(&mut ui), original);
+            assert_eq!(ui.messages, [pressed as u8]);
+        }
+    }
+}
+
+#[test]
+fn group_motion_quick_release_and_neighbor_repress_are_continuous() {
+    for connected in [false, true] {
+        let mut ui = Harness::new(
+            motion_group(connected),
+            Size::new(1100., 80.),
+            Theme::light().expressive(),
+        );
+        ui.frame();
+        let original = bounds(&mut ui);
+        ui.move_to(original[0].center());
+        ui.down();
+        ui.at(40);
+        let release = bounds(&mut ui);
+        ui.up();
+        assert_eq!(bounds(&mut ui), release);
+        ui.at(42);
+        assert!(
+            bounds(&mut ui)[0].width > release[0].width,
+            "early release preserves outward velocity"
+        );
+        let next = bounds(&mut ui)[1].center();
+        ui.move_to(next);
+        let before_repress = bounds(&mut ui);
+        ui.down();
+        assert_eq!(
+            bounds(&mut ui),
+            before_repress,
+            "neighbor press must not rescale existing motion"
+        );
+        for ms in (44..=180).step_by(2) {
+            ui.at(ms);
+            assert_group_geometry(&bounds(&mut ui), 1100., connected);
+        }
+        ui.up();
+        ui.at(2000);
+        assert_eq!(bounds(&mut ui), original);
+        assert_eq!(ui.messages, [0, 1]);
+    }
+}
+
+#[test]
+fn group_motion_is_independent_of_frame_cadence() {
+    let mut samples = Vec::new();
+    for step in [8, 16, 33, 140] {
+        let mut ui = Harness::new(
+            motion_group(false),
+            Size::new(1100., 80.),
+            Theme::light().expressive(),
+        );
+        ui.frame();
+        let center = bounds(&mut ui)[0].center();
+        ui.move_to(center);
+        ui.down();
+        for ms in (step..140).step_by(step as usize) {
+            ui.at(ms);
+        }
+        ui.at(140);
+        samples.push(bounds(&mut ui));
+    }
+    for sample in &samples[1..] {
+        for (actual, expected) in sample.iter().zip(&samples[0]) {
+            assert!((actual.x - expected.x).abs() < 0.001);
+            assert!((actual.width - expected.width).abs() < 0.001);
+        }
+    }
+}
+
+#[test]
+fn group_motion_preserves_content_space_in_narrow_and_asymmetric_layouts() {
+    struct Probes(Vec<Rectangle>);
+    impl Operation for Probes {
+        fn traverse(&mut self, f: &mut dyn FnMut(&mut dyn Operation)) {
+            f(self);
+        }
+        fn container(&mut self, id: Option<&widget::Id>, bounds: Rectangle) {
+            if id == Some(&widget::Id::new("content-probe")) {
+                self.0.push(bounds);
+            }
+        }
+    }
+    let content_bounds = |ui: &mut Harness<'_, u8>| {
+        let mut probes = Probes(Vec::new());
+        ui.operate(&mut probes);
+        assert_eq!(probes.0.len(), 3);
+        probes.0
+    };
+    for width in [50., 160., 500., 1100.] {
+        for connected in [false, true] {
+            for ratio in [0.0, 0.15, 1.0] {
+                let mut scheme = crate::MotionScheme::expressive();
+                // More overshoot than the preset also exercises the physical
+                // padding budget, independently of the resting expansion limit.
+                scheme.fast_spatial = crate::Spring::new(800., 0.2);
+                let content = button_group((0..3).map(|i| {
+                    crate::Button::new(
+                        widget::container(widget::space().width(Length::Fill).height(20))
+                            .id("content-probe"),
+                    )
+                    .padding(iced::Padding {
+                        top: 10.,
+                        bottom: 10.,
+                        left: 8. + i as f32 * 8.,
+                        right: 32. - i as f32 * 8.,
+                    })
+                    .on_press(i)
+                }))
+                .connected(connected)
+                .expanded_ratio(ratio);
+                let mut ui = Harness::new(
+                    content,
+                    Size::new(width, 80.),
+                    Theme::light().expressive().motion_scheme(scheme),
+                );
+                ui.frame();
+                let original = bounds(&mut ui);
+                let content = content_bounds(&mut ui);
+                for (step, pressed) in [0, 2, 1, 0].into_iter().enumerate() {
+                    let center = bounds(&mut ui)[pressed].center();
+                    ui.move_to(center);
+                    ui.down();
+                    for t in (2..=80).step_by(2) {
+                        ui.at(step as u64 * 80 + t);
+                        let buttons = bounds(&mut ui);
+                        assert_group_geometry(&buttons, width, connected);
+                        for ((current, initial), button) in
+                            content_bounds(&mut ui).iter().zip(&content).zip(&buttons)
+                        {
+                            assert!(
+                                current.width >= initial.width - 0.001,
+                                "animation squeezed child content: width={width}, connected={connected}, ratio={ratio}, {current:?} < {initial:?}"
+                            );
+                            assert!(
+                                current.x >= button.x - 0.001
+                                    && current.x + current.width <= button.x + button.width + 0.001
+                            );
+                        }
+                        if ratio == 0.0 {
+                            assert_eq!(buttons, original);
+                        }
+                    }
+                    ui.up();
+                }
+                ui.at(4000);
+                assert_eq!(bounds(&mut ui), original);
+            }
+        }
+    }
+}
+
+#[test]
+#[ignore = "reference suite; run with --ignored"]
+fn visual_references_group_spring_motion() {
+    use super::reference;
+    for dark in [false, true] {
+        let theme = if dark { Theme::dark() } else { Theme::light() }.expressive();
+        for connected in [false, true] {
+            let case = format!(
+                "group-spring/{}/{}",
+                if dark { "dark" } else { "light" },
+                if connected { "connected" } else { "spaced" }
+            );
+            for pressed in [0, 1] {
+                let case = format!("{case}/button-{pressed}");
+                let mut ui = Harness::new(
+                    motion_group(connected),
+                    Size::new(1100., 80.),
+                    theme.clone(),
+                );
+                reference::check(&format!("{case}/00-rest"), &ui.frame());
+                let point = bounds(&mut ui)[pressed].center();
+                ui.move_to(point);
+                ui.down();
+                for ms in [40, 140, 1000] {
+                    ui.at(ms);
+                    reference::check(&format!("{case}/01-press-{ms:04}"), &ui.frame());
+                }
+                ui.up();
+                for ms in [1020, 1140, 2000] {
+                    ui.at(ms);
+                    reference::check(&format!("{case}/02-release-{ms:04}"), &ui.frame());
+                }
+            }
+            let mut ui = Harness::new(
+                motion_group(connected),
+                Size::new(1100., 80.),
+                theme.clone(),
+            );
+            ui.frame();
+            let point = bounds(&mut ui)[0].center();
+            ui.move_to(point);
+            ui.down();
+            ui.at(40);
+            ui.up();
+            for ms in [40, 60, 140, 300, 2000] {
+                ui.at(ms);
+                reference::check(&format!("{case}/quick-release/{ms:04}"), &ui.frame());
+            }
+        }
+    }
+}
+
 #[test]
 fn reduced_motion_round_trip_preserves_application_timings() {
     let mut theme = Theme::dark();
@@ -476,6 +797,7 @@ fn shared_spring_controls_render_through_overshoot_and_reversal() {
         let theme = if dark { Theme::dark() } else { Theme::light() }.expressive();
         let mut ui = Harness::new(controls(false), Size::new(450., 330.), theme);
         let start = ui.frame();
+        ui.at(0);
         ui.rebuild(controls(true));
         ui.at(0);
         for ms in [40, 100, 140, 180, 240] {
@@ -488,8 +810,90 @@ fn shared_spring_controls_render_through_overshoot_and_reversal() {
             ui.at(ms);
             ui.frame();
         }
-        assert!(ui.frame() == start);
+        let finish = ui.frame();
+        if finish != start {
+            start.write(&std::path::PathBuf::from(format!(
+                "target/group-motion/controls-start-{dark}.png"
+            )));
+            finish.write(&std::path::PathBuf::from(format!(
+                "target/group-motion/controls-finish-{dark}.png"
+            )));
+        }
+        assert!(finish == start);
         assert!(ui.messages.is_empty());
+    }
+}
+
+#[test]
+fn expressive_tab_indicator_pixels_retain_overshoot_reversal_and_reduced_motion() {
+    let content = |selected| -> Element<'static, u8> {
+        crate::tabs(
+            [
+                crate::Tab::new(0, "A"),
+                crate::Tab::new(1, "B"),
+                crate::Tab::new(2, "C"),
+            ],
+            Some(selected),
+        )
+        .on_select(|value| value)
+        .into()
+    };
+    let indicator_center = |ui: &mut Harness<'_, u8>, ink: u8| {
+        let frame = ui.frame();
+        // The last interior scanline isolates the indicator from labels and the
+        // neutral divider. 2x output: return its center in logical pixels.
+        let y = frame.height - 2;
+        let pixels: Vec<_> = (0..frame.width)
+            .filter(|&x| {
+                let offset = ((y * frame.width + x) * 4) as usize;
+                frame.pixels[offset..offset + 4] == [ink, ink, ink, 255]
+            })
+            .collect();
+        assert!(pixels.len() >= 40, "indicator must remain visible");
+        (*pixels.first().unwrap() + *pixels.last().unwrap() + 1) as f32 / 4.0
+    };
+    let backend = std::env::var("ICED_TEST_BACKEND").unwrap_or_else(|_| "tiny-skia".into());
+    for width in [360., 1100.] {
+        for dark in [false, true] {
+            for reduced in [false, true] {
+                let mut theme = if dark { Theme::dark() } else { Theme::light() }
+                    .expressive()
+                    .reduced_motion(reduced);
+                let ink = if dark { 255 } else { 0 };
+                theme.colors.primary = if dark {
+                    iced::Color::WHITE
+                } else {
+                    iced::Color::BLACK
+                };
+                let mut ui =
+                    Harness::with_backend(content(0), Size::new(width, 48.), theme, &backend);
+                ui.frame();
+                ui.at(0); // Initialize the retained indicator before changing selection.
+                let start = indicator_center(&mut ui, ink);
+                let target = width / 2.0;
+                ui.rebuild(content(1));
+                ui.at(0);
+                if reduced {
+                    assert!((indicator_center(&mut ui, ink) - target).abs() < 0.5);
+                } else {
+                    assert!((indicator_center(&mut ui, ink) - start).abs() < 0.5);
+                    ui.at(270);
+                    assert!(
+                        indicator_center(&mut ui, ink) > target + (target - start) * 0.01,
+                        "the drawn indicator must retain the spatial spring's overshoot"
+                    );
+                }
+                let before = indicator_center(&mut ui, ink);
+                ui.rebuild(content(0));
+                ui.at(270);
+                if !reduced {
+                    assert!((indicator_center(&mut ui, ink) - before).abs() < 0.5);
+                }
+                ui.at(2000);
+                assert!((indicator_center(&mut ui, ink) - start).abs() < 0.5);
+                assert_eq!(ui.at(2016), iced::window::RedrawRequest::Wait);
+            }
+        }
     }
 }
 
@@ -504,6 +908,7 @@ fn visual_references_expressive_controls() {
             &format!("expressive-controls/{name}/00-default"),
             &ui.frame(),
         );
+        ui.at(0);
         ui.rebuild(controls(true));
         ui.at(0);
         for ms in [40, 100, 140, 180, 240, 1000] {

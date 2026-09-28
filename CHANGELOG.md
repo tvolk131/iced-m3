@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+- Fixed Expressive button-group motion hitting its expansion limit prematurely
+  and losing release rebound. Padding limits now constrain the target before
+  applying the spring; overlapping animations preserve child content space.
+  Added motion-property tests for groups, navigation rails and tab indicators.
+- Fixed settled springs restarting at rest, which could keep rail/reveal widgets
+  requesting animation frames after their visible movement had finished.
+
 - Fixed a rectangular flash at the end of spring-animated dialog dismissal.
   Content now finishes fading before the rounded panel becomes translucent,
   including when closing is interrupted and reversed.

@@ -1,5 +1,39 @@
 # Validation report
 
+## Button-group spring response and proactive motion checks — 2026-09-27
+
+The first regression run failed for clipped press overshoot and delayed release.
+Group targets now account for neighboring padding before applying the spring;
+edge transfers preserve rebound, share constrained padding without order bias,
+and keep the original content space available. The public API and spring presets
+are unchanged.
+
+- All **305 ordinary tests** pass with default and software-only features. Eight
+  new tests cover actual compact/desktop group layouts, all three button positions,
+  connected/spaced groups, peak and release response, quick reversal/neighbor
+  presses, frame cadence, custom springs, narrow/asymmetric padding, zero expansion,
+  rail width, tab-indicator pixels and settled spring scheduling. Existing tests
+  cover reduced motion, keyboard input, disabled presses and retained focus.
+- The proactive rail test exposed springs restarting at rest and requesting
+  redraws indefinitely. Both the widget test and a focused transition regression
+  failed before correcting unchanged-target sampling. That correction also lets
+  layout consumers observe each tick instead of hiding its value change.
+- Group peak and tab-indicator tests pass on **Tiny Skia and wgpu/Metal**. Metal
+  used native GPU access outside the process sandbox. The tab reference fixture
+  now initializes its retained indicator before changing selection.
+- All **50 canonical reference functions** pass with updates disabled against
+  **2,919 PNGs**: 76 new group frames, 26 updated existing Expressive frames and
+  2,817 unchanged images. Representative light/dark press, rebound and control
+  frames were visually inspected. References use Rust **1.92.0**, Tiny Skia and 2x
+  scale; they do not establish platform-identical Material motion.
+- All **20 doctests**, strict Clippy, formatting and the optimized Expressive
+  example build pass. Logs, initial failures and sampled Metal peaks are under
+  `target/group-motion/`.
+
+[Motion contracts](VISUAL_TESTS.md#motion-contracts-beyond-reference-images)
+describe proactive coverage priorities. This is not a completed component-wide
+motion audit, a real-time performance benchmark, or a new Windows/Linux GPU run.
+
 ## Spring dialog exit compositing — 2026-09-27
 
 The new pixel regression failed before the fix: 200ms after closing, the nominally

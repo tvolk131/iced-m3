@@ -9,8 +9,9 @@ pub struct ButtonGroup<'a, Message> {
     connected: bool,
     expanded_ratio: f32,
 }
-/// Group actions with a 15% requested press expansion, bounded by neighboring
-/// padding so labels keep their original available width.
+/// Group actions with a 15% requested press expansion. The resting target is
+/// bounded by neighboring padding; springs retain overshoot and release rebound
+/// while spare padding protects the original space available to child content.
 pub fn button_group<'a, Message>(
     buttons: impl IntoIterator<Item = Button<'a, Message>>,
 ) -> ButtonGroup<'a, Message> {
@@ -28,7 +29,8 @@ impl<Message> ButtonGroup<'_, Message> {
     }
     /// Requested width growth as a fraction of the resting button width.
     /// Zero disables deformation. Values are clamped to 0..=1; non-finite values
-    /// are ignored. Actual growth is limited by immediate neighbors' padding.
+    /// are ignored. The target is limited by immediate neighbors' padding.
+    /// Spring overshoot may use their remaining padding, but never content space.
     pub fn expanded_ratio(mut self, ratio: f32) -> Self {
         if ratio.is_finite() {
             self.expanded_ratio = ratio.clamp(0.0, 1.0);

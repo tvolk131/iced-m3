@@ -1,6 +1,7 @@
 use super::{harness::Harness, theme};
 use crate::{
-    Element, NavigationItem, TypeScale, button, focus, navigation_bar, navigation_rail, typography,
+    Element, NavigationItem, Theme, TypeScale, button, focus, navigation_bar, navigation_rail,
+    typography,
 };
 use iced::{
     Event, Length, Size,
@@ -391,6 +392,47 @@ fn rail_width_animates_reverses_and_settles_without_idle_redraws() {
     ui.at(500);
     assert!((ui.find("Content").x - start).abs() < 0.1);
     assert_eq!(ui.at(1000), iced::window::RedrawRequest::Wait);
+}
+
+#[test]
+fn expressive_rail_width_retains_overshoot_reversal_and_reduced_motion() {
+    for reduced in [false, true] {
+        let mut view = Harness::new(
+            rail_shell(false),
+            Size::new(700., 350.),
+            Theme::light().expressive().reduced_motion(reduced),
+        );
+        view.frame();
+        view.at(0);
+        let start = view.find("Content").x;
+        view.rebuild(rail_shell(true));
+        view.at(0);
+        if reduced {
+            assert!((view.find("Content").x - start - 200.).abs() < 0.01);
+        } else {
+            assert!((view.find("Content").x - start).abs() < 0.01);
+            view.at(270);
+            // The 80 -> 280px destination is not a physical viewport boundary.
+            assert!(
+                view.find("Content").x > start + 202.,
+                "spatial overshoot must reach the actual row layout"
+            );
+        }
+        let before = view.find("Content").x;
+        view.rebuild(rail_shell(false));
+        view.at(270);
+        if !reduced {
+            assert!((view.find("Content").x - before).abs() < 0.01);
+        }
+        view.at(2000);
+        view.frame();
+        assert!((view.find("Content").x - start).abs() < 0.01);
+        assert_eq!(
+            view.at(2016),
+            iced::window::RedrawRequest::Wait,
+            "reduced={reduced}"
+        );
+    }
 }
 fn modal_rail(open: bool) -> Element<'static, Message> {
     focus::scope(crate::modal_navigation_rail(

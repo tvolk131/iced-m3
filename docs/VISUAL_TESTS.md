@@ -1,7 +1,7 @@
 # Visual regression tests
 
 Every current component family has reference-image coverage. The suite stores
-2,843 PNGs across component states, timed animation frames and gallery
+2,919 PNGs across component states, timed animation frames and gallery
 compositions. These complement the ordinary interaction tests. A passing comparison means the rendered pixels match the
 reviewed reference; it does not establish complete Material 3 compliance.
 
@@ -82,6 +82,53 @@ pointer exit must clear both effects. It can also run against wgpu/Metal via
 `ICED_TEST_BACKEND=wgpu cargo test --locked --lib selection_ripple_preserves_hover_circle`.
 
 ## Coverage
+
+### Motion contracts beyond reference images
+
+Approved screenshots can preserve a faulty animation. The spring solver can also
+pass its tests while a widget's layout or painter clamps away the result. Test
+the observable geometry or pixels of each distinct motion path, in addition to
+reviewing its reference frames. Do not require every component to bounce: opacity
+must stay bounded, clipping reveals have physical endpoints, and ripples and
+continuous indicators have their own timelines.
+
+The button-group regression in `tests/visual/expressive.rs` checks the actual
+retained iced layout at 40/100/140ms and after settling, across 500px and 1100px
+groups, all three positions, and connected/spaced variants. Independently defined
+response ranges reject the early plateau even if someone approves new PNGs.
+Release must move promptly and retain its small rebound; quick release/repress
+must preserve position and velocity. Other checks cover 8/16/33ms and skipped
+frames, reduced motion, narrow hosts, asymmetric padding, stronger custom springs,
+width conservation, content space, disabled presses and idle redraws.
+
+Proactive checks now also measure navigation-rail width and the tab indicator's
+painted pixels through overshoot, reversal, reduced motion and settling. The tab
+fixture sends its initial redraw before changing the selected value, so it tests
+a retained transition instead of initializing directly at the new destination.
+The rail check caught a shared transition bug that restarted settled springs;
+the regression also exercises the consumer's short-circuit redraw pattern.
+
+For new motion or changes to existing motion, use this checklist:
+
+- Define the expected response from design/reference evidence, independently of
+  the implementation. Spatial overshoot, bounded effects, reveal clipping and
+  continuous cycles need different assertions.
+- Measure early motion, the expected peak, settling, and motion immediately after
+  reversal. Check position continuity and continued momentum on early release.
+- Exercise a compact layout, a realistic desktop layout, and a constrained layout;
+  include endpoints, long content and overlapping transitions where relevant.
+- Check reduced motion, cancellation/disable, retained view rebuilds, cadence
+  independence and eventual idle scheduling. Continuous indicators instead need
+  explicit pause, viewport and window-focus policy checks.
+- Add a small light/dark filmstrip around the important transition times and
+  review it in motion. Golden updates alone are not evidence of correctness.
+
+Prioritize remaining property checks by independent implementation: selection
+geometry and floating labels; overlay/reveal clipping and compositing; then
+sliders and continuous cycles. Many already have targeted regressions below, but
+this is not yet a uniform contract suite for every component or motion scheme.
+
+### Reference families
 
 | Family | Reference cases |
 | --- | --- |

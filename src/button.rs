@@ -357,6 +357,9 @@ impl<'a, Message: 'a> Button<'a, Message> {
     pub(crate) fn compression_limit(&self) -> f32 {
         self.padding.left.min(self.padding.right)
     }
+    pub(crate) fn compression_capacity(&self) -> f32 {
+        self.padding.left + self.padding.right
+    }
     pub(crate) fn grouped(mut self) -> Self {
         self.grouped = true;
         if self.expressive.is_none() {
@@ -509,8 +512,12 @@ impl<Message: Clone> Widget<Message, Theme, Renderer> for Button<'_, Message> {
         limits: &layout::Limits,
     ) -> layout::Node {
         let mut padding = self.padding;
-        padding.left = (padding.left - self.group_compression.0).max(0.0);
-        padding.right = (padding.right - self.group_compression.1).max(0.0);
+        let left = padding.left - self.group_compression.0;
+        let right = padding.right - self.group_compression.1;
+        // A group spring may briefly consume more than one side's padding.
+        // Borrow the excess from the other side before reducing content space.
+        padding.left = (left + right.min(0.0)).max(0.0);
+        padding.right = (right + left.min(0.0)).max(0.0);
         let dimensions = self.dimensions();
         layout::positioned(
             &limits.min_height(match dimensions.height {

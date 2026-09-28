@@ -67,33 +67,60 @@ impl<'a, Message: Clone + 'a> Widget<Message, Theme, Renderer> for Group<'a, Mes
         };
         let mut widths = vec![base; count];
         let mut compressed = vec![(0.0, 0.0); count];
-        // Each pressed child takes space only from its immediate neighbors.
-        // Capacity accounts for simultaneous/reversing animations as well.
-        let mut capacity: Vec<f32> = self
+        // Limit the destination, not the animated value: clamping each frame to
+        // the resting target removes overshoot and delays visible release motion.
+        let compression_limits: Vec<f32> = self
             .buttons
             .iter()
             .map(|b| b.compression_limit().min(base * 0.5))
             .collect();
-        for i in 0..count {
-            let amount = Button::<Message>::press_amount(&tree.children[i]).clamp(0.0, 1.25);
+        let mut growth = vec![0.0; count];
+        for (i, growth) in growth.iter_mut().enumerate() {
             let neighbors = usize::from(i > 0) + usize::from(i + 1 < count);
             if neighbors == 0 {
                 continue;
             }
-            let requested = base * self.ratio * amount / neighbors as f32;
+            let mut target = base * self.ratio / neighbors as f32;
             for j in [i.checked_sub(1), (i + 1 < count).then_some(i + 1)]
                 .into_iter()
                 .flatten()
             {
-                let growth = requested.min(capacity[j]);
-                widths[j] -= growth;
-                widths[i] += growth;
-                capacity[j] -= growth;
-                if j < i {
-                    compressed[j].1 += growth;
+                target = target.min(compression_limits[j]);
+            }
+            *growth = target * Button::<Message>::press_amount(&tree.children[i]);
+        }
+        // Opposing requests at a shared edge cancel. Resolve all edges together
+        // so interrupted neighbor animations do not change each other's targets
+        // or depend on iteration order. A negative value retains release rebound.
+        let transfers: Vec<f32> = growth.windows(2).map(|g| g[0] - g[1]).collect();
+        let mut donated = vec![0.0_f32; count];
+        for (i, &transfer) in transfers.iter().enumerate() {
+            donated[if transfer >= 0.0 { i + 1 } else { i }] += transfer.abs();
+        }
+        // Only actual lack of space may constrain a spring. Spare padding on
+        // the other side permits the normal overshoot without squeezing labels.
+        // Simultaneous transfers share this budget proportionally.
+        let scales: Vec<f32> = self
+            .buttons
+            .iter()
+            .zip(donated)
+            .map(|(button, donated)| {
+                if donated > 0.0 {
+                    (button.compression_capacity().min(base) / donated).min(1.0)
                 } else {
-                    compressed[j].0 += growth;
+                    1.0
                 }
+            })
+            .collect();
+        for (i, transfer) in transfers.into_iter().enumerate() {
+            let donor = if transfer >= 0.0 { i + 1 } else { i };
+            let transfer = transfer * scales[donor];
+            widths[i] += transfer;
+            widths[i + 1] -= transfer;
+            if transfer >= 0.0 {
+                compressed[i + 1].0 += transfer;
+            } else {
+                compressed[i].1 -= transfer;
             }
         }
         let mut x = 0.0;
@@ -112,8 +139,8 @@ impl<'a, Message: Clone + 'a> Widget<Message, Theme, Renderer> for Group<'a, Mes
                     state,
                     renderer,
                     &layout::Limits::new(
-                        Size::new(width, 0.0),
-                        Size::new(width, limits.max().height),
+                        Size::new(width.max(0.0), 0.0),
+                        Size::new(width.max(0.0), limits.max().height),
                     ),
                 )
                 .move_to(Point::new(x, 0.0));

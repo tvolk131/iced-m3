@@ -82,8 +82,11 @@ which need not center a text glyph's visible ink. Prefer `icon(...)` with SVGs.
 
 Button groups retain child state and focus while the pressed button grows and
 its immediate neighbors compress. Requested expansion defaults to 15% of resting
-width and is limited by neighboring padding, preserving the label's available
-space. `.expanded_ratio(0.0)` disables width deformation. Connected groups use
+width. The target is limited by neighboring padding before applying the spring,
+so motion keeps its overshoot and release rebound. Overshoot can consume spare
+padding on the opposite side; simultaneous neighbor animations share the total
+padding budget without reducing the label's original available space.
+`.expanded_ratio(0.0)` disables width deformation. Connected groups use
 2px gaps, 8px resting inner corners, 4px pressed inner corners and rounded selected
 items; ordinary groups use 12px gaps. Release, cancellation and interruption
 retarget the same springs. Groups currently allocate equal resting widths and do
