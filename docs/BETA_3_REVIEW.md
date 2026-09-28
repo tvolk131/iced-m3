@@ -52,3 +52,19 @@ plus ordinary Windows/Linux/macOS, MSRV and consumer checks. Publication follows
 [RELEASING.md](RELEASING.md) only after checks pass on the merged master commit.
 Local checks do not certify native platform accessibility, IME, or complete M3
 fidelity. The generated archive is a candidate, not an automatic publication.
+
+## Local results — September 28, 2026
+
+On Apple Silicon with Rust 1.92.0, the software visual behavior suite passed
+202 tests. All 40 ignored canonical visual-reference tests passed without
+baseline updates. The Metal/wgpu run passed 18 Expressive tests (including review
+capture generation), six switch-motion tests, the dialog-exit pixel regression,
+and the rail overshoot/reversal test. Timed TinySkia and Metal captures were
+inspected for selection movement, hold/release response and dialog exit; the
+Standard/Expressive/reduced-motion comparisons retain their intended differences.
+No additional component-motion change was required by these checks.
+
+The first sandboxed GPU attempt could not initialize a headless renderer; the
+reported GPU results are from a successful rerun with Metal device access.
+All results describe headless rendering and interaction simulation, not a new
+native accessibility or full-platform manual certification.
