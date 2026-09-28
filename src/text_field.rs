@@ -51,19 +51,19 @@ pub struct TextField<'a, Message> {
 }
 enum Trailing<'a, Message> {
     Passive(Element<'a, Message>, bool),
-    Action(crate::Button<'a, Message>, Message),
+    Action(Box<crate::Button<'a, Message>>, Message),
 }
 impl<'a, Message: Clone + 'a> Trailing<'a, Message> {
     fn widget(&self) -> &dyn Widget<Message, Theme, Renderer> {
         match self {
             Self::Passive(e, _) => e.as_widget(),
-            Self::Action(b, _) => b,
+            Self::Action(b, _) => b.as_ref(),
         }
     }
     fn widget_mut(&mut self) -> &mut dyn Widget<Message, Theme, Renderer> {
         match self {
             Self::Passive(e, _) => e.as_widget_mut(),
-            Self::Action(b, _) => b,
+            Self::Action(b, _) => b.as_mut(),
         }
     }
     fn present(&self) -> bool {
@@ -72,7 +72,7 @@ impl<'a, Message: Clone + 'a> Trailing<'a, Message> {
     fn sync(self, enabled: bool) -> Self {
         match self {
             Self::Action(b, message) => Self::Action(
-                b.on_press_maybe(enabled.then_some(message.clone())),
+                Box::new((*b).on_press_maybe(enabled.then_some(message.clone()))),
                 message,
             ),
             passive => passive,
@@ -147,7 +147,8 @@ impl<'a, Message: Clone + 'a> TextField<'a, Message> {
         icon: impl Into<Element<'a, Message>>,
         message: Message,
     ) -> Self {
-        self.trailing = Trailing::Action(crate::icon_button(icon), message).sync(self.enabled);
+        self.trailing =
+            Trailing::Action(Box::new(crate::icon_button(icon)), message).sync(self.enabled);
         self
     }
     /// Display an affix without adding it to the editable value or clipboard.
@@ -588,16 +589,19 @@ impl<'a, Message: Clone + 'a> Widget<Message, Theme, Renderer> for TextField<'a,
         };
         let field = layout.children().next().unwrap().bounds();
         let hovered = self.enabled && cursor.is_over(field) && cursor.is_over(*viewport);
-        if state
-            .hover
-            .set(f32::from(hovered), now, state.motion.get().short)
-        {
+        if state.hover.set_motion(
+            f32::from(hovered),
+            now,
+            state.motion.get().short,
+            state.motion.get().effects(crate::MotionSpeed::Fast),
+        ) {
             shell.request_redraw();
         }
-        if state.floating.set(
+        if state.floating.set_motion(
             if focused || self.populated { 1.0 } else { 0.0 },
             now,
             state.motion.get().medium,
+            state.motion.get().spatial(crate::MotionSpeed::Fast),
         ) {
             shell.request_redraw();
             shell.invalidate_layout();
@@ -636,7 +640,7 @@ impl<'a, Message: Clone + 'a> Widget<Message, Theme, Renderer> for TextField<'a,
             ..bounds
         };
         let state = tree.state.downcast_ref::<State>();
-        state.motion.set(theme.motion);
+        state.motion.set(theme.effective_motion());
         let focused = self.enabled
             && if self.activate.is_some() {
                 state.focus.focused

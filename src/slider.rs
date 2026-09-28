@@ -455,19 +455,22 @@ impl<'a, Message: Clone + 'a> Widget<Message, Theme, Renderer> for Slider<'a, Me
                 event,
                 Event::Window(window::Event::Unfocused) | Event::Mouse(mouse::Event::CursorLeft)
             );
-        let changed = state.hover.set(
+        let changed = state.hover.set_motion(
             if hovered { 0.08 } else { 0.0 },
             now,
             state.motion.get().short,
-        ) | state.press.set(
+            state.motion.get().effects(crate::MotionSpeed::Fast),
+        ) | state.press.set_motion(
             if state.dragging { 1.0 } else { 0.0 },
             now,
             state.motion.get().short,
+            state.motion.get().spatial(crate::MotionSpeed::Fast),
         );
-        let label_changed = state.label.set(
+        let label_changed = state.label.set_motion(
             f32::from(self.labeled && (hovered || state.dragging || state.focus.focused)),
             now,
             state.motion.get().slider_label,
+            state.motion.get().spatial(crate::MotionSpeed::Fast),
         );
         let active = state.hover.tick(now) | state.press.tick(now) | state.label.tick(now);
         let changed = changed | label_changed;
@@ -491,7 +494,7 @@ impl<'a, Message: Clone + 'a> Widget<Message, Theme, Renderer> for Slider<'a, Me
             return;
         };
         let state = tree.state.downcast_ref::<State>();
-        state.motion.set(theme.motion);
+        state.motion.set(theme.effective_motion());
         let c = theme.colors;
         let enabled = self.enabled();
         let track = self.track(bounds);

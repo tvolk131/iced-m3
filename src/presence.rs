@@ -44,6 +44,25 @@ impl Presence {
         }
         self.surface_open = open;
         let duration = if open { enter } else { exit };
+        if let Some(scheme) = self.motion.get().scheme {
+            let spatial = Some(scheme.default_spatial);
+            let effects = Some(scheme.default_effects);
+            return self
+                .progress
+                .set_motion(f32::from(open), now, duration, effects)
+                | self
+                    .height
+                    .set_motion(if open { 1.0 } else { 0.35 }, now, duration, spatial)
+                | self
+                    .slide
+                    .set_motion(f32::from(open), now, duration, spatial)
+                | self
+                    .content
+                    .set_motion(f32::from(open), now, duration, effects)
+                | self
+                    .paper
+                    .set_motion(f32::from(open), now, duration, effects);
+        }
         let curve = if open {
             [0.2, 0.0, 0.0, 1.0]
         } else {
@@ -100,6 +119,10 @@ impl Presence {
             | self.slide.tick(now)
             | self.content.tick(now)
             | self.paper.tick(now);
+        self.progress.value = self.progress.value.clamp(0.0, 1.0);
+        self.height.value = self.height.value.max(0.0);
+        self.content.value = self.content.value.clamp(0.0, 1.0);
+        self.paper.value = self.paper.value.clamp(0.0, 1.0);
         let after = (
             self.progress.value,
             self.height.value,
@@ -130,9 +153,12 @@ impl Presence {
             _ => crate::motion::now(),
         };
         let before = self.progress.value;
-        let changed = self
-            .progress
-            .set(f32::from(open), now, if open { enter } else { exit });
+        let changed = self.progress.set_motion(
+            f32::from(open),
+            now,
+            if open { enter } else { exit },
+            self.motion.get().effects(crate::MotionSpeed::Default),
+        );
         let animating = self.progress.tick(now);
         // A preference change while animating must settle the current target too.
         if (if open { enter } else { exit }).is_zero() {

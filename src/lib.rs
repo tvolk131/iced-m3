@@ -77,6 +77,7 @@ pub mod list;
 pub mod loading;
 pub mod menu;
 mod motion;
+pub mod motion_scheme;
 pub mod navigation;
 mod presence;
 pub mod progress;
@@ -124,13 +125,14 @@ pub use radio::{Radio, RadioGroup, RadioOption, radio, radio_group};
 pub use snackbar::{Snackbar, snackbar};
 pub use tooltip::{Tooltip, tooltip};
 
-pub use button::{Button, ButtonVariant, button};
+pub use button::{Button, ButtonShape, ButtonSize, ButtonVariant, IconButtonWidth, button};
 pub use checkbox::{Checkbox, checkbox};
 pub use chip::{Chip, ChipVariant, assist_chip, filter_chip, input_chip, suggestion_chip};
 pub use components::{
     Surface, SurfaceVariant, Switch, badge, chip, divider, icon_button, surface, switch, typography,
 };
 pub use dialog::{Dialog, FullScreenDialog, dialog, full_screen_dialog};
+pub use motion_scheme::{MotionScheme, MotionSpeed, Spring};
 pub use text_field::{TextField, TextFieldVariant, text_field};
 pub use theme::{ColorScheme, Theme};
 pub use tokens::TypeScale;

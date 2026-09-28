@@ -1,5 +1,39 @@
 # Validation report
 
+## Expressive motion and action recipes — 2026-09-27
+
+The first red run reproduced missing group width deformation and reduced-motion
+round trips erasing custom durations. The implementation adds opt-in shared
+springs, retargetable action shapes, current common/icon button recipes and a
+retained equal-width group layout. The [Expressive guide](EXPRESSIVE.md) records
+reference pins, precedence and remaining catalog gaps.
+
+- All **295 ordinary tests** pass with default and software-only features. Fifteen
+  new tests cover analytic frame-rate independence, interruption continuity,
+  bounded effects, theme/local/reduced-motion precedence, 30 icon size/width/order
+  combinations, group neighbors and width conservation, keyboard focus across a
+  held-press rebuild, disable/cancellation, narrow/empty groups, reversible dialog
+  presence and selection/field/tab rendering through spring motion.
+- All **48 canonical reference functions** pass against **2,795 PNGs**, with
+  updates disabled. There are **116 new** light/dark action and control frames;
+  **12 existing** images change for connected-group corners and press deformation.
+  Representative large/small action recipes, connected/held groups, control
+  transitions and the existing group comparison were visually inspected.
+- All **20 doctests**, strict Clippy, strict software rustdoc, formatting and the
+  independent consumer's **six tests** pass. All targets check on Rust **1.88.0**
+  with software-only features; the default-feature release example builds.
+- The theme/explicit/opt-out rendering comparison passes on **wgpu/Metal**. Metal
+  access required running outside the process sandbox; the first sandboxed attempt
+  could not initialize a GPU renderer. The release example launched in a native
+  macOS window and its dark-theme layout was visually inspected. Precise held and
+  interrupted interactions were tested in the headless iced event dispatcher.
+
+Logs: `target/expressive/`. Reference generation/comparison uses Rust **1.92.0**,
+Tiny Skia and fixed 2x scale. No new release or full Expressive conformance is
+claimed; native Windows/Linux behavior and platform-wide spring parity were not
+measured. The local `target/Material Expressive.app` is an unsigned test launcher.
+
+
 ## Interaction contracts and window activity — 2026-09-26
 
 Regressions use iced's actual headless UI event dispatcher, pointer events and

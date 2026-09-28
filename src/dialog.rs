@@ -383,7 +383,7 @@ impl<Message: Clone> Widget<Message, Theme, Renderer> for Modal<'_, Message> {
             .downcast_ref::<State>()
             .presence
             .motion
-            .set(theme.motion);
+            .set(theme.effective_motion());
         self.background.as_widget().draw(
             &tree.children[0],
             renderer,
@@ -672,7 +672,7 @@ impl<Message: Clone> Overlay<Message, Theme, Renderer> for DialogOverlay<'_, '_,
         cursor: mouse::Cursor,
     ) {
         use iced::advanced::Renderer as _;
-        self.state.presence.motion.set(theme.motion);
+        self.state.presence.motion.set(theme.effective_motion());
         let mut scrim = crate::theme::alpha(theme.colors.scrim, theme.colors.scrim.a * 0.32);
         scrim.a *= self.state.presence.progress.value;
         renderer.fill_quad(

@@ -8,12 +8,13 @@
 | [Component catalog](COMPONENTS.md) | Available builders, variants and interaction behavior |
 | [Cookbook](COOKBOOK.md) | Composed controls, navigation, dialogs, sheets and feedback |
 | [Theming and native widgets](THEMING.md) | Semantic colors, typography, surfaces and theme adapters |
+| [Expressive actions and motion](EXPRESSIVE.md) | Theme defaults, spring schemes, action recipes and reference pins |
 | [Gallery and sample apps](GALLERY.md) | Run and explore the gallery or independent consumer |
 | [Support and limitations](LIMITATIONS.md) | Platform, accessibility, localization and fidelity boundaries |
 
 Build the API reference with `cargo doc --open --no-deps`. Its homepage has direct
 component links; the `guide` module includes getting started, the cookbook and
-theming. The examples remain compiled doctests. All three guides are included in
+theming. The examples remain compiled doctests. These guides are included in
 the distributable and work in locally generated rustdoc without a hosted repository.
 
 ## Development and release

@@ -121,7 +121,7 @@ impl Widget<(), Theme, Renderer> for LoadingIndicator {
             return;
         };
         let state = t.state.downcast_ref::<State>();
-        state.motion.set(theme.motion);
+        state.motion.set(theme.effective_motion());
         if self.contained {
             r.fill_quad(
                 renderer::Quad {
@@ -135,7 +135,7 @@ impl Widget<(), Theme, Renderer> for LoadingIndicator {
                 theme.colors.primary_container,
             );
         }
-        let elapsed = if theme.motion.medium.is_zero() {
+        let elapsed = if theme.effective_motion().medium.is_zero() {
             Duration::ZERO
         } else {
             state.elapsed

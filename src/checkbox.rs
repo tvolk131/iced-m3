@@ -361,7 +361,12 @@ impl<Message> Widget<Message, Theme, Renderer> for Control<'_, Message> {
             [0.3, 0.0, 0.8, 0.15]
         };
         let mut changed = if self.radio || self.switch {
-            state.selection.set(f32::from(selected), now, duration)
+            state.selection.set_motion(
+                f32::from(selected),
+                now,
+                duration,
+                state.motion.get().spatial(crate::MotionSpeed::Fast),
+            )
         } else {
             state
                 .selection
@@ -516,7 +521,7 @@ impl<Message> Widget<Message, Theme, Renderer> for Control<'_, Message> {
             return;
         };
         let state = tree.state.downcast_ref::<State>();
-        state.motion.set(theme.motion);
+        state.motion.set(theme.effective_motion());
         let enabled = self.on_toggle.is_some();
         let center = layout.child(0).bounds().center();
         let centered = |diameter| {
@@ -555,7 +560,7 @@ impl<Message> Widget<Message, Theme, Renderer> for Control<'_, Message> {
         } else {
             c.primary
         };
-        let amount = state.selection.value;
+        let amount = state.selection.value.clamp(0.0, 1.0);
         renderer.with_layer(clip, |renderer| {
             self.label.as_widget().draw(
                 &tree.children[0],
@@ -717,7 +722,7 @@ fn draw_switch(
 ) {
     use iced::advanced::Renderer as _;
     let c = theme.colors;
-    let amount = state.selection.value;
+    let amount = state.selection.value.clamp(0.0, 1.0);
     let track = Rectangle::new(
         Point::new(center.x - 26.0, center.y - 16.0),
         Size::new(52.0, 32.0),

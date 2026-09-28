@@ -405,7 +405,7 @@ impl<Message: Clone> Widget<Message, Theme, Renderer> for Host<'_, Message> {
         viewport: &Rectangle,
     ) {
         let state = tree.state.downcast_ref::<State>();
-        state.presence.motion.set(theme.motion);
+        state.presence.motion.set(theme.effective_motion());
         let active = self.notice.as_ref().is_some_and(|n| n.visible) && !state.expired;
         let visible = self.notice.is_some() && state.presence.visible(active);
         let over = visible && cursor.is_over(layout.child(1).bounds());

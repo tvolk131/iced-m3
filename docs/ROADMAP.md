@@ -1,5 +1,10 @@
 # M3 completion sequence
 
+Current Expressive follow-up: [shared springs and action recipes](EXPRESSIVE.md).
+Earlier checked milestones below record family coverage, not complete Expressive
+fidelity; the new guide records remaining typography/shape, FAB, toolbar, slider
+and navigation work.
+
 Authorized sequence: adaptive navigation → date/time pickers → remaining variants
 and carousel → visual/Expressive refinement, with keyboard and accessibility work
 throughout. Keep released upstream iced 0.14; do not claim full conformance merely

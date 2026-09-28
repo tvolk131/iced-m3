@@ -205,7 +205,7 @@ impl<Message: Clone> Widget<Message, Theme, Renderer> for Stack<'_, Message> {
     ) {
         let state = tree.state.downcast_ref::<StackState>();
         for layer in &state.layers {
-            layer.presence.motion.set(theme.motion);
+            layer.presence.motion.set(theme.effective_motion());
         }
         self.background.as_widget().draw(
             &tree.children[0],
@@ -415,7 +415,7 @@ impl<Message: Clone> Overlay<Message, Theme, Renderer> for StackOverlay<'_, '_, 
             if !layer.presence.visible(*open) {
                 continue;
             }
-            layer.presence.motion.set(theme.motion);
+            layer.presence.motion.set(theme.effective_motion());
             // Separate renderer layers preserve opaque surface/text ordering on GPU.
             r.with_layer(l.bounds(), |r| {
                 let mut scrim =

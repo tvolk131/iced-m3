@@ -62,6 +62,10 @@ pub struct ColorScheme {
 pub struct Theme {
     pub colors: ColorScheme,
     pub motion: Motion,
+    /// Default shape feedback for ordinary action buttons. Explicit component
+    /// settings take precedence; custom card/list/chip geometry is unaffected.
+    pub action_shape_motion: bool,
+    reduced_motion: bool,
     dark: bool,
     pub(crate) shadows: bool,
 }
@@ -117,6 +121,8 @@ impl Theme {
                 colors: *colors,
                 dark,
                 motion: Motion::default(),
+                action_shape_motion: false,
+                reduced_motion: false,
                 shadows: true,
             };
         }
@@ -180,17 +186,41 @@ impl Theme {
             colors,
             dark,
             motion: Motion::default(),
+            action_shape_motion: false,
+            reduced_motion: false,
             shadows: true,
         }
     }
     /// Apply the application's reduced-motion preference to all shared animations.
     pub fn reduced_motion(mut self, reduced: bool) -> Self {
-        self.motion = if reduced {
+        self.reduced_motion = reduced;
+        self
+    }
+    /// Enable Expressive springs and default action shape feedback. Colors,
+    /// typography, component sizes, and explicit variants are preserved.
+    /// Call `motion_scheme` afterwards for restrained motion with these shapes.
+    pub fn expressive(mut self) -> Self {
+        self.motion.scheme = Some(crate::MotionScheme::expressive());
+        self.action_shape_motion = true;
+        self
+    }
+    /// Choose or customize shared springs without changing component variants.
+    pub fn motion_scheme(mut self, scheme: crate::MotionScheme) -> Self {
+        self.motion.scheme = Some(scheme);
+        self
+    }
+    /// Motion after the accessibility preference is applied. Consumers drawing
+    /// custom animations should use this instead of the saved configuration.
+    pub fn effective_motion(&self) -> Motion {
+        if self.reduced_motion {
             Motion::reduced()
         } else {
-            Motion::default()
-        };
-        self
+            self.motion
+        }
+    }
+    /// Whether the application's reduced-motion preference is enabled.
+    pub fn is_reduced_motion(&self) -> bool {
+        self.reduced_motion
     }
     pub fn is_dark(&self) -> bool {
         self.dark
@@ -257,10 +287,11 @@ impl theme::Base for Theme {
 }
 
 pub(crate) fn alpha(mut color: Color, opacity: f32) -> Color {
-    color.a = opacity;
+    color.a = opacity.clamp(0.0, 1.0);
     color
 }
 pub(crate) fn mix(a: Color, b: Color, t: f32) -> Color {
+    let t = t.clamp(0.0, 1.0);
     Color::from_rgba(
         a.r + (b.r - a.r) * t,
         a.g + (b.g - a.g) * t,

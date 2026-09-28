@@ -133,8 +133,12 @@ impl TypeScale {
     }
 }
 /// Finite interaction timings. A zero duration is also supported.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Motion {
+    /// Optional spring scheme for finite movement and effects. `None` retains
+    /// duration-based transitions. Zero durations still disable their animations.
+    /// Continuous indicator cycles and pointer ripples have separate recipes.
+    pub scheme: Option<crate::MotionScheme>,
     /// Search view expansion and collapse, using standard easing.
     pub search_enter: Duration,
     pub search_exit: Duration,
@@ -162,6 +166,7 @@ pub struct Motion {
 impl Default for Motion {
     fn default() -> Self {
         Self {
+            scheme: None,
             search_enter: Duration::from_millis(300),
             search_exit: Duration::from_millis(250),
             sheet_enter: Duration::from_millis(300),
@@ -184,8 +189,17 @@ impl Default for Motion {
 }
 
 impl Motion {
+    /// Spring for position, size, or shape; absent for legacy timed motion.
+    pub fn spatial(self, speed: crate::MotionSpeed) -> Option<crate::Spring> {
+        self.scheme.map(|scheme| scheme.spatial(speed))
+    }
+    /// Spring for color or opacity; absent for legacy timed motion.
+    pub fn effects(self, speed: crate::MotionSpeed) -> Option<crate::Spring> {
+        self.scheme.map(|scheme| scheme.effects(speed))
+    }
     pub const fn reduced() -> Self {
         Self {
+            scheme: None,
             search_enter: Duration::ZERO,
             search_exit: Duration::ZERO,
             sheet_enter: Duration::ZERO,

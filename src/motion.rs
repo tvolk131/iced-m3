@@ -37,6 +37,14 @@ pub(crate) struct Transition {
     start: Option<Instant>,
     duration: Duration,
     curve: Option<[f32; 4]>,
+    spring: Option<SpringState>,
+}
+#[derive(Debug, Clone, Copy)]
+struct SpringState {
+    config: crate::Spring,
+    position: f64,
+    velocity: f64,
+    last: Instant,
 }
 impl Transition {
     pub fn new(value: f32) -> Self {
@@ -47,6 +55,7 @@ impl Transition {
             start: None,
             duration: Duration::ZERO,
             curve: None,
+            spring: None,
         }
     }
     /// Baseline Material standard easing: cubic-bezier(0.2, 0, 0, 1).
@@ -77,14 +86,25 @@ impl Transition {
         changed
     }
     pub fn set(&mut self, target: f32, now: Instant, duration: Duration) -> bool {
-        if self.target == target {
-            if duration.is_zero() && self.start.is_some() {
-                self.value = target;
-                self.from = target;
-                self.start = None;
-                self.duration = duration;
-                return true;
-            }
+        if duration.is_zero() {
+            let changed = self.value != target
+                || self.target != target
+                || self.start.is_some()
+                || self.spring.is_some();
+            self.value = target;
+            self.target = target;
+            self.from = target;
+            self.start = None;
+            self.spring = None;
+            self.duration = duration;
+            return changed;
+        }
+        let switching = self.spring.is_some();
+        if switching {
+            self.tick(now);
+            self.spring = None;
+        }
+        if self.target == target && !switching {
             return false;
         }
         self.tick(now);
@@ -93,6 +113,39 @@ impl Transition {
         self.start = Some(now);
         self.duration = duration;
         self.tick(now);
+        true
+    }
+    /// Resolve a theme spring, retaining the legacy curve when none is selected.
+    /// Retargeting or replacing a spring preserves position and velocity.
+    pub fn set_motion(
+        &mut self,
+        target: f32,
+        now: Instant,
+        duration: Duration,
+        spring: Option<crate::Spring>,
+    ) -> bool {
+        let Some(config) = spring.filter(|_| !duration.is_zero()) else {
+            return self.set(target, now, duration);
+        };
+        let unchanged = self.target == target && self.spring.is_none() && self.start.is_none();
+        if unchanged {
+            return false;
+        }
+        self.tick(now);
+        if self.target == target && self.spring.is_some_and(|s| s.config == config) {
+            return false;
+        }
+        let (position, velocity) = self
+            .spring
+            .map_or((f64::from(self.value), 0.0), |s| (s.position, s.velocity));
+        self.start = None;
+        self.target = target;
+        self.spring = Some(SpringState {
+            config,
+            position,
+            velocity,
+            last: now,
+        });
         true
     }
     pub fn set_delayed(
@@ -110,6 +163,23 @@ impl Transition {
         changed
     }
     pub fn tick(&mut self, now: Instant) -> bool {
+        if let Some(spring) = &mut self.spring {
+            let (offset, velocity) = spring.config.sample(
+                spring.position - f64::from(self.target),
+                spring.velocity,
+                now.saturating_duration_since(spring.last).as_secs_f64(),
+            );
+            spring.position = f64::from(self.target) + offset;
+            spring.velocity = velocity;
+            spring.last = now;
+            self.value = spring.position as f32;
+            if offset.abs() < 0.0001 && velocity.abs() < 0.001 {
+                self.value = self.target;
+                self.spring = None;
+                return false;
+            }
+            return true;
+        }
         let Some(start) = self.start else {
             return false;
         };
@@ -187,5 +257,43 @@ mod tests {
         assert!(transition.set(1.0, now + Duration::from_millis(50), Duration::ZERO));
         assert_eq!(transition.value, 1.0);
         assert!(!transition.tick(now + Duration::from_millis(51)));
+    }
+    #[test]
+    fn spring_retarget_preserves_position_and_velocity_then_settles() {
+        let now = Instant::now();
+        let mut motion = Transition::new(0.);
+        let spring = crate::MotionScheme::expressive().fast_spatial;
+        motion.set_motion(1., now, Duration::from_millis(100), Some(spring));
+        let reversal = now + Duration::from_millis(70);
+        motion.tick(reversal);
+        let before = motion.spring.unwrap();
+        motion.set_motion(0., reversal, Duration::from_millis(100), Some(spring));
+        let after = motion.spring.unwrap();
+        assert_eq!(after.position, before.position);
+        assert_eq!(after.velocity, before.velocity);
+        let (expected, _) = spring.sample(after.position, after.velocity, 0.016);
+        motion.tick(reversal + Duration::from_millis(16));
+        assert!((motion.value - expected as f32).abs() < 1e-6);
+        assert!(!motion.tick(now + Duration::from_secs(3)));
+        assert_eq!(motion.value, 0.);
+        assert!(!motion.set_motion(
+            0.,
+            now + Duration::from_secs(4),
+            Duration::from_millis(100),
+            Some(spring)
+        ));
+    }
+
+    #[test]
+    fn reduced_motion_cancels_an_active_spring_and_local_scheme() {
+        let now = Instant::now();
+        let mut motion = Transition::new(0.);
+        let spring = Some(crate::MotionScheme::expressive().fast_spatial);
+        motion.set_motion(1., now, Duration::from_millis(100), spring);
+        motion.tick(now + Duration::from_millis(70));
+        motion.set_motion(1., now + Duration::from_millis(70), Duration::ZERO, spring);
+        assert_eq!(motion.value, 1.);
+        assert!(motion.spring.is_none());
+        assert!(!motion.tick(now + Duration::from_secs(1)));
     }
 }

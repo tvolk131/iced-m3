@@ -431,7 +431,7 @@ impl<Message> Widget<Message, Theme, Renderer> for Carousel<'_, Message> {
             return;
         };
         let state = t.state.downcast_ref::<State>();
-        state.motion.set(theme.motion);
+        state.motion.set(theme.effective_motion());
         r.with_layer(clip, |r| {
             for (i, item) in self.items.borrow().iter().enumerate() {
                 if let Some(item_clip) = l.child(i).bounds().intersection(&clip) {

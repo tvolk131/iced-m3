@@ -9,6 +9,7 @@ mod desktop_fidelity;
 mod desktop_finish;
 mod dialog_actions;
 mod dialog_regressions;
+mod expressive;
 mod fidelity;
 mod interaction_contracts;
 mod loading_progress;

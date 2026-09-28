@@ -57,7 +57,7 @@ impl<Message> Widget<Message, Theme, Renderer> for Rail<'_, Message> {
             .downcast_ref::<State>()
             .width
             .value
-            .min(l.max().width);
+            .clamp(0.0, l.max().width);
         let child = self.content.as_widget_mut().layout(
             &mut t.children[0],
             r,
@@ -90,7 +90,12 @@ impl<Message> Widget<Message, Theme, Renderer> for Rail<'_, Message> {
             _ => crate::motion::now(),
         };
         let before = state.width.value;
-        let changed = state.width.set(self.width, now, state.motion.get().medium);
+        let changed = state.width.set_motion(
+            self.width,
+            now,
+            state.motion.get().medium,
+            state.motion.get().spatial(crate::MotionSpeed::Default),
+        );
         if changed || state.width.tick(now) {
             s.request_redraw();
         }
@@ -134,7 +139,10 @@ impl<Message> Widget<Message, Theme, Renderer> for Rail<'_, Message> {
         v: &Rectangle,
     ) {
         use iced::advanced::Renderer as _;
-        t.state.downcast_ref::<State>().motion.set(th.motion);
+        t.state
+            .downcast_ref::<State>()
+            .motion
+            .set(th.effective_motion());
         if t.state.downcast_ref::<State>().width.value == self.width {
             self.content
                 .as_widget()

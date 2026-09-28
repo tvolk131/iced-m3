@@ -731,7 +731,7 @@ impl<Message: Clone> Widget<Message, Theme, Renderer> for Menu<'_, Message> {
             .popup
             .presence
             .motion
-            .set(theme.motion);
+            .set(theme.effective_motion());
         if self.item && tree.state.downcast_ref::<State>().popup.open {
             use iced::advanced::Renderer as _;
             renderer.fill_quad(

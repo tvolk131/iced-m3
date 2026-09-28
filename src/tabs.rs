@@ -351,7 +351,17 @@ impl<Message: Clone> Widget<Message, Theme, Renderer> for Strip<'_, Message> {
                     _ => crate::motion::now(),
                 };
                 let duration = state.motion.get().medium;
-                let changed = state.x.set(x, now, duration) | state.width.set(width, now, duration);
+                let changed = state.x.set_motion(
+                    x,
+                    now,
+                    duration,
+                    state.motion.get().spatial(crate::MotionSpeed::Default),
+                ) | state.width.set_motion(
+                    width,
+                    now,
+                    duration,
+                    state.motion.get().spatial(crate::MotionSpeed::Default),
+                );
                 let active = state.x.tick(now) | state.width.tick(now);
                 if changed || active {
                     shell.request_redraw();
@@ -375,7 +385,7 @@ impl<Message: Clone> Widget<Message, Theme, Renderer> for Strip<'_, Message> {
             return;
         };
         let state = tree.state.downcast_ref::<State>();
-        state.motion.set(theme.motion);
+        state.motion.set(theme.effective_motion());
         renderer.with_layer(clip, |renderer| {
             self.row.as_widget().draw(
                 &tree.children[0],
@@ -398,7 +408,7 @@ impl<Message: Clone> Widget<Message, Theme, Renderer> for Strip<'_, Message> {
             );
             if let Some(target) = self.target(layout) {
                 let (x, width) = if state.initialized {
-                    (state.x.value, state.width.value)
+                    (state.x.value, state.width.value.max(0.0))
                 } else {
                     target
                 };

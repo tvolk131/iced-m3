@@ -103,9 +103,12 @@ pub fn divider<'a>() -> widget::Rule<'a, Theme> {
     widget::rule::horizontal(tokens::size::OUTLINE)
 }
 
-/// A circular 40px action using the same finite press effect as Button.
-/// Content is centered in a 24×24px area. Prefer a vector icon or an icon font
-/// with square metrics; ordinary text glyphs include baseline/line-height space.
+/// A circular 40px action by default, with centered 24px artwork.
+/// Use [`Button::size`] and [`Button::icon_width`] for the current Material sizes
+/// and narrow/default/wide widths. Supply artwork at
+/// [`crate::ButtonSize::icon_button_icon_size`]; arbitrary widgets are not resized.
+/// Prefer [`crate::icon()`] with an SVG: text layout bounds include font metrics
+/// and need not center the visible glyph.
 pub fn icon_button<'a, Message: 'a>(icon: impl Into<Element<'a, Message>>) -> Button<'a, Message> {
     Button::new(
         widget::container(icon)
@@ -114,9 +117,6 @@ pub fn icon_button<'a, Message: 'a>(icon: impl Into<Element<'a, Message>>) -> Bu
     )
     .icon_style()
     .variant(ButtonVariant::Text)
-    .padding(8.0)
-    .width(tokens::size::BUTTON)
-    .height(tokens::size::BUTTON)
 }
 
 /// A selectable filter/assist chip. App state owns the selection.

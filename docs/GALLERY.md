@@ -48,6 +48,14 @@ The **More** menu now includes a full-screen workspace editor and a **Navigation
 submenu for rail expansion and modal navigation. **Schedule → Open calendar**
 demonstrates a compact docked date picker with an integrated calendar/text toggle. Edited workspace drafts now show a nested discard confirmation. See [desktop behavior and variants](DESKTOP.md).
 
+## Expressive comparison
+
+`cargo run --release --example expressive` compares Standard and Expressive spring
+schemes, reduced motion and light/dark themes. It includes five common/icon button
+sizes, narrow/default/wide icon containers, round/square shapes, connected groups
+and a retained dialog. Hold and release controls or reverse an animation early.
+See [the API and remaining scope](EXPRESSIVE.md).
+
 ## Independent consumer app
 
 The repository also contains **Northstar Studio**, a separate package with its own

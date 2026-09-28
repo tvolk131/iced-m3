@@ -1,49 +1,78 @@
 //! Expressive action compositions, sharing the existing Material interaction layer.
 use crate::{Button, Element, MenuItem, Theme, TypeScale, typography};
 use iced::{Border, Length, widget};
+mod group;
+/// Equal-width actions with retained press expansion and neighbor compression.
+/// Children keep their widget/focus state while their layout changes.
 pub struct ButtonGroup<'a, Message> {
     buttons: Vec<Button<'a, Message>>,
     connected: bool,
+    expanded_ratio: f32,
 }
+/// Group actions with a 15% requested press expansion, bounded by neighboring
+/// padding so labels keep their original available width.
 pub fn button_group<'a, Message>(
     buttons: impl IntoIterator<Item = Button<'a, Message>>,
 ) -> ButtonGroup<'a, Message> {
     ButtonGroup {
         buttons: buttons.into_iter().collect(),
         connected: false,
+        expanded_ratio: 0.15,
     }
 }
 impl<Message> ButtonGroup<'_, Message> {
+    /// Use 2px gaps and connected corners instead of 12px gaps (default: false).
     pub fn connected(mut self, connected: bool) -> Self {
         self.connected = connected;
+        self
+    }
+    /// Requested width growth as a fraction of the resting button width.
+    /// Zero disables deformation. Values are clamped to 0..=1; non-finite values
+    /// are ignored. Actual growth is limited by immediate neighbors' padding.
+    pub fn expanded_ratio(mut self, ratio: f32) -> Self {
+        if ratio.is_finite() {
+            self.expanded_ratio = ratio.clamp(0.0, 1.0);
+        }
         self
     }
 }
 impl<'a, Message: Clone + 'a> From<ButtonGroup<'a, Message>> for Element<'a, Message> {
     fn from(group: ButtonGroup<'a, Message>) -> Self {
         let last = group.buttons.len().saturating_sub(1);
-        let row =
-            widget::Row::with_children(group.buttons.into_iter().enumerate().map(|(i, button)| {
-                let button = button.expressive(true).width(Length::Fill);
+        let buttons = group
+            .buttons
+            .into_iter()
+            .enumerate()
+            .map(|(i, button)| {
+                let button = button.grouped().width(Length::Fill);
                 if group.connected {
                     button
                         .corner_radius(
                             Border::default()
                                 .rounded(iced::border::Radius {
-                                    top_left: if i == 0 { 20.0 } else { 4.0 },
-                                    bottom_left: if i == 0 { 20.0 } else { 4.0 },
-                                    top_right: if i == last { 20.0 } else { 4.0 },
-                                    bottom_right: if i == last { 20.0 } else { 4.0 },
+                                    top_left: if i == 0 { 999.0 } else { 8.0 },
+                                    bottom_left: if i == 0 { 999.0 } else { 8.0 },
+                                    top_right: if i == last { 999.0 } else { 8.0 },
+                                    bottom_right: if i == last { 999.0 } else { 8.0 },
                                 })
                                 .radius,
                         )
-                        .into()
+                        .pressed_corners(iced::border::Radius {
+                            top_left: if i == 0 { 999.0 } else { 4.0 },
+                            bottom_left: if i == 0 { 999.0 } else { 4.0 },
+                            top_right: if i == last { 999.0 } else { 4.0 },
+                            bottom_right: if i == last { 999.0 } else { 4.0 },
+                        })
                 } else {
-                    button.into()
+                    button
                 }
-            }))
-            .spacing(if group.connected { 2 } else { 8 });
-        crate::focus::group(row)
+            })
+            .collect();
+        crate::focus::group(Element::new(group::Group {
+            buttons,
+            spacing: if group.connected { 2.0 } else { 12.0 },
+            ratio: group.expanded_ratio,
+        }))
     }
 }
 pub fn split_button<'a, Message: Clone + 'a>(

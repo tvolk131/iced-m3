@@ -91,7 +91,12 @@ impl<Message> Widget<Message, Theme, Renderer> for Selection<'_, Message> {
             std::time::Duration::ZERO
         };
         let before = state.progress.value;
-        let changed = state.progress.set(f32::from(self.selected), now, duration);
+        let changed = state.progress.set_motion(
+            f32::from(self.selected),
+            now,
+            duration,
+            state.motion.get().spatial(crate::MotionSpeed::Fast),
+        );
         let active = state.progress.tick(now);
         if changed || active || state.progress.value != before {
             shell.request_redraw();
@@ -109,7 +114,7 @@ impl<Message> Widget<Message, Theme, Renderer> for Selection<'_, Message> {
     ) {
         use iced::advanced::Renderer as _;
         let state = tree.state.downcast_ref::<State>();
-        state.motion.set(theme.motion);
+        state.motion.set(theme.effective_motion());
         let Some(clip) = layout.bounds().intersection(viewport) else {
             return;
         };

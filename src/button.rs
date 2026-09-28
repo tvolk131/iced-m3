@@ -23,10 +23,128 @@ pub enum ButtonVariant {
     Elevated,
 }
 
+/// Coordinated current Material common-button sizes. Custom content keeps its
+/// own typography/artwork; `button(label)` updates the label automatically.
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
+pub enum ButtonSize {
+    /// 32px container; 14px label and 20px icon.
+    ExtraSmall,
+    /// 40px container; 14px label and 20px icon.
+    #[default]
+    Small,
+    /// 56px container; 16px label and 24px icon.
+    Medium,
+    /// 96px container; 24px label and 32px icon.
+    Large,
+    /// 136px container; 32px label and 40px icon.
+    ExtraLarge,
+}
+impl ButtonSize {
+    /// Visible container height in logical pixels.
+    pub const fn height(self) -> f32 {
+        match self {
+            Self::ExtraSmall => 32.,
+            Self::Small => 40.,
+            Self::Medium => 56.,
+            Self::Large => 96.,
+            Self::ExtraLarge => 136.,
+        }
+    }
+    /// Expected square artwork size for custom icon content.
+    pub const fn icon_size(self) -> f32 {
+        match self {
+            Self::ExtraSmall | Self::Small => 20.,
+            Self::Medium => 24.,
+            Self::Large => 32.,
+            Self::ExtraLarge => 40.,
+        }
+    }
+    /// Label role used by the text constructor.
+    pub const fn label(self) -> tokens::TypeScale {
+        match self {
+            Self::ExtraSmall | Self::Small => tokens::TypeScale::LabelLarge,
+            Self::Medium => tokens::TypeScale::TitleMedium,
+            Self::Large => tokens::TypeScale::HeadlineSmall,
+            Self::ExtraLarge => tokens::TypeScale::HeadlineLarge,
+        }
+    }
+    /// Artwork size for an icon-only button (small icon buttons use 24px).
+    pub const fn icon_button_icon_size(self) -> f32 {
+        match self {
+            Self::Small => 24.,
+            _ => self.icon_size(),
+        }
+    }
+    fn icon_padding(self, width: IconButtonWidth) -> f32 {
+        let values = match self {
+            Self::ExtraSmall => [4., 6., 10.],
+            Self::Small => [4., 8., 14.],
+            Self::Medium => [12., 16., 24.],
+            Self::Large => [16., 32., 48.],
+            Self::ExtraLarge => [32., 48., 72.],
+        };
+        values[match width {
+            IconButtonWidth::Narrow => 0,
+            IconButtonWidth::Default => 1,
+            IconButtonWidth::Wide => 2,
+        }]
+    }
+    fn padding(self) -> f32 {
+        match self {
+            Self::ExtraSmall | Self::Small => 16.,
+            Self::Medium => 24.,
+            Self::Large => 48.,
+            Self::ExtraLarge => 64.,
+        }
+    }
+    fn square_radius(self) -> f32 {
+        match self {
+            Self::ExtraSmall | Self::Small => 12.,
+            Self::Medium => 16.,
+            Self::Large | Self::ExtraLarge => 28.,
+        }
+    }
+    fn pressed_radius(self) -> f32 {
+        match self {
+            Self::ExtraSmall | Self::Small => 8.,
+            Self::Medium => 12.,
+            Self::Large | Self::ExtraLarge => 16.,
+        }
+    }
+}
+/// Width treatment for icon-only actions, relative to the selected size.
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
+pub enum IconButtonWidth {
+    /// Less horizontal padding.
+    Narrow,
+    /// Square container.
+    #[default]
+    Default,
+    /// More horizontal padding.
+    Wide,
+}
+/// Resting geometry for a common action. Selected toggles use the opposite shape.
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
+pub enum ButtonShape {
+    /// Fully rounded ends.
+    #[default]
+    Round,
+    /// Size-specific rounded square corners.
+    Square,
+}
+
 /// A pointer and keyboard action. Omitting `on_press` makes it disabled.
 /// Child content should be non-interactive; rows of text and icons are supported.
 pub struct Button<'a, Message> {
     content: Element<'a, Message>,
+    label: Option<iced::widget::text::Fragment<'a>>,
+    size: Option<ButtonSize>,
+    shape: ButtonShape,
+    shape_override: bool,
+    motion_scheme: Option<crate::MotionScheme>,
+    pressed_corners: Option<iced::border::Radius>,
+    grouped: bool,
+    group_compression: (f32, f32),
     on_press: Option<Message>,
     disabled: bool,
     variant: ButtonVariant,
@@ -38,6 +156,7 @@ pub struct Button<'a, Message> {
     selected: bool,
     palette: Option<Box<dyn Fn(&Theme) -> (Color, Color) + 'a>>,
     icon: bool,
+    icon_width: IconButtonWidth,
     toggle: bool,
     interactive_content: bool,
     content_disabled: bool,
@@ -47,7 +166,7 @@ pub struct Button<'a, Message> {
     corners: Option<iced::border::Radius>,
     elevated: bool,
     chip: bool,
-    expressive: bool,
+    expressive: Option<bool>,
     chip_assist: bool,
     elevation: Option<(u8, u8)>,
     card: Option<(crate::SurfaceVariant, bool, bool)>,
@@ -58,15 +177,26 @@ pub struct Button<'a, Message> {
 pub fn button<'a, Message: 'a>(
     label: impl iced::widget::text::IntoFragment<'a>,
 ) -> Button<'a, Message> {
-    Button::new(crate::components::typography(
-        label,
+    let label = label.into_fragment();
+    let mut button = Button::new(crate::components::typography(
+        label.clone(),
         tokens::TypeScale::Label,
-    ))
+    ));
+    button.label = Some(label);
+    button
 }
 impl<'a, Message: 'a> Button<'a, Message> {
     pub fn new(content: impl Into<Element<'a, Message>>) -> Self {
         Self {
             content: content.into(),
+            label: None,
+            size: None,
+            shape: ButtonShape::Round,
+            shape_override: false,
+            motion_scheme: None,
+            pressed_corners: None,
+            grouped: false,
+            group_compression: (0.0, 0.0),
             on_press: None,
             disabled: false,
             variant: ButtonVariant::Filled,
@@ -78,6 +208,7 @@ impl<'a, Message: 'a> Button<'a, Message> {
             selected: false,
             palette: None,
             icon: false,
+            icon_width: IconButtonWidth::Default,
             toggle: false,
             interactive_content: false,
             content_disabled: false,
@@ -87,7 +218,7 @@ impl<'a, Message: 'a> Button<'a, Message> {
             corners: None,
             elevated: false,
             chip: false,
-            expressive: false,
+            expressive: None,
             chip_assist: false,
             elevation: None,
             card: None,
@@ -119,7 +250,7 @@ impl<'a, Message: 'a> Button<'a, Message> {
     }
     pub fn variant(mut self, variant: ButtonVariant) -> Self {
         self.variant = variant;
-        if !self.custom_padding {
+        if !self.custom_padding && self.size.is_none() && !self.icon {
             self.padding = [
                 10.0,
                 if variant == ButtonVariant::Text {
@@ -145,9 +276,99 @@ impl<'a, Message: 'a> Button<'a, Message> {
         self.custom_padding = true;
         self
     }
+    /// Override theme-provided shape feedback. This controls press/selection
+    /// morphing only; sizes and motion schemes remain independently configurable.
     pub fn expressive(mut self, expressive: bool) -> Self {
-        self.expressive = expressive;
+        self.expressive = Some(expressive);
         self
+    }
+    /// Apply a current Material common-button recipe, including label typography,
+    /// minimum height, padding and outline width. Explicit padding is preserved.
+    /// Arbitrary `Button::new` content retains its own font/icon sizing.
+    pub fn size(mut self, size: ButtonSize) -> Self {
+        self.size = Some(size);
+        self.min_height = size.height();
+        if !self.custom_padding && self.icon {
+            self.padding = [
+                (size.height() - size.icon_button_icon_size()) / 2.,
+                size.icon_padding(self.icon_width),
+            ]
+            .into();
+        } else if !self.custom_padding {
+            self.padding = [
+                ((size.height() - size.label().metrics().1) / 2.0).max(0.0),
+                size.padding(),
+            ]
+            .into();
+        }
+        if let Some(label) = &self.label {
+            self.content = crate::typography(label.clone(), size.label()).into();
+        }
+        self
+    }
+    /// Choose narrow, square, or wide geometry for `icon_button`.
+    /// Explicit `.width(...)` takes precedence; arbitrary artwork is not resized.
+    /// This setting has no effect on a common text button.
+    pub fn icon_width(mut self, width: IconButtonWidth) -> Self {
+        self.icon_width = width;
+        if self.icon {
+            let size = self.size.unwrap_or_default();
+            self = self.size(size);
+        }
+        self
+    }
+    fn dimensions(&self) -> Size<Length> {
+        let size = self.size.unwrap_or_default();
+        Size::new(
+            if self.icon && self.width == Length::Shrink {
+                (size.icon_button_icon_size() + size.icon_padding(self.icon_width) * 2.).into()
+            } else {
+                self.width
+            },
+            if self.icon && self.height == Length::Shrink {
+                size.height().into()
+            } else {
+                self.height
+            },
+        )
+    }
+    /// Choose round or rounded-square geometry without changing the motion scheme.
+    /// Enables size-specific shape feedback unless `.expressive(false)` is set.
+    pub fn shape(mut self, shape: ButtonShape) -> Self {
+        self.shape = shape;
+        self.shape_override = true;
+        if self.size.is_none() {
+            self = self.size(ButtonSize::Small);
+        }
+        self
+    }
+    /// Override shared springs for this control. Reduced motion still wins.
+    pub fn motion_scheme(mut self, scheme: crate::MotionScheme) -> Self {
+        self.motion_scheme = Some(scheme);
+        self
+    }
+    pub(crate) fn pressed_corners(mut self, corners: iced::border::Radius) -> Self {
+        self.pressed_corners = Some(corners);
+        self
+    }
+    pub(crate) fn press_amount(tree: &Tree) -> f32 {
+        tree.state.downcast_ref::<State>().shape.value
+    }
+    pub(crate) fn compression_limit(&self) -> f32 {
+        self.padding.left.min(self.padding.right)
+    }
+    pub(crate) fn grouped(mut self) -> Self {
+        self.grouped = true;
+        if self.expressive.is_none() {
+            self.expressive = Some(true);
+        }
+        self
+    }
+    pub(crate) fn group_compression(&mut self, left: f32, right: f32) {
+        self.group_compression = (left, right);
+    }
+    pub(crate) fn layout_width(&mut self, width: Length) {
+        self.width = width;
     }
     pub fn corner_radius(mut self, radius: iced::border::Radius) -> Self {
         self.corners = Some(radius);
@@ -165,6 +386,7 @@ impl<'a, Message: 'a> Button<'a, Message> {
     }
     pub(crate) fn icon_style(mut self) -> Self {
         self.icon = true;
+        self.padding = 8.0.into();
         self
     }
     pub(crate) fn elevated_style(mut self) -> Self {
@@ -220,6 +442,8 @@ struct State {
     focus: crate::focus::Focus,
     keyboard_pressed: bool,
     shape: Transition,
+    shape_enabled: Cell<bool>,
+    selected_shape: Transition,
     pressed: bool,
     layer: Transition,
     ripple: crate::ripple::PressRipple,
@@ -236,6 +460,8 @@ impl Default for State {
             focus: crate::focus::Focus::default(),
             keyboard_pressed: false,
             shape: Transition::standard(0.0),
+            shape_enabled: Cell::new(false),
+            selected_shape: Transition::standard(0.0),
             pressed: false,
             layer: Transition::new(0.0),
             ripple: crate::ripple::PressRipple::new(),
@@ -256,6 +482,7 @@ impl<Message: Clone> Widget<Message, Theme, Renderer> for Button<'_, Message> {
     fn state(&self) -> tree::State {
         tree::State::new(State {
             selection: Transition::standard(f32::from(self.selected)),
+            selected_shape: Transition::standard(f32::from(self.selected)),
             ..State::default()
         })
     }
@@ -273,7 +500,7 @@ impl<Message: Clone> Widget<Message, Theme, Renderer> for Button<'_, Message> {
         tree.state.downcast_mut::<State>().content_disabled = self.content_disabled;
     }
     fn size(&self) -> Size<Length> {
-        Size::new(self.width, self.height)
+        self.dimensions()
     }
     fn layout(
         &mut self,
@@ -281,14 +508,18 @@ impl<Message: Clone> Widget<Message, Theme, Renderer> for Button<'_, Message> {
         renderer: &Renderer,
         limits: &layout::Limits,
     ) -> layout::Node {
+        let mut padding = self.padding;
+        padding.left = (padding.left - self.group_compression.0).max(0.0);
+        padding.right = (padding.right - self.group_compression.1).max(0.0);
+        let dimensions = self.dimensions();
         layout::positioned(
-            &limits.min_height(match self.height {
+            &limits.min_height(match dimensions.height {
                 Length::Fixed(h) => h,
                 _ => self.min_height,
             }),
-            self.width,
-            self.height,
-            self.padding,
+            dimensions.width,
+            dimensions.height,
+            padding,
             |limits| {
                 self.content.as_widget_mut().layout(
                     &mut tree.children[0],
@@ -395,10 +626,12 @@ impl<Message: Clone> Widget<Message, Theme, Renderer> for Button<'_, Message> {
             _ => crate::motion::now(),
         };
         if self.segment || self.chip {
-            let changed =
-                state
-                    .selection
-                    .set(f32::from(self.selected), now, state.motion.get().medium);
+            let changed = state.selection.set_motion(
+                f32::from(self.selected),
+                now,
+                state.motion.get().medium,
+                state.motion.get().effects(crate::MotionSpeed::Fast),
+            );
             if state.selection.tick(now) || changed {
                 shell.request_redraw();
             }
@@ -472,13 +705,27 @@ impl<Message: Clone> Widget<Message, Theme, Renderer> for Button<'_, Message> {
             }
             _ => {}
         }
-        if self.expressive {
-            let changed = state
-                .shape
-                .set(f32::from(state.pressed), now, state.motion.get().short);
-            if changed || state.shape.tick(now) {
+        if state.shape_enabled.get() || self.grouped {
+            let motion = state.motion.get();
+            let changed = state.shape.set_motion(
+                f32::from(state.pressed),
+                now,
+                motion.short,
+                motion.spatial(crate::MotionSpeed::Fast),
+            );
+            let selected = state.selected_shape.set_motion(
+                f32::from(self.selected),
+                now,
+                motion.short,
+                motion.spatial(crate::MotionSpeed::Fast),
+            );
+            let active = state.shape.tick(now) | state.selected_shape.tick(now);
+            if changed || selected || active {
                 shell.request_redraw();
             }
+        } else {
+            state.shape = Transition::standard(0.0);
+            state.selected_shape = Transition::standard(f32::from(self.selected));
         }
         if (was_pressed && !state.pressed) || (state.pressed && !over && !state.keyboard_pressed) {
             state.ripple.release(
@@ -495,7 +742,12 @@ impl<Message: Clone> Widget<Message, Theme, Renderer> for Button<'_, Message> {
             shell.request_redraw();
         }
         let target = if over { 0.08 } else { 0.0 };
-        if state.layer.set(target, now, state.motion.get().short) {
+        if state.layer.set_motion(
+            target,
+            now,
+            state.motion.get().short,
+            state.motion.get().effects(crate::MotionSpeed::Fast),
+        ) {
             shell.request_redraw();
         }
         if let Event::Window(window::Event::RedrawRequested(_)) = event
@@ -520,7 +772,23 @@ impl<Message: Clone> Widget<Message, Theme, Renderer> for Button<'_, Message> {
             return;
         };
         let state = tree.state.downcast_ref::<State>();
-        state.motion.set(theme.motion);
+        let mut motion = theme.effective_motion();
+        motion.scheme = self.motion_scheme.or(motion.scheme);
+        let shape_enabled = self.expressive.unwrap_or(
+            self.shape_override
+                || (theme.action_shape_motion
+                    && !self.chip
+                    && !self.segment
+                    && self.card.is_none()
+                    && !self.interactive_content
+                    && self.corners.is_none()
+                    && self.radius == tokens::shape::FULL),
+        );
+        if (shape_enabled || self.grouped) && motion.scheme.is_none() {
+            motion.scheme = Some(crate::MotionScheme::expressive());
+        }
+        state.motion.set(motion);
+        state.shape_enabled.set(shape_enabled);
         let c = theme.colors;
         let enabled = self.enabled() || (self.interactive_content && !self.content_disabled);
         let focused = state.focus.focused && state.focus.visible && !state.focus.suppressed;
@@ -636,16 +904,53 @@ impl<Message: Clone> Widget<Message, Theme, Renderer> for Button<'_, Message> {
             }
         };
         let mut radius = self.corners.unwrap_or(self.radius.into());
-        if self.expressive {
-            let shrink = |value: f32| {
-                let value = value.min(bounds.height / 2.0);
-                value + (12.0_f32.min(bounds.height / 2.0) - value) * state.shape.value
+        if (self.size.is_some() || shape_enabled)
+            && self.corners.is_none()
+            && self.radius == tokens::shape::FULL
+        {
+            let size = self.size.unwrap_or_default();
+            let round = bounds.height / 2.0;
+            let square = size.square_radius().min(round);
+            let (rest, selected) = match self.shape {
+                ButtonShape::Round => (round, square),
+                ButtonShape::Square => (square, round),
+            };
+            let amount = if shape_enabled && enabled {
+                state.selected_shape.value
+            } else {
+                f32::from(self.selected)
+            };
+            radius = (rest + (selected - rest) * amount).clamp(0.0, round).into();
+        }
+        if self.pressed_corners.is_some() {
+            let amount = if shape_enabled && enabled {
+                state.selected_shape.value
+            } else {
+                f32::from(self.selected)
+            };
+            let round = bounds.height.min(bounds.width) / 2.;
+            let selected = |r: f32| r.min(round) + (round - r.min(round)) * amount.clamp(0., 1.);
+            radius = iced::border::Radius {
+                top_left: selected(radius.top_left),
+                top_right: selected(radius.top_right),
+                bottom_left: selected(radius.bottom_left),
+                bottom_right: selected(radius.bottom_right),
+            };
+        }
+        if shape_enabled {
+            let pressed = self
+                .pressed_corners
+                .unwrap_or(self.size.unwrap_or_default().pressed_radius().into());
+            let shrink = |value: f32, target: f32| {
+                let limit = bounds.height.min(bounds.width) / 2.0;
+                let value = value.min(limit);
+                (value + (target.min(limit) - value) * state.shape.value).clamp(0.0, limit)
             };
             radius = iced::border::Radius {
-                top_left: shrink(radius.top_left),
-                top_right: shrink(radius.top_right),
-                bottom_left: shrink(radius.bottom_left),
-                bottom_right: shrink(radius.bottom_right),
+                top_left: shrink(radius.top_left, pressed.top_left),
+                top_right: shrink(radius.top_right, pressed.top_right),
+                bottom_left: shrink(radius.bottom_left, pressed.bottom_left),
+                bottom_right: shrink(radius.bottom_right, pressed.bottom_right),
             };
         }
         let border = Border {
@@ -661,7 +966,11 @@ impl<Message: Clone> Widget<Message, Theme, Renderer> for Button<'_, Message> {
                     1.0
                 }
             } else if self.variant == ButtonVariant::Outlined && !(self.icon && self.selected) {
-                tokens::size::OUTLINE
+                match self.size {
+                    Some(ButtonSize::Large) => 2.0,
+                    Some(ButtonSize::ExtraLarge) => 3.0,
+                    _ => tokens::size::OUTLINE,
+                }
             } else {
                 0.0
             },

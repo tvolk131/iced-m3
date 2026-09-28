@@ -358,19 +358,22 @@ impl<'a, Message: Clone + 'a> Widget<Message, Theme, Renderer> for RangeSlider<'
         for i in 0..2 {
             let hovered = !cancelled && over && nearest == Some(i);
             let pressed = state.dragging && state.active.unwrap_or(state.last_active) == i;
-            let changed = state.hover[i].set(
+            let changed = state.hover[i].set_motion(
                 if hovered { 0.08 } else { 0.0 },
                 now,
                 state.motion.get().short,
-            ) | state.press[i].set(
+                state.motion.get().effects(crate::MotionSpeed::Fast),
+            ) | state.press[i].set_motion(
                 if pressed { 1.0 } else { 0.0 },
                 now,
                 state.motion.get().short,
+                state.motion.get().spatial(crate::MotionSpeed::Fast),
             );
-            let label_changed = state.label[i].set(
+            let label_changed = state.label[i].set_motion(
                 f32::from(self.labeled && (hovered || show_both)),
                 now,
                 state.motion.get().slider_label,
+                state.motion.get().spatial(crate::MotionSpeed::Fast),
             );
             if state.hover[i].tick(now)
                 | state.press[i].tick(now)
@@ -398,7 +401,7 @@ impl<'a, Message: Clone + 'a> Widget<Message, Theme, Renderer> for RangeSlider<'
             return;
         };
         let state = tree.state.downcast_ref::<State>();
-        state.motion.set(theme.motion);
+        state.motion.set(theme.effective_motion());
         let enabled = self.enabled();
         let c = theme.colors;
         let track = self.scale.track(bounds);

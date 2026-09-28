@@ -2,6 +2,16 @@
 
 ## Unreleased
 
+- Added opt-in `Theme::expressive()` and customizable Standard/Expressive spring
+  schemes, with component motion/shape overrides and interruption continuity.
+- Added five common/icon button sizes, round/square toggle shapes and three
+  icon-button widths. SVG artwork sizing remains explicit. Button groups retain
+  focus/state while expanding pressed items and compressing adjacent padding.
+- Reduced motion now preserves custom motion settings when toggled off again.
+  Custom animations should use `Theme::effective_motion()`. `tokens::Motion` now
+  contains an optional spring scheme and implements `PartialEq`, no longer `Eq`.
+- Added an interactive `expressive` example and a [reference/coverage guide](docs/EXPRESSIVE.md).
+
 - Focus groups let focused children consume editing keys before arrow/Home/End
   traversal. Text fields and sliders work inside toolbars; Tab still leaves the
   group. Context clicks no longer clear focus in the root focus scope.

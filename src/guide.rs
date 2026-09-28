@@ -12,3 +12,6 @@ pub mod cookbook {}
 
 #[doc = include_str!("../docs/THEMING.md")]
 pub mod theming {}
+
+#[doc = include_str!("../docs/EXPRESSIVE.md")]
+pub mod expressive {}

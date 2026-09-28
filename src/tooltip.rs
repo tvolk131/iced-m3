@@ -200,7 +200,7 @@ impl<Message: Clone> Widget<Message, Theme, Renderer> for Tooltip<'_, Message> {
             .downcast_ref::<State>()
             .presence
             .motion
-            .set(theme.motion);
+            .set(theme.effective_motion());
         self.content.as_widget().draw(
             &tree.children[0],
             renderer,

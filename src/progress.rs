@@ -444,9 +444,9 @@ impl Widget<(), Theme, Renderer> for Progress {
             return;
         };
         let state = tree.state.downcast_ref::<State>();
-        state.motion.set(theme.motion);
+        state.motion.set(theme.effective_motion());
         let c = theme.colors;
-        let elapsed = if state.indeterminate && !theme.motion.medium.is_zero() {
+        let elapsed = if state.indeterminate && !theme.effective_motion().medium.is_zero() {
             state.elapsed
         } else {
             Duration::ZERO
@@ -471,7 +471,7 @@ impl Widget<(), Theme, Renderer> for Progress {
         });
         renderer.with_layer(clip, |renderer| {
             if self.wavy {
-                let elapsed = if state.indeterminate && theme.motion.medium.is_zero() {
+                let elapsed = if state.indeterminate && theme.effective_motion().medium.is_zero() {
                     Duration::from_millis(1000)
                 } else {
                     elapsed
@@ -498,7 +498,7 @@ impl Widget<(), Theme, Renderer> for Progress {
                     (-90., state.progress.value * 360.)
                 };
                 let wavelength = self.wavelength_for(state.indeterminate);
-                let phase = if theme.motion.medium.is_zero() {
+                let phase = if theme.effective_motion().medium.is_zero() {
                     0.
                 } else {
                     (state.wave_elapsed.as_secs_f64() * self.wave_speed as f64 / wavelength as f64)
@@ -530,7 +530,7 @@ impl Widget<(), Theme, Renderer> for Progress {
                 return;
             }
             if self.kind == Kind::Linear {
-                let elapsed = if state.indeterminate && theme.motion.medium.is_zero() {
+                let elapsed = if state.indeterminate && theme.effective_motion().medium.is_zero() {
                     Duration::from_millis(1000)
                 } else {
                     elapsed

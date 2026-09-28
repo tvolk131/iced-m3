@@ -535,7 +535,7 @@ impl<Message: Clone> Overlay<Message, Theme, Renderer> for Anchored<'_, '_, Mess
     ) {
         use iced::advanced::Renderer as _;
         let progress = if let Some(state) = &self.menu {
-            state.presence.motion.set(theme.motion);
+            state.presence.motion.set(theme.effective_motion());
             if !state.presence.visible(state.open) {
                 return;
             }

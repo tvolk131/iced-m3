@@ -15,6 +15,12 @@ let heading = typography("A new workspace", TypeScale::Headline).font(Font::DEFA
 
 Return your theme from the application's `.theme(...)` callback. All custom components share semantic roles. Accent generation uses HCT tonal-spot colors from the pinned Rust port of Material color utilities. `Theme::from_accent_with_contrast(accent, dark, level)` sets contrast in -1..1; `.reduced_motion(true)` disables shared animation. At standard contrast, generated foreground/background role pairs are tested for at least 4.5:1 contrast. Custom role overrides are the application's responsibility.
 
+`Theme::expressive()` opts into shared spring motion and action shape feedback.
+Component sizes/variants stay explicit. Read `theme.effective_motion()` in custom
+widgets so reduced motion wins without erasing your saved timings. See
+[Expressive actions and motion](https://github.com/tvolk131/iced-m3/blob/master/docs/EXPRESSIVE.md)
+for precedence, coverage and reference pins.
+
 ## Typography and surfaces
 
 Material helpers register bundled Roboto automatically. Set the application's

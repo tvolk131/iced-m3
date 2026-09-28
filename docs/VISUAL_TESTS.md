@@ -1,7 +1,7 @@
 # Visual regression tests
 
 Every current component family has reference-image coverage. The suite stores
-2,679 PNGs across component states, timed animation frames and gallery
+2,795 PNGs across component states, timed animation frames and gallery
 compositions. These complement the ordinary interaction tests. A passing comparison means the rendered pixels match the
 reviewed reference; it does not establish complete Material 3 compliance.
 

@@ -29,7 +29,7 @@
 | Loading | `loading_indicator()` | Canonical seven-shape morph sequence, optional container and explicit pause |
 | Date/time pickers | `date_picker`, `docked_date_picker`, `date_input`, `time_picker`, `time_input` | App-owned dates/times, single/range dates, calendar/text entry, clock/numeric entry and validation |
 | Carousels | `carousel`, `lazy_carousel` | Fitted keylines, snapping and lazy construction of nearby items; durable item state belongs to the app |
-| Expressive previews | `button_group`, `split_button`, `toolbar`, `fab_menu`, `rich_tooltip` | Action compositions and rich hints; see the documented variant and motion limitations |
+| Expressive previews | `button_group`, `split_button`, `toolbar`, `fab_menu`, `rich_tooltip` | Action compositions and rich hints; [shared springs, button recipes and group deformation](EXPRESSIVE.md), with remaining variant limits |
 | Sheets | `side_sheet(content)`, `bottom_sheet(content)`, `sheet::host(background, sheet)` | Standard/modal side and bottom sheets, optional bottom-sheet handle resizing; reversible entrance/exit motion, scrolling, configurable Escape/outside dismissal and modal input blocking |
 | Floating action buttons | `fab(icon)`, `extended_fab(icon, label)` | Small/regular/large, extended label, four semantic colors, elevated hover and held/release states; controlled action and optional disabled treatment |
 

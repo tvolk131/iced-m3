@@ -66,7 +66,12 @@ impl<Message> Widget<Message, Theme, Renderer> for Reveal<'_, Message> {
             .as_widget_mut()
             .layout(&mut t.children[0], r, &l.loose());
         let mut size = child.size();
-        let progress = t.state.downcast_ref::<State>().progress.value;
+        let progress = t
+            .state
+            .downcast_ref::<State>()
+            .progress
+            .value
+            .clamp(0.0, 1.0);
         if self.horizontal {
             size.width *= progress;
         } else {
@@ -98,9 +103,12 @@ impl<Message> Widget<Message, Theme, Renderer> for Reveal<'_, Message> {
             _ => crate::motion::now(),
         };
         let before = state.progress.value;
-        let changed = state
-            .progress
-            .set(f32::from(self.open), now, state.motion.get().medium);
+        let changed = state.progress.set_motion(
+            f32::from(self.open),
+            now,
+            state.motion.get().medium,
+            state.motion.get().spatial(crate::MotionSpeed::Default),
+        );
         if changed || state.progress.tick(now) {
             s.request_redraw();
         }
@@ -145,7 +153,10 @@ impl<Message> Widget<Message, Theme, Renderer> for Reveal<'_, Message> {
         v: &Rectangle,
     ) {
         use iced::advanced::Renderer as _;
-        t.state.downcast_ref::<State>().motion.set(th.motion);
+        t.state
+            .downcast_ref::<State>()
+            .motion
+            .set(th.effective_motion());
         if let Some(clip) = l.bounds().intersection(v) {
             r.with_layer(clip, |r| {
                 self.content

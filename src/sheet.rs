@@ -731,7 +731,7 @@ impl<'s, Message: Clone + 's> Widget<Message, Theme, Renderer> for Host<'s, Mess
     ) {
         use iced::advanced::Renderer as _;
         let state = tree.state.downcast_ref::<State>();
-        state.motion.set(theme.motion);
+        state.motion.set(theme.effective_motion());
         let present = state.present(self.sheet.open);
         renderer.with_layer(*viewport, |renderer| {
             self.background.as_widget().draw(

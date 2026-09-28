@@ -321,7 +321,7 @@ impl<Message: Clone> Widget<Message, Theme, Renderer> for SearchWidget<'_, Messa
         };
         let before = state.progress.value;
         let motion = state.motion.get();
-        let changed = state.progress.set(
+        let changed = state.progress.set_motion(
             f32::from(self.open),
             now,
             if self.open {
@@ -329,6 +329,7 @@ impl<Message: Clone> Widget<Message, Theme, Renderer> for SearchWidget<'_, Messa
             } else {
                 motion.search_exit
             },
+            motion.spatial(crate::MotionSpeed::Slow),
         );
         if state.progress.tick(now) || changed {
             shell.request_redraw();
@@ -360,7 +361,7 @@ impl<Message: Clone> Widget<Message, Theme, Renderer> for SearchWidget<'_, Messa
         viewport: &Rectangle,
     ) {
         let state = tree.state.downcast_ref::<State>();
-        state.motion.set(theme.motion);
+        state.motion.set(theme.effective_motion());
         self.bar.as_widget().draw(
             &tree.children[0],
             renderer,
@@ -438,7 +439,7 @@ impl<Message: Clone> Overlay<Message, Theme, Renderer> for SearchOverlay<'_, '_,
         let target = view_bounds(self.anchor, bounds, self.height, self.full_screen);
         self.full_header
             .set(self.full_screen.unwrap_or(bounds.width < 600.));
-        let p = self.state.progress.value;
+        let p = self.state.progress.value.clamp(0.0, 1.0);
         let area = Rectangle {
             x: self.anchor.x + (target.x - self.anchor.x) * p,
             y: self.anchor.y + (target.y - self.anchor.y) * p,
@@ -589,7 +590,7 @@ impl<Message: Clone> Overlay<Message, Theme, Renderer> for SearchOverlay<'_, '_,
         let bounds = self.state.bounds;
         let full = self.full_screen.unwrap_or(layout.bounds().width < 600.0);
         let radius = if full {
-            28.0 * (1.0 - self.state.progress.value)
+            28.0 * (1.0 - self.state.progress.value.clamp(0.0, 1.0))
         } else {
             28.0
         };

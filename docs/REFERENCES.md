@@ -9,3 +9,5 @@ The bundled Roboto font is redistributed unmodified under [SIL OFL 1.1](../asset
 Canonical loading shape/morph data is generated from Apache-2.0 Material/AndroidX
 sources. Preserve its [license and attribution](../assets/loading/README.md);
 `loading::{LICENSE, NOTICE}` exposes these for application acknowledgments.
+
+Current Expressive motion and action recipes use a separately [pinned AndroidX reference profile](EXPRESSIVE.md#reference-profile). Material design guidance remains the target; implementation pins provide reproducible numerical details.
