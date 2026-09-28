@@ -483,7 +483,7 @@ doc_examples! {
     search_bar {
         title: "Search", size: (400.0, 300.0), scale: 1, budget: 800_000,
         compare: false, animated: true, variants_size: (400.0, 260.0),
-        caption: "Application state opens and closes search results for a fixed query. Query editing and result selection remain application-owned.",
+        caption: "Application state opens and closes search results for a fixed query. Query editing and result selection remain application-owned. The capture leaves the input unfocused so native caret blinking does not affect this motion preview.",
         view: fn view(open: bool) -> Element<'static, Message> {
             search_bar("Search workspace", "design").open(open).on_open(Message::Toggle(true)).on_close(Message::Toggle(false))
                 .on_input(Message::Input).on_submit(Message::Action).height(200.0)

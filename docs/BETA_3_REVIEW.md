@@ -68,3 +68,10 @@ The first sandboxed GPU attempt could not initialize a headless renderer; the
 reported GPU results are from a successful rerun with Metal device access.
 All results describe headless rendering and interaction simulation, not a new
 native accessibility or full-platform manual certification.
+
+Comparing CI's actual archive with the local captures exposed a one-frame search
+caret difference: iced's native input timer uses wall time independently of the
+component animation clock. The fixed-query search preview now clears input focus
+before capture; this is documented in its caption and does not change search's
+runtime behavior. A regression test first failed on the focused native input,
+then passed after the capture fix, checking stability across caret blink intervals.

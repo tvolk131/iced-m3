@@ -248,6 +248,7 @@ fn render(example: &Example, standard: bool) -> Vec<Image> {
                 _ => {}
             }
         }
+        prepare_capture(example, &mut ui);
         frames.push(ui.frame_at_scale(example.scale as f32));
     }
     if clickable || matches!(example.id, "slider" | "range_slider") {
@@ -275,6 +276,68 @@ fn render(example: &Example, standard: bool) -> Vec<Image> {
     }
     frames
 }
+fn prepare_capture(example: &Example, ui: &mut Harness<'_, Message>) {
+    if example.id == "search_bar" {
+        // Search auto-focuses its native input when the overlay opens. iced's
+        // caret uses Instant::now(), outside our animation clock. This preview
+        // demonstrates expansion with a fixed query, so keep input unfocused.
+        // operate() also lays out the overlay before traversing its focusables.
+        ui.operate(&mut iced::advanced::widget::operation::focusable::unfocus::<()>());
+    }
+}
+
+#[test]
+fn search_preview_has_no_wall_clock_caret() {
+    use iced::advanced::widget::{Operation, operation::Focusable};
+    #[derive(Default)]
+    struct Focused(usize);
+    impl Operation for Focused {
+        fn traverse(&mut self, f: &mut dyn FnMut(&mut dyn Operation)) {
+            f(self);
+        }
+        fn focusable(
+            &mut self,
+            _: Option<&widget::Id>,
+            _: iced::Rectangle,
+            state: &mut dyn Focusable,
+        ) {
+            self.0 += usize::from(state.is_focused());
+        }
+    }
+    let example = examples::registry()
+        .into_iter()
+        .find(|e| e.id == "search_bar")
+        .unwrap();
+    let state = State {
+        active: true,
+        ..Default::default()
+    };
+    let mut ui = Harness::new(
+        host(&example, &state),
+        example.size,
+        Theme::light().expressive(),
+    );
+    ui.at(0);
+    ui.frame(); // Opening the overlay automatically focuses its native input.
+    ui.at(2000);
+    prepare_capture(&example, &mut ui);
+    let mut focused = Focused::default();
+    ui.operate(&mut focused);
+    assert_eq!(
+        focused.0, 0,
+        "native caret time must not enter the documentation animation"
+    );
+    let frame = ui.frame();
+    for ms in [2500, 3000, 3500] {
+        ui.at(ms);
+        prepare_capture(&example, &mut ui);
+        assert!(
+            ui.frame() == frame,
+            "settled search preview changed at {ms}ms"
+        );
+    }
+}
+
 // All changes here drive the public view parameters or real input events.
 fn catalog_tick(
     example: &Example,

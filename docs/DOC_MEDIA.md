@@ -68,6 +68,9 @@ messages; the slider drag checks snapping, both endpoints of the demonstrated
 movement, one commit per release, and outside-click focus clearing. Menus,
 selects, tabs, chips, navigation, and pickers assert their selection/action
 messages. Picker captures check that OK and Cancel remain visible.
+The fixed-query search preview clears input focus before capture, excluding iced's
+native wall-clock caret timer while retaining the real expansion animation. A
+regression test checks that its settled frames remain identical across blink intervals.
 Loading and indeterminate progress are explicitly labeled as three-second
 excerpts; the capture boundary need not match their natural cycles.
 
