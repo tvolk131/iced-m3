@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Made the Expressive example's button-group selections independent. Added tab,
+  navigation-rail, extended-FAB, switch and slider motion demos, with persistent
+  comparison controls and interaction tests for independent demo state.
+
 - Fixed Expressive button-group motion hitting its expansion limit prematurely
   and losing release rebound. Padding limits now constrain the target before
   applying the spring; overlapping animations preserve child content space.

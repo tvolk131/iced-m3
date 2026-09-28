@@ -121,8 +121,27 @@ Run the focused comparison with:
 cargo run --release --example expressive
 ```
 
-It compares Standard/Expressive springs, reduced motion, light/dark themes,
-button/icon recipes, connected groups and reversible dialog presence.
+The Standard/Expressive, reduced-motion and light/dark controls stay visible while
+you scroll. Each demo owns its state, including separate selections for the spaced
+and connected button groups.
+
+- **Button groups:** hold a button, release early, then press its neighbor. Compare
+  expansion, neighbor compression, shape changes and release rebound.
+- **Tabs:** jump between the first and last tabs and reverse before the moving
+  indicator settles.
+- **Navigation rail:** expand and collapse while it is moving. The neighboring
+  content follows the animated width.
+- **Extended FAB:** hide and restore its label. The reveal uses the shared spring,
+  but bounds its visible size rather than overshooting the collapsed/expanded ends.
+- **Switch and slider:** hold the switch to inspect thumb feedback; drag the slider
+  to compare handle and value-bubble feedback. Slider values follow your pointer.
+- **Dialog and action recipes:** compare reversible dialog presence and all five
+  button/icon sizes, including a button with shape feedback explicitly disabled.
+
+The effect is deliberately different across these demos: a tab indicator can
+overshoot, while dialog opacity stays within its valid range. Ripples and looping
+progress indicators still use their dedicated timing, so they are not included as
+spring comparisons.
 
 Remaining Expressive work includes theme typography/shape schemes, complete FAB
 and split-button size families, richer toolbar/FAB-menu behavior, current slider
