@@ -250,7 +250,7 @@ buttons and a pick-list popup. See [BETA_READINESS.md](BETA_READINESS.md).
   docs, font/shape inputs and notices. The 2,665 source-checkout golden PNGs are
   excluded from the archive and remain unchanged in the repository. No component
   drawing code changed and no golden images were regenerated in this milestone.
-- `tools/check_package.py` verifies the archive and runs the library plus a copied
+- `cargo xtask check-package` verifies the archive and runs the library plus a copied
   independent app against its extracted contents. The dependency tree confirms
   that the app resolves iced-material from the temporary extraction, not the source
   checkout. The machine-readable report is `target/beta-package-report.json`.

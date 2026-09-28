@@ -18,6 +18,7 @@ enum Placement {
 
 /// Application-owned visibility; keep this value and its content in [`host`]
 /// while closed so exit motion, scroll position and child state are preserved.
+/// See the [rendered examples](crate::guide::components::side_sheet).
 pub struct Sheet<'a, Message> {
     content: Element<'a, Message>,
     placement: Placement,
@@ -33,10 +34,12 @@ pub struct Sheet<'a, Message> {
 }
 /// A standard right-side sheet that reserves space beside the main content.
 /// Use `.modal()` to show it over a scrim instead.
+#[cfg_attr(iced_m3_doc_media, doc = include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/docs/generated/side_sheet-primary.md")))]
 pub fn side_sheet<'a, Message: 'a>(content: impl Into<Element<'a, Message>>) -> Sheet<'a, Message> {
     Sheet::new(content, Placement::Side)
 }
 /// A modal bottom sheet, centered and capped at 640px wide by default.
+/// See the [component showcase](crate::guide::components::side_sheet) for rendered family examples.
 pub fn bottom_sheet<'a, Message: 'a>(
     content: impl Into<Element<'a, Message>>,
 ) -> Sheet<'a, Message> {

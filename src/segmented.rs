@@ -45,6 +45,7 @@ impl<'a, Value, Message> Segment<'a, Value, Message> {
         self
     }
 }
+/// See the [rendered examples](crate::guide::components::segmented_buttons).
 pub struct SegmentedButtons<'a, Value, Message> {
     items: Vec<Segment<'a, Value, Message>>,
     selection: SegmentSelection<Value>,
@@ -52,6 +53,7 @@ pub struct SegmentedButtons<'a, Value, Message> {
     disabled: bool,
     width: Length,
 }
+#[cfg_attr(iced_m3_doc_media, doc = include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/docs/generated/segmented_buttons-primary.md")))]
 pub fn segmented_buttons<'a, Value, Message>(
     items: impl IntoIterator<Item = Segment<'a, Value, Message>>,
     selection: SegmentSelection<Value>,

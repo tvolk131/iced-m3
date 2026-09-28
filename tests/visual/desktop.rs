@@ -397,7 +397,7 @@ fn rail_width_animates_reverses_and_settles_without_idle_redraws() {
 #[test]
 fn expressive_rail_width_retains_overshoot_reversal_and_reduced_motion() {
     for reduced in [false, true] {
-        let mut view = Harness::new(
+        let mut view = Harness::configured(
             rail_shell(false),
             Size::new(700., 350.),
             Theme::light().expressive().reduced_motion(reduced),

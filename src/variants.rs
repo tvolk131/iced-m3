@@ -1,6 +1,7 @@
 //! Composable variants built on the shared focus, state, and popup primitives.
 use crate::{Button, ButtonVariant, Element, SurfaceVariant, Theme, TypeScale, typography};
 use iced::{Border, Length, widget};
+/// See the [rendered examples](crate::guide::components::card).
 pub struct Card<'a, Message> {
     content: Element<'a, Message>,
     variant: SurfaceVariant,
@@ -9,6 +10,7 @@ pub struct Card<'a, Message> {
     disabled: bool,
     dragged: bool,
 }
+#[cfg_attr(iced_m3_doc_media, doc = include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/docs/generated/card-primary.md")))]
 pub fn card<'a, Message>(content: impl Into<Element<'a, Message>>) -> Card<'a, Message> {
     Card {
         content: content.into(),
@@ -91,6 +93,7 @@ impl<'a, Message: Clone + 'a> From<Card<'a, Message>> for Element<'a, Message> {
     }
 }
 /// A 6px status dot; an anchored badge preserves its target's size.
+/// See the [component showcase](crate::guide::components::badge) for rendered family examples.
 pub fn badge_dot<'a, Message: 'a>() -> widget::Container<'a, Message, Theme> {
     widget::container(widget::space())
         .width(6)
@@ -104,6 +107,7 @@ pub fn badge_dot<'a, Message: 'a>() -> widget::Container<'a, Message, Theme> {
             ..Default::default()
         })
 }
+/// See the [component showcase](crate::guide::components::badge) for rendered family examples.
 pub fn badged<'a, Message: 'a>(
     content: impl Into<Element<'a, Message>>,
     count: Option<u32>,
@@ -119,10 +123,12 @@ pub fn badged<'a, Message: 'a>(
     ]
     .into()
 }
+/// See the [component showcase](crate::guide::components::divider) for rendered family examples.
 pub fn vertical_divider<'a>() -> widget::Rule<'a, Theme> {
     widget::rule::vertical(1)
 }
 /// Rich hints open on click or keyboard activation, so their actions stay reachable.
+#[cfg_attr(iced_m3_doc_media, doc = include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/docs/generated/rich_tooltip-primary.md")))]
 pub fn rich_tooltip<'a, Message: Clone + 'a>(
     trigger: impl Into<Element<'a, Message>>,
     title: impl Into<String>,

@@ -27,6 +27,7 @@ pub enum TextFieldVariant {
     Filled,
 }
 /// A Material text field. No callback means disabled, matching iced.
+/// See the [visual examples and variants](crate::guide::components::text_field).
 pub struct TextField<'a, Message> {
     input: text_input::TextInput<'a, Message, Theme>,
     label: String,
@@ -79,6 +80,8 @@ impl<'a, Message: Clone + 'a> Trailing<'a, Message> {
         }
     }
 }
+/// See the [component showcase](crate::guide::components::text_field) for variants and motion.
+#[cfg_attr(iced_m3_doc_media, doc = include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/docs/generated/text_field-primary.md")))]
 pub fn text_field<'a, Message: Clone + 'a>(label: &str, value: &str) -> TextField<'a, Message> {
     TextField::new(label, value)
 }

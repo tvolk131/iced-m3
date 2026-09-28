@@ -41,7 +41,7 @@ desired. The top-level CI explicitly checks this package, since root
 ```sh
 ICED_TEST_BACKEND=wgpu cargo test --locked --manifest-path consumers/desktop/Cargo.toml --test flows
 CONSUMER_CAPTURES=/absolute/output/path cargo test --locked --manifest-path consumers/desktop/Cargo.toml capture_consumer_review -- --ignored
-python3 tools/check_package.py --offline
+cargo xtask check-package --offline
 ```
 
 The last command runs from the repository root and checks a copy of this client

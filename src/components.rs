@@ -7,6 +7,7 @@ use crate::{
 use iced::{Border, Color, Length, widget};
 
 /// Material text styles. Text remains an ordinary iced text widget.
+#[cfg_attr(iced_m3_doc_media, doc = include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/docs/generated/typography-primary.md")))]
 pub fn typography<'a>(
     content: impl widget::text::IntoFragment<'a>,
     scale: TypeScale,
@@ -29,12 +30,14 @@ pub enum SurfaceVariant {
     Elevated,
 }
 /// A card/surface accepting arbitrary iced content.
+/// See the [rendered examples](crate::guide::components::surface).
 pub struct Surface<'a, Message> {
     content: Element<'a, Message>,
     variant: SurfaceVariant,
     padding: iced::Padding,
     width: Length,
 }
+#[cfg_attr(iced_m3_doc_media, doc = include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/docs/generated/surface-primary.md")))]
 pub fn surface<'a, Message: 'a>(content: impl Into<Element<'a, Message>>) -> Surface<'a, Message> {
     Surface {
         content: content.into(),
@@ -99,6 +102,7 @@ impl<'a, Message: 'a> From<Surface<'a, Message>> for Element<'a, Message> {
 }
 
 /// A horizontal semantic divider.
+#[cfg_attr(iced_m3_doc_media, doc = include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/docs/generated/divider-primary.md")))]
 pub fn divider<'a>() -> widget::Rule<'a, Theme> {
     widget::rule::horizontal(tokens::size::OUTLINE)
 }
@@ -109,6 +113,7 @@ pub fn divider<'a>() -> widget::Rule<'a, Theme> {
 /// [`crate::ButtonSize::icon_button_icon_size`]; arbitrary widgets are not resized.
 /// Prefer [`crate::icon()`] with an SVG: text layout bounds include font metrics
 /// and need not center the visible glyph.
+#[cfg_attr(iced_m3_doc_media, doc = include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/docs/generated/icon_button-primary.md")))]
 pub fn icon_button<'a, Message: 'a>(icon: impl Into<Element<'a, Message>>) -> Button<'a, Message> {
     Button::new(
         widget::container(icon)
@@ -120,6 +125,7 @@ pub fn icon_button<'a, Message: 'a>(icon: impl Into<Element<'a, Message>>) -> Bu
 }
 
 /// A selectable filter/assist chip. App state owns the selection.
+/// See the [component showcase](crate::guide::components::filter_chip) for rendered family examples.
 pub fn chip<'a, Message: 'a>(
     label: impl widget::text::IntoFragment<'a>,
     selected: bool,
@@ -134,6 +140,7 @@ pub fn chip<'a, Message: 'a>(
 
 /// A compact standalone count/status badge. Use in a row or an iced stack.
 /// Counts above 99 are displayed as `99+`; zero is displayed deliberately.
+#[cfg_attr(iced_m3_doc_media, doc = include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/docs/generated/badge-primary.md")))]
 pub fn badge<'a, Message: 'a>(count: u32) -> widget::Container<'a, Message, Theme> {
     let label = if count > 99 {
         "99+".into()
@@ -163,6 +170,7 @@ pub use crate::checkbox::checkbox;
 /// enlarged thumb; releasing or cancelling springs back to its resting size.
 /// Without a scheme, the baseline duration-based motion is retained. Reduced
 /// motion makes transitions immediate.
+/// See the [visual examples and variants](crate::guide::components::switch).
 pub struct Switch<'a, Message> {
     icons: bool,
     checked: bool,
@@ -171,6 +179,8 @@ pub struct Switch<'a, Message> {
     disabled: bool,
     width: Length,
 }
+/// See the [component showcase](crate::guide::components::switch) for variants and motion.
+#[cfg_attr(iced_m3_doc_media, doc = include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/docs/generated/switch-primary.md")))]
 pub fn switch<'a, Message>(checked: bool) -> Switch<'a, Message> {
     Switch {
         icons: false,

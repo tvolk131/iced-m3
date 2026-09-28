@@ -2,6 +2,7 @@
 use crate::{Button, ButtonVariant, Element, Theme, TypeScale, tokens, typography};
 use iced::{Color, Length, widget};
 
+/// See the [rendered examples](crate::guide::components::list_item).
 pub struct ListItem<'a, Message> {
     headline: String,
     supporting: Option<String>,
@@ -13,6 +14,7 @@ pub struct ListItem<'a, Message> {
     disabled: bool,
     width: Length,
 }
+#[cfg_attr(iced_m3_doc_media, doc = include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/docs/generated/list_item-primary.md")))]
 pub fn list_item<'a, Message>(headline: impl Into<String>) -> ListItem<'a, Message> {
     ListItem {
         headline: headline.into(),
@@ -149,6 +151,7 @@ impl<'a, Message: Clone + 'a> From<ListItem<'a, Message>> for Element<'a, Messag
 /// A transparent list provides grouping and vertical padding; compose dividers
 /// between items. This returns a native container: use its `.style(...)` builder
 /// for an explicit background color or gradient.
+/// See the [component showcase](crate::guide::components::list_item) for rendered family examples.
 pub fn list<'a, Message: 'a>(
     items: impl IntoIterator<Item = Element<'a, Message>>,
 ) -> widget::Container<'a, Message, Theme> {

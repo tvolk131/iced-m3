@@ -21,6 +21,7 @@ the distributable and work in locally generated rustdoc without a hosted reposit
 
 - [Contributing and validation commands](CONTRIBUTING.md)
 - [Visual regression tests](VISUAL_TESTS.md)
+- [Executable component documentation](DOC_MEDIA.md)
 - [Executed validation results](VALIDATION.md)
 - [Desktop beta integration checks](BETA_READINESS.md)
 - [Release process](RELEASING.md)

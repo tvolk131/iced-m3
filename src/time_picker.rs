@@ -90,6 +90,7 @@ pub enum TimePart {
     Hour,
     Minute,
 }
+/// See the [rendered examples](crate::guide::components::time_picker).
 pub struct TimePicker<'a, Message> {
     value: Time,
     part: TimePart,
@@ -105,6 +106,7 @@ pub struct TimePicker<'a, Message> {
     minute_input: Option<(String, Box<dyn Fn(String) -> Message + 'a>)>,
     input_period: Option<(bool, Box<dyn Fn(bool) -> Message + 'a>)>,
 }
+#[cfg_attr(iced_m3_doc_media, doc = include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/docs/generated/time_picker-primary.md")))]
 pub fn time_picker<'a, Message>(value: Time, part: TimePart) -> TimePicker<'a, Message> {
     TimePicker {
         value,
@@ -627,6 +629,7 @@ fn typography_time(value: u8) -> String {
     format!("{value:02}")
 }
 /// Numeric 24-hour input. Incomplete text remains application-owned.
+/// See the [component showcase](crate::guide::components::time_picker) for rendered family examples.
 pub fn time_input<'a, Message: Clone + 'a>(label: &str, value: &str) -> TextField<'a, Message> {
     let field = text_field(label, value).supporting_text("HH:MM · 24-hour time");
     if !value.is_empty() && value.parse::<Time>().is_err() {

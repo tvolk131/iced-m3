@@ -106,6 +106,7 @@ enum Trigger<Message> {
     Forward(Message),
 }
 
+/// See the [rendered examples](crate::guide::components::menu).
 pub struct Menu<'a, Message> {
     trigger: Element<'a, Trigger<Message>>,
     content: Element<'a, Message>,
@@ -192,6 +193,7 @@ pub(crate) fn link<Message>(
     );
 }
 
+#[cfg_attr(iced_m3_doc_media, doc = include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/docs/generated/menu-primary.md")))]
 pub fn menu<'a, Message: Clone + 'a>(
     label: impl widget::text::IntoFragment<'a>,
     items: impl IntoIterator<Item = MenuItem<'a, Message>>,
@@ -199,6 +201,7 @@ pub fn menu<'a, Message: Clone + 'a>(
     menu_button(typography(label, TypeScale::LabelLarge), items)
 }
 /// An action menu with passive custom trigger content.
+/// See the [component showcase](crate::guide::components::menu) for rendered family examples.
 pub fn menu_button<'a, Message: Clone + 'a>(
     content: impl Into<Element<'a, Message>>,
     items: impl IntoIterator<Item = MenuItem<'a, Message>>,
@@ -214,6 +217,7 @@ pub fn menu_button<'a, Message: Clone + 'a>(
     build(trigger.into(), items, false)
 }
 /// Right-click a normal interactive region to open its contextual actions.
+/// See the [component showcase](crate::guide::components::menu) for rendered family examples.
 pub fn context_menu<'a, Message: Clone + 'a>(
     content: impl Into<Element<'a, Message>>,
     items: impl IntoIterator<Item = MenuItem<'a, Message>>,
@@ -889,6 +893,7 @@ impl<Value> SelectOption<Value> {
         self
     }
 }
+/// See the [rendered examples](crate::guide::components::select).
 pub struct Select<'a, Value, Message> {
     label: String,
     options: Vec<SelectOption<Value>>,
@@ -902,6 +907,7 @@ pub struct Select<'a, Value, Message> {
     leading: Option<Element<'a, Message>>,
     background: Option<Box<dyn Fn(&Theme) -> iced::Color + 'a>>,
 }
+#[cfg_attr(iced_m3_doc_media, doc = include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/docs/generated/select-primary.md")))]
 pub fn select<'a, Value, Message>(
     label: impl Into<String>,
     options: impl IntoIterator<Item = SelectOption<Value>>,

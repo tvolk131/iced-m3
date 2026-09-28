@@ -183,6 +183,7 @@ impl DateSelection {
         }
     }
 }
+/// See the [rendered examples](crate::guide::components::date_picker).
 pub struct DatePicker<'a, Message> {
     month: Date,
     selection: DateSelection,
@@ -206,6 +207,7 @@ pub struct DatePicker<'a, Message> {
     on_input: Option<Box<dyn Fn(String) -> Message + 'a>>,
     on_end_input: Option<Box<dyn Fn(String) -> Message + 'a>>,
 }
+#[cfg_attr(iced_m3_doc_media, doc = include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/docs/generated/date_picker-primary.md")))]
 pub fn date_picker<'a, Message>(month: Date, selection: DateSelection) -> DatePicker<'a, Message> {
     DatePicker {
         month: month.first_of_month(),
@@ -824,6 +826,7 @@ impl<'a, Message: Clone + 'a> From<DatePicker<'a, Message>> for Element<'a, Mess
 }
 /// ISO input retains incomplete text in application state. Parse with `Date::from_str`
 /// and apply the same bounds/validator before accepting the dialog.
+/// See the [component showcase](crate::guide::components::date_picker) for rendered family examples.
 pub fn date_input<'a, Message: Clone + 'a>(label: &str, value: &str) -> TextField<'a, Message> {
     let field = text_field(label, value).supporting_text("YYYY-MM-DD");
     if !value.is_empty() && value.parse::<Date>().is_err() {
@@ -889,6 +892,7 @@ enum PopupEvent<Message> {
 /// after a complete selection. Keep it mounted to preserve focus across updates.
 /// A date range closes after its second endpoint. Escape/outside cancel the popup;
 /// selected values and validation remain owned by the application.
+/// See the [component showcase](crate::guide::components::date_picker) for rendered family examples.
 pub fn docked_date_picker<'a, Message: Clone + 'a>(
     trigger: impl Into<Element<'a, Message>>,
     picker: DatePicker<'a, Message>,

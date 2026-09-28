@@ -8,6 +8,7 @@ use iced::advanced::{
 use iced::time::{Duration, Instant};
 use iced::{Border, Event, Rectangle, Renderer, Size, Vector, keyboard, mouse, widget, window};
 
+/// See the [rendered examples](crate::guide::components::tooltip).
 pub struct Tooltip<'a, Message> {
     content: Element<'a, Message>,
     hint: Element<'a, Message>,
@@ -15,6 +16,7 @@ pub struct Tooltip<'a, Message> {
     placement: Placement,
     disabled: bool,
 }
+#[cfg_attr(iced_m3_doc_media, doc = include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/docs/generated/tooltip-primary.md")))]
 pub fn tooltip<'a, Message: 'a>(
     content: impl Into<Element<'a, Message>>,
     hint: impl widget::text::IntoFragment<'a>,

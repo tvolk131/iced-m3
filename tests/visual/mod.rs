@@ -9,6 +9,7 @@ mod desktop_fidelity;
 mod desktop_finish;
 mod dialog_actions;
 mod dialog_regressions;
+mod doc_media;
 mod expressive;
 mod fidelity;
 mod interaction_contracts;

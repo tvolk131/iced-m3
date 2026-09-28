@@ -135,6 +135,7 @@ pub enum ButtonShape {
 
 /// A pointer and keyboard action. Omitting `on_press` makes it disabled.
 /// Child content should be non-interactive; rows of text and icons are supported.
+/// See the [rendered examples](crate::guide::components::button) for appearance variants and interaction.
 pub struct Button<'a, Message> {
     content: Element<'a, Message>,
     label: Option<iced::widget::text::Fragment<'a>>,
@@ -174,6 +175,7 @@ pub struct Button<'a, Message> {
 }
 /// Construct a button with Material label typography.
 /// Use `Button::new` for arbitrary passive iced content.
+#[cfg_attr(iced_m3_doc_media, doc = include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/docs/generated/button-primary.md")))]
 pub fn button<'a, Message: 'a>(
     label: impl iced::widget::text::IntoFragment<'a>,
 ) -> Button<'a, Message> {

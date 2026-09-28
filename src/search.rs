@@ -16,6 +16,7 @@ use std::{cell::Cell, rc::Rc};
 /// Keep the bar mounted when closed to preserve editing/scroll state and exit motion.
 /// Results, query, and visibility belong to the application. The view captures
 /// outside input; Escape, the back button, and outside clicks request dismissal.
+/// See the [rendered examples](crate::guide::components::search_bar).
 pub struct Search<'a, Message> {
     placeholder: String,
     value: String,
@@ -29,6 +30,7 @@ pub struct Search<'a, Message> {
     height: f32,
     full_screen: Option<bool>,
 }
+#[cfg_attr(iced_m3_doc_media, doc = include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/docs/generated/search_bar-primary.md")))]
 pub fn search_bar<'a, Message: 'a>(
     placeholder: impl Into<String>,
     value: &str,

@@ -7,6 +7,7 @@ use iced::advanced::{
 use iced::{Border, Event, Length, Point, Rectangle, Renderer, Size, mouse, window};
 use std::{cell::Cell, ops::RangeInclusive};
 
+/// See the [rendered examples](crate::guide::components::slider) for appearance variants and interaction.
 pub struct Slider<'a, Message> {
     range: RangeInclusive<f32>,
     value: f32,
@@ -20,6 +21,7 @@ pub struct Slider<'a, Message> {
     width: Length,
 }
 /// Values are clamped to the range. Invalid or empty ranges are inert.
+#[cfg_attr(iced_m3_doc_media, doc = include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/docs/generated/slider-primary.md")))]
 pub fn slider<'a, Message>(range: RangeInclusive<f32>, value: f32) -> Slider<'a, Message> {
     Slider {
         range,
