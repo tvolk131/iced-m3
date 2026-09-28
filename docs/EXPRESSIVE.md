@@ -98,6 +98,11 @@ of frame rate. Retargeting preserves position and velocity. Preset effects are
 critically damped; spatial springs may overshoot. Bounded layout/opacity consumers
 clamp their output where negative size or invalid opacity would be inappropriate.
 
+Dialog content and paper use sequential ranges of one reversible effects spring:
+content is absent whenever the rounded panel is translucent. This preserves the
+existing content-cover compositing approach without exposing its rectangular
+mask during exit, and does not add a second spring's settling delay.
+
 Shared schemes currently drive button state/shape feedback, selection movement,
 slider press/label feedback, floating field labels, tab indicators, chip icon
 replacement, rail/extended-label reveals, search expansion and overlay presence.

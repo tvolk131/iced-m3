@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Fixed a rectangular flash at the end of spring-animated dialog dismissal.
+  Content now finishes fading before the rounded panel becomes translucent,
+  including when closing is interrupted and reversed.
+
 - Added opt-in `Theme::expressive()` and customizable Standard/Expressive spring
   schemes, with component motion/shape overrides and interruption continuity.
 - Added five common/icon button sizes, round/square toggle shapes and three

@@ -56,12 +56,19 @@ impl Presence {
                 | self
                     .slide
                     .set_motion(f32::from(open), now, duration, spatial)
-                | self
-                    .content
-                    .set_motion(f32::from(open), now, duration, effects)
-                | self
-                    .paper
-                    .set_motion(f32::from(open), now, duration, effects);
+                | if dialog {
+                    // Dialog content fades by covering child ink with its
+                    // surface color. It must finish before that surface fades;
+                    // otherwise the cover itself becomes an opaque rectangle.
+                    // Resolve both phases from the same reversible spring below.
+                    false
+                } else {
+                    self.content
+                        .set_motion(f32::from(open), now, duration, effects)
+                        | self
+                            .paper
+                            .set_motion(f32::from(open), now, duration, effects)
+                };
         }
         let curve = if open {
             [0.2, 0.0, 0.0, 1.0]
@@ -120,6 +127,20 @@ impl Presence {
             | self.content.tick(now)
             | self.paper.tick(now);
         self.progress.value = self.progress.value.clamp(0.0, 1.0);
+        if dialog && self.motion.get().scheme.is_some() {
+            // The final third of the fade range belongs to the rounded paper.
+            // Content is absent whenever paper is translucent, on entrance,
+            // exit and reversal. Neither phase adds another settling delay.
+            let paper_end = 1.0 / 3.0;
+            let progress = self.progress.value;
+            self.content.set(
+                ((progress - paper_end) / (1.0 - paper_end)).clamp(0.0, 1.0),
+                now,
+                Duration::ZERO,
+            );
+            self.paper
+                .set((progress / paper_end).clamp(0.0, 1.0), now, Duration::ZERO);
+        }
         self.height.value = self.height.value.max(0.0);
         self.content.value = self.content.value.clamp(0.0, 1.0);
         self.paper.value = self.paper.value.clamp(0.0, 1.0);
@@ -221,5 +242,79 @@ mod tests {
             (1.0, 1.0, 1.0, 1.0)
         );
         assert!(!p.progress.tick(origin + Duration::from_millis(271)));
+    }
+    #[test]
+    fn spring_dialog_keeps_paper_opaque_until_content_is_gone_even_on_reversal() {
+        for scheme in [
+            crate::MotionScheme::standard(),
+            crate::MotionScheme::expressive(),
+        ] {
+            let now = iced::time::Instant::now();
+            let mut p = Presence::new(false);
+            let motion = Motion {
+                scheme: Some(scheme),
+                ..Motion::default()
+            };
+            p.motion.set(motion);
+            let mut messages = Vec::<()>::new();
+            let mut shell = Shell::new(&mut messages);
+            let mut update = |p: &mut Presence, open, ms| {
+                p.update_surface(
+                    open,
+                    &Event::Window(window::Event::RedrawRequested(
+                        now + Duration::from_millis(ms),
+                    )),
+                    motion.dialog_enter,
+                    motion.dialog_exit,
+                    true,
+                    &mut shell,
+                );
+                assert!(
+                    p.content.value == 0. || p.paper.value == 1.,
+                    "content cover must never outlive opaque paper"
+                );
+            };
+            for (open, ms) in [
+                (true, 0),
+                (true, 40),
+                (false, 40),
+                (false, 65),
+                (true, 65),
+                (true, 400),
+                (false, 400),
+                (false, 440),
+                (false, 480),
+                (false, 520),
+                (false, 600),
+                (false, 800),
+            ] {
+                let before = (p.progress.value, p.content.value, p.paper.value);
+                update(&mut p, open, ms);
+                if ms == 40 && !open || ms == 65 && open || ms == 400 && !open {
+                    assert_eq!(
+                        (p.progress.value, p.content.value, p.paper.value),
+                        before,
+                        "retargeting at the same time must not jump"
+                    );
+                }
+            }
+            assert!(!p.visible(false));
+            assert_eq!((p.content.value, p.paper.value), (0., 0.));
+            p.motion.set(Motion::reduced());
+            p.update_surface(
+                true,
+                &Event::Window(window::Event::RedrawRequested(
+                    now + Duration::from_millis(801),
+                )),
+                Duration::ZERO,
+                Duration::ZERO,
+                true,
+                &mut shell,
+            );
+            assert_eq!(
+                (p.progress.value, p.content.value, p.paper.value),
+                (1., 1., 1.)
+            );
+        }
     }
 }

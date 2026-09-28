@@ -433,3 +433,98 @@ fn visual_references_dialog_regressions() {
         }
     }
 }
+
+fn spring_exit_dialog(open: bool, stacked: bool) -> Element<'static, Message> {
+    let background = widget::space().width(Length::Fill).height(Length::Fill);
+    let panel = crate::dialog(widget::space().height(200).width(Length::Fill))
+        .width(400.)
+        .actions(crate::button("Close").on_press(Message::Close));
+    if stacked {
+        crate::dialog::stack(background, [(panel, open)])
+    } else {
+        crate::dialog::modal(background, panel, open)
+    }
+}
+
+#[test]
+fn spring_dialog_exit_leaves_no_opaque_content_rectangle() {
+    for scheme in [
+        crate::MotionScheme::standard(),
+        crate::MotionScheme::expressive(),
+    ] {
+        for stacked in [false, true] {
+            let mut theme = Theme::dark().expressive().motion_scheme(scheme);
+            // Strong contrast makes a lingering content-fade rectangle measurable.
+            theme.colors.surface = iced::Color::BLACK;
+            theme.colors.surface_container_high = iced::Color::WHITE;
+            theme.colors.scrim = iced::Color::BLACK;
+            let mut ui = Harness::with_backend(
+                spring_exit_dialog(true, stacked),
+                Size::new(600., 480.),
+                theme,
+                &backend(),
+            );
+            ui.frame();
+            ui.click("Close");
+            assert_eq!(ui.messages, [Message::Close]);
+            ui.rebuild(spring_exit_dialog(false, stacked));
+            ui.at(0);
+            for ms in [200, 240, 280, 320, 400] {
+                ui.at(ms);
+                let image = ui.frame();
+                image.write(&std::path::PathBuf::from(format!(
+                    "target/dialog-exit/{}-{stacked}-{ms}.png",
+                    backend()
+                )));
+                let brightest = image
+                    .pixels
+                    .as_chunks::<4>()
+                    .0
+                    .iter()
+                    .flat_map(|p| p[..3].iter())
+                    .copied()
+                    .max()
+                    .unwrap();
+                assert!(
+                    brightest <= 32,
+                    "closing dialog still paints opaque content at {ms}ms: channel={brightest}, stacked={stacked}"
+                );
+            }
+        }
+    }
+}
+
+#[test]
+#[ignore = "reference suite; run with --ignored"]
+fn visual_references_spring_dialog_fade() {
+    for dark in [false, true] {
+        for stacked in [false, true] {
+            let mut ui = ui(true, stacked, theme(dark).expressive());
+            let case = format!(
+                "spring-dialog-fade/{}/{}",
+                if dark { "dark" } else { "light" },
+                if stacked { "stack" } else { "single" }
+            );
+            reference::check(&format!("{case}/00-open"), &ui.frame());
+            ui.click("Cancel");
+            assert_eq!(ui.messages, [Message::Close]);
+            ui.rebuild(dialog(false, stacked));
+            for ms in [0, 40, 80, 120, 180, 240, 320, 400] {
+                ui.at(ms);
+                reference::check(&format!("{case}/01-close-{ms:03}ms"), &ui.frame());
+            }
+            ui.rebuild(dialog(true, stacked));
+            ui.at(400);
+            ui.at(440);
+            reference::check(&format!("{case}/02-reopen-040ms"), &ui.frame());
+            ui.rebuild(dialog(false, stacked));
+            ui.at(440);
+            ui.at(460);
+            reference::check(&format!("{case}/03-reverse-020ms"), &ui.frame());
+            ui.rebuild(dialog(true, stacked));
+            ui.at(460);
+            ui.at(800);
+            reference::check(&format!("{case}/04-open-again"), &ui.frame());
+        }
+    }
+}

@@ -1,5 +1,25 @@
 # Validation report
 
+## Spring dialog exit compositing — 2026-09-27
+
+The new pixel regression failed before the fix: 200ms after closing, the nominally
+faded white dialog still painted a fully opaque rectangular content cover (255
+channel value on black). Dialog paper and content now use sequential ranges of
+one effects spring, keeping the paper opaque until content has disappeared.
+The same clock controls total lifetime and preserves reversal continuity.
+
+- All **297 ordinary tests** and strict Clippy pass. New checks exercise actual
+  Close-button input, single/stacked hosts, Standard/Expressive schemes, closing
+  frames, entrance/exit reversals and reduced-motion settling.
+- The pixel regression passes on both **Tiny Skia and wgpu/Metal**.
+- All **49 canonical reference functions** pass against **2,843 PNGs**. The 48 new
+  light/dark references include exit frames through 400ms and interrupted
+  reopening. Existing reference images are unchanged; representative corrected
+  closing frames were visually inspected.
+- The release Expressive example rebuilds. Logs and the original failing image
+  are retained under `target/dialog-exit/`.
+
+
 ## Expressive motion and action recipes — 2026-09-27
 
 The first red run reproduced missing group width deformation and reduced-motion
