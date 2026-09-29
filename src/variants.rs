@@ -128,6 +128,10 @@ pub fn vertical_divider<'a>() -> widget::Rule<'a, Theme> {
     widget::rule::vertical(1)
 }
 /// Rich hints open on click or keyboard activation, so their actions stay reachable.
+/// Tab traverses actions then dismisses the hint and continues to the next page
+/// control. Shift+Tab from the first action dismisses to the trigger. Escape also
+/// returns to the trigger; action activation dismisses and publishes its message.
+/// Use [`crate::focus::scope`] around the page for traversal outside the hint.
 #[cfg_attr(iced_m3_doc_media, doc = include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/docs/generated/rich_tooltip-primary.md")))]
 pub fn rich_tooltip<'a, Message: Clone + 'a>(
     trigger: impl Into<Element<'a, Message>>,

@@ -128,6 +128,7 @@ impl<'a, Message> TimePicker<'a, Message> {
     /// Add an OK action. Selection edits still use `on_change`; keep a separate
     /// draft in application state when confirmation must be transactional.
     /// Numeric OK/Enter validates the draft and sends this callback only.
+    /// The callback runs on activation, never during view construction.
     pub fn on_confirm(mut self, f: impl Fn(Time) -> Message + 'a) -> Self {
         self.on_confirm = Some(Box::new(f));
         self
@@ -162,7 +163,9 @@ impl<'a, Message> TimePicker<'a, Message> {
         self
     }
     /// Validate the numeric draft without committing it. Apply/Enter uses this
-    /// same result and emits `on_change` only when both fields are valid.
+    /// same result and invokes `on_confirm` when supplied, otherwise `on_change`,
+    /// only when both fields are valid. Callbacks run on interaction, never while
+    /// constructing the view.
     pub fn input_time(&self) -> Result<Time, InvalidTime> {
         let hour = self
             .hour_input
@@ -192,10 +195,13 @@ impl<'a, Message> TimePicker<'a, Message> {
         };
         Time::new(hour, minute)
     }
+    /// Called on dial/period changes, or valid numeric submission without `on_confirm`.
+    /// Message construction is deferred until that interaction.
     pub fn on_change(mut self, f: impl Fn(Time) -> Message + 'a) -> Self {
         self.on_change = Some(Box::new(f));
         self
     }
+    /// Called when the user chooses the hour/minute part; never during view construction.
     pub fn on_part(mut self, f: impl Fn(TimePart) -> Message + 'a) -> Self {
         self.on_part = Some(Box::new(f));
         self
@@ -209,8 +215,71 @@ impl<'a, Message> TimePicker<'a, Message> {
         self
     }
 }
+// Build the tree using inert interaction values. Resolve application callbacks
+// at the outer message boundary, including native input's prebuilt submit event.
+#[derive(Clone)]
+enum Action<Message> {
+    Forward(Message),
+    Change(Time),
+    Confirm(Time),
+    Part(TimePart),
+    Hour(String),
+    Minute(String),
+    Period(bool),
+}
 impl<'a, Message: Clone + 'a> From<TimePicker<'a, Message>> for Element<'a, Message> {
     fn from(picker: TimePicker<'a, Message>) -> Self {
+        let TimePicker {
+            value,
+            part,
+            format24,
+            title,
+            on_change,
+            on_confirm,
+            on_cancel,
+            on_part,
+            input_mode,
+            on_toggle_input,
+            hour_input,
+            minute_input,
+            input_period,
+        } = picker;
+        let (hour, hour_handler) =
+            hour_input.map_or((None, None), |(text, f)| (Some(text), Some(f)));
+        let (minute, minute_handler) =
+            minute_input.map_or((None, None), |(text, f)| (Some(text), Some(f)));
+        let (period, period_handler) =
+            input_period.map_or((None, None), |(pm, f)| (Some(pm), Some(f)));
+        TimePicker {
+            value,
+            part,
+            format24,
+            title,
+            input_mode,
+            on_change: on_change.as_ref().map(|_| Box::new(Action::Change) as _),
+            on_confirm: on_confirm.as_ref().map(|_| Box::new(Action::Confirm) as _),
+            on_part: on_part.as_ref().map(|_| Box::new(Action::Part) as _),
+            on_cancel: on_cancel.map(Action::Forward),
+            on_toggle_input: on_toggle_input.map(Action::Forward),
+            hour_input: hour.map(|s| (s, Box::new(Action::Hour) as _)),
+            minute_input: minute.map(|s| (s, Box::new(Action::Minute) as _)),
+            input_period: period.map(|pm| (pm, Box::new(Action::Period) as _)),
+        }
+        .into_view()
+        .map(move |event| match event {
+            Action::Forward(message) => message,
+            Action::Change(time) => on_change.as_ref().expect("enabled change handler")(time),
+            Action::Confirm(time) => on_confirm.as_ref().expect("enabled confirm handler")(time),
+            Action::Part(part) => on_part.as_ref().expect("enabled part handler")(part),
+            Action::Hour(text) => hour_handler.as_ref().expect("enabled hour handler")(text),
+            Action::Minute(text) => minute_handler.as_ref().expect("enabled minute handler")(text),
+            Action::Period(pm) => period_handler.as_ref().expect("enabled period handler")(pm),
+        })
+    }
+}
+impl<'a, Message: Clone + 'a> TimePicker<'a, Message> {
+    fn into_view(self) -> Element<'a, Message> {
+        let picker = self;
         if picker.input_mode {
             return numeric_picker(picker);
         }

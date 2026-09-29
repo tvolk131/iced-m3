@@ -124,6 +124,7 @@ pub struct Menu<'a, Message> {
     surface: (f32, u8),
     plain_surface: bool,
     surface_high: bool,
+    linear_focus: bool,
     close_when: Option<Box<dyn Fn(&Message) -> bool + 'a>>,
 }
 struct State {
@@ -338,6 +339,7 @@ fn build<'a, Message: Clone + 'a>(
         surface: (4.0, 2),
         plain_surface: true,
         surface_high: false,
+        linear_focus: false,
         close_when: None,
     }
 }
@@ -384,6 +386,7 @@ pub(crate) fn rich_popup<'a, Message: Clone + 'a>(
         surface: (12.0, 2),
         plain_surface: false,
         surface_high: false,
+        linear_focus: true,
         close_when: None,
     }
 }
@@ -865,6 +868,7 @@ impl<Message: Clone> Widget<Message, Theme, Renderer> for Menu<'_, Message> {
             surface: Some(self.surface),
             plain_surface: self.plain_surface,
             surface_high: self.surface_high,
+            linear_focus: self.linear_focus,
         })))
     }
 }
@@ -957,6 +961,7 @@ impl<'a, Value, Message> Select<'a, Value, Message> {
         self.leading = Some(icon.into());
         self
     }
+    /// Build a message only when an enabled option is selected, never during view construction.
     pub fn on_select(mut self, handler: impl Fn(Value) -> Message + 'a) -> Self {
         self.handler = Some(Box::new(handler));
         self
@@ -977,6 +982,11 @@ impl<'a, Value: Clone + PartialEq + 'a, Message: Clone + 'a> From<Select<'a, Val
     for Element<'a, Message>
 {
     fn from(select: Select<'a, Value, Message>) -> Self {
+        #[derive(Clone)]
+        enum Selection<Value, Message> {
+            Select(Value),
+            Forward(Message),
+        }
         let current = select
             .options
             .iter()
@@ -993,7 +1003,7 @@ impl<'a, Value: Clone + PartialEq + 'a, Message: Clone + 'a> From<Select<'a, Val
             action: if disabled || option.disabled {
                 None
             } else {
-                select.handler.as_ref().map(|handler| handler(option.value))
+                Some(Selection::Select(option.value))
             },
             label: option.label,
             shortcut: None,
@@ -1011,7 +1021,7 @@ impl<'a, Value: Clone + PartialEq + 'a, Message: Clone + 'a> From<Select<'a, Val
             trigger = trigger.background_with(background);
         }
         if let Some(leading) = select.leading {
-            trigger = trigger.leading(leading.map(Trigger::Forward));
+            trigger = trigger.leading(leading.map(Selection::Forward).map(Trigger::Forward));
         }
         if let Some(text) = select.supporting {
             trigger = if select.error {
@@ -1025,7 +1035,12 @@ impl<'a, Value: Clone + PartialEq + 'a, Message: Clone + 'a> From<Select<'a, Val
             .disabled(disabled);
         menu.match_width = true;
         menu.field_trigger = true;
-        menu.into()
+        Element::from(menu).map(move |event| match event {
+            Selection::Select(value) => {
+                select.handler.as_ref().expect("enabled select handler")(value)
+            }
+            Selection::Forward(message) => message,
+        })
     }
 }
 
