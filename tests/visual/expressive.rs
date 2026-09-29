@@ -753,9 +753,9 @@ fn visual_references_expressive_actions() {
             let connected = || {
                 host(
                     button_group([
-                        button("First").on_press(1),
+                        button("First").selected(false).on_press(1),
                         button("Selected").selected(true).on_press(2),
-                        button("Last").on_press(3),
+                        button("Last").selected(false).on_press(3),
                     ])
                     .connected(true),
                 )

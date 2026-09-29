@@ -13,6 +13,14 @@ media. The grids are curated examples, not an exhaustive matrix of every builder
 option, theme, input method, or state. Existing interaction and reference-image
 tests remain the broader behavior checks.
 
+Button appearance grids compare ordinary actions with unselected and selected
+toggles. The button-group timeline changes application-owned selection and shows
+it after pointer exit; connected grids include first/middle/last selection. These
+state comparisons complement the independent role assertions documented in
+[CONTRIBUTING.md](CONTRIBUTING.md#selection-state-checks).
+An ordinary layout test also requires every enabled choice in these grids to fit
+fully inside the capture; increasing the number of states must not clip a row.
+
 Media is generated from real iced components, not hand-authored pictures. It is
 not committed to Git. The generated documentation is embedded in the release
 archive and works without remote image hosting. No renderer runs in consumer

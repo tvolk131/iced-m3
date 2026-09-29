@@ -25,6 +25,7 @@ use std::time::Instant;
 mod harness;
 mod reference;
 mod search;
+mod selection_contracts;
 mod sheets;
 mod values;
 mod variants;

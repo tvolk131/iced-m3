@@ -383,7 +383,18 @@ impl<'a, Message: 'a> Button<'a, Message> {
         self.radius = radius.max(0.0);
         self
     }
-    /// Selected treatment for toggle chips and icon buttons. The value is application-owned.
+    /// Opt into toggle styling, with application-owned selection state.
+    ///
+    /// Even `selected(false)` configures a toggle: common Filled toggles rest on
+    /// `surface_container`, while ordinary Filled actions use `primary`.
+    /// Configure every selectable item with `.selected(is_selected)`, including
+    /// unselected items in a button group.
+    /// Common Filled/Elevated, Tonal, and Outlined toggles use their respective
+    /// selected palettes; enabled selected Outlined toggles have no outline. Icon
+    /// buttons retain their own variant recipes. Shape feedback is preserved.
+    /// Text toggles are a library extension and retain their selected
+    /// `secondary_container` fill. Explicit [`Self::palette`] overrides win for
+    /// enabled buttons. Update this value when handling the activation message.
     pub fn selected(mut self, selected: bool) -> Self {
         self.selected = selected;
         self.toggle = true;
@@ -902,8 +913,21 @@ impl<Message: Clone> Widget<Message, Theme, Renderer> for Button<'_, Message> {
                 }
                 ButtonVariant::Tonal => (c.secondary_container, c.on_secondary_container),
             }
-        } else if self.selected {
-            (c.secondary_container, c.on_secondary_container)
+        } else if self.toggle {
+            match (self.variant, self.selected) {
+                (ButtonVariant::Filled, false) => (c.surface_container, c.on_surface_variant),
+                (ButtonVariant::Filled | ButtonVariant::Elevated, true) => {
+                    (c.primary, c.on_primary)
+                }
+                (ButtonVariant::Tonal, false) => (c.secondary_container, c.on_secondary_container),
+                (ButtonVariant::Tonal, true) => (c.secondary, c.on_secondary),
+                (ButtonVariant::Elevated, false) => (c.surface_container_low, c.primary),
+                (ButtonVariant::Outlined, false) => (Color::TRANSPARENT, c.on_surface_variant),
+                (ButtonVariant::Outlined, true) => (c.inverse_surface, c.inverse_on_surface),
+                // Text has no reference toggle recipe; retain the library extension.
+                (ButtonVariant::Text, false) => (Color::TRANSPARENT, c.primary),
+                (ButtonVariant::Text, true) => (c.secondary_container, c.on_secondary_container),
+            }
         } else {
             match self.variant {
                 ButtonVariant::Elevated => (c.surface_container_low, c.primary),
@@ -974,7 +998,9 @@ impl<Message: Clone> Widget<Message, Theme, Renderer> for Button<'_, Message> {
                 } else {
                     1.0
                 }
-            } else if self.variant == ButtonVariant::Outlined && !(self.icon && self.selected) {
+            } else if self.variant == ButtonVariant::Outlined
+                && !((self.icon || (self.toggle && enabled)) && self.selected)
+            {
                 match self.size {
                     Some(ButtonSize::Large) => 2.0,
                     Some(ButtonSize::ExtraLarge) => 3.0,
