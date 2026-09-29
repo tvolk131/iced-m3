@@ -1,5 +1,40 @@
 # Validation report
 
+## Tooltip and callback contracts — 2026-09-29
+
+Twelve focused tests cover plain-tooltip focus/delay/dismissal, rich-tooltip
+forward/reverse traversal, pointer entry, Escape, menu containment, callback
+construction timing, disabled controls, rebuilds and invalid time submission.
+The initial nine-test run had eight failures reproducing the reported behavior;
+the existing menu/Escape control passed. All twelve final checks pass on TinySkia
+and Metal. Existing hover tests also caught overlapping focus/hover dismissal,
+which now has independent suppression state.
+
+The software all-target suite passed 259 library tests plus the integration and
+example suites. Metal also passed 18 Expressive checks, six switch-motion checks,
+the dialog-exit regression, and four modal/background-activity checks. These
+include interruption, reduced motion and simulated window-focus loss.
+
+The native `desktop_contracts` example was exercised on macOS with the renderer
+restricted to wgpu: keyboard hint display/Escape, Tab traversal out of rich hints,
+arrow/Space toggle selection, Enter submission, invalid drafts, disabled select
+options, light/dark themes, repeated selections, dialog dismissal and reduced
+motion. The visible spinner continued changing behind the open dialog. This is
+a focused macOS smoke check, not native accessibility or cross-platform certification.
+
+```sh
+ICED_TEST_BACKEND=tiny-skia cargo test --locked --no-default-features --lib beta4_contracts
+ICED_TEST_BACKEND=wgpu cargo test --locked --lib beta4_contracts
+ICED_BACKEND=wgpu cargo run --locked --example desktop_contracts
+cargo +1.92.0 test --locked --no-default-features --lib visual_references -- --ignored
+cargo +1.92.0 xtask doc-media check
+```
+
+Canonical PNG checks use Rust 1.92.0, matching CI. An initial run using local
+stable 1.98.1 differed by 60 pixels at a circular-progress zero-length handoff;
+that specific reference passes on 1.92.0 without an image update. Keep renderer/
+toolchain comparison separate from approving new canonical images.
+
 ## Switch spatial spring response — 2026-09-27
 
 The initial regression run reproduced the hidden selection overshoot and the

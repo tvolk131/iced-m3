@@ -204,6 +204,7 @@ pub(crate) struct Anchored<'a, 'b, Message> {
     pub surface: Option<(f32, u8)>,
     pub plain_surface: bool,
     pub surface_high: bool,
+    pub linear_focus: bool,
 }
 impl<Message: Clone> Overlay<Message, Theme, Renderer> for Anchored<'_, '_, Message> {
     fn layout(&mut self, renderer: &Renderer, bounds: Size) -> layout::Node {
@@ -434,6 +435,27 @@ impl<Message: Clone> Overlay<Message, Theme, Renderer> for Anchored<'_, '_, Mess
             return;
         }
         let outside = cursor.position().is_some() && !cursor.is_over(panel.bounds());
+        if self.linear_focus
+            && let Event::Keyboard(keyboard::Event::KeyPressed {
+                key: keyboard::Key::Named(keyboard::key::Named::Tab),
+                modifiers,
+                ..
+            }) = event
+        {
+            if crate::focus::advance(self.content, self.tree, panel, renderer, modifiers.shift()) {
+                shell.capture_event();
+                shell.request_redraw();
+            } else {
+                crate::focus::clear(self.content, self.tree, panel, renderer);
+                state.close(shell);
+                // The invoker retains focus underneath the popup. Reverse exits
+                // land there; forward exits let the enclosing scope advance once.
+                if modifiers.shift() {
+                    shell.capture_event();
+                }
+            }
+            return;
+        }
         if crate::focus::tab(self.content, self.tree, panel, renderer, event, shell) {
             return;
         }

@@ -112,6 +112,37 @@ pub(crate) fn cycle<Message>(
     }
 }
 
+/// Move within a nonmodal popup without wrapping. False hands focus back to its invoker.
+pub(crate) fn advance<Message>(
+    content: &mut Element<'_, Message>,
+    tree: &mut Tree,
+    layout: Layout<'_>,
+    renderer: &Renderer,
+    reverse: bool,
+) -> bool {
+    let mut query = Entries {
+        roving: true,
+        ..Default::default()
+    };
+    content
+        .as_widget_mut()
+        .operate(tree, layout, renderer, &mut query);
+    let total = query.items.len();
+    let current = query.items.iter().position(|(_, _, focused)| *focused);
+    let next = match (current, reverse) {
+        (Some(i), true) => i.checked_sub(1),
+        (Some(i), false) => (i + 1 < total).then_some(i + 1),
+        (None, true) => total.checked_sub(1),
+        (None, false) => (total > 0).then_some(0),
+    };
+    if let Some(next) = next {
+        select(content, tree, layout, renderer, next);
+        true
+    } else {
+        false
+    }
+}
+
 pub(crate) fn clear<Message>(
     content: &mut Element<'_, Message>,
     tree: &mut Tree,

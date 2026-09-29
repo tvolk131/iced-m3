@@ -1,4 +1,4 @@
-//! Noninteractive hints with delayed hover and shared popup placement.
+//! Noninteractive hints with delayed hover/focus and shared popup placement.
 pub use crate::anchored::Placement;
 use crate::{Element, Theme, TypeScale, anchored::Anchored, typography};
 use iced::advanced::{
@@ -8,6 +8,10 @@ use iced::advanced::{
 use iced::time::{Duration, Instant};
 use iced::{Border, Event, Rectangle, Renderer, Size, Vector, keyboard, mouse, widget, window};
 
+/// A passive hint shown after hover or focus remains for the configured delay.
+/// Escape or a pointer press dismisses it until the corresponding hover/focus
+/// visit ends. Window unfocus hides it; leaving with the pointer alone does not
+/// hide a focused hint. The wrapped control keeps its normal input behavior.
 /// See the [rendered examples](crate::guide::components::tooltip).
 pub struct Tooltip<'a, Message> {
     content: Element<'a, Message>,
@@ -42,6 +46,7 @@ pub fn tooltip<'a, Message: 'a>(
     }
 }
 impl<Message> Tooltip<'_, Message> {
+    /// Delay before showing a hovered or focused hint (default: 500ms).
     pub fn delay(mut self, delay: Duration) -> Self {
         self.delay = delay;
         self
@@ -60,7 +65,8 @@ impl<Message> Tooltip<'_, Message> {
 struct State {
     since: Option<Instant>,
     open: bool,
-    suppressed: bool,
+    hover_suppressed: bool,
+    focus_suppressed: bool,
     inactive: bool,
     presence: crate::presence::Presence,
 }
@@ -123,10 +129,8 @@ impl<Message: Clone> Widget<Message, Theme, Renderer> for Tooltip<'_, Message> {
         };
         let open = state.open;
         match event {
-            Event::Window(window::Event::Unfocused) | Event::Mouse(mouse::Event::CursorLeft) => {
-                state.inactive = true
-            }
-            Event::Window(window::Event::Focused) | Event::Mouse(_) => state.inactive = false,
+            Event::Window(window::Event::Unfocused) => state.inactive = true,
+            Event::Window(window::Event::Focused) => state.inactive = false,
             _ => {}
         }
         let over = !state.inactive
@@ -136,6 +140,19 @@ impl<Message: Clone> Widget<Message, Theme, Renderer> for Tooltip<'_, Message> {
                 event,
                 Event::Mouse(mouse::Event::CursorLeft) | Event::Window(window::Event::Unfocused)
             );
+        let focused =
+            crate::focus::has_focus(&mut self.content, &mut tree.children[0], layout, renderer);
+        // Hover and focus can overlap. Dismissing one must not prevent a new
+        // hover visit while the clicked control retains input focus.
+        if !over {
+            state.hover_suppressed = false;
+        }
+        if !focused {
+            state.focus_suppressed = false;
+        }
+        let active = !state.inactive
+            && layout.bounds().intersection(viewport).is_some()
+            && ((over && !state.hover_suppressed) || (focused && !state.focus_suppressed));
         let dismiss = matches!(
             event,
             Event::Mouse(mouse::Event::ButtonPressed(_)) | Event::Window(window::Event::Unfocused)
@@ -146,15 +163,15 @@ impl<Message: Clone> Widget<Message, Theme, Renderer> for Tooltip<'_, Message> {
                 ..
             })
         );
-        if !over || self.disabled {
-            state.since = None;
-            state.open = false;
-            state.suppressed = false;
-        } else if dismiss {
+        if dismiss {
             state.open = false;
             state.since = None;
-            state.suppressed = true;
-        } else if !state.suppressed {
+            state.hover_suppressed = true;
+            state.focus_suppressed = true;
+        } else if !active || self.disabled {
+            state.since = None;
+            state.open = false;
+        } else {
             let since = *state.since.get_or_insert(now);
             if now.saturating_duration_since(since) >= self.delay {
                 state.open = true;
@@ -266,6 +283,7 @@ impl<Message: Clone> Widget<Message, Theme, Renderer> for Tooltip<'_, Message> {
                 surface: None,
                 plain_surface: false,
                 surface_high: false,
+                linear_focus: false,
             })))
         } else {
             None

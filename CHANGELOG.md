@@ -2,6 +2,16 @@
 
 ## Unreleased
 
+- Plain tooltips now reveal on focus as well as hover, with independent dismissal
+  state. Rich tooltips allow Tab to continue to the next page control and
+  Shift+Tab to return to their trigger; menus retain contained traversal.
+- Select and time-picker callbacks now construct messages at activation rather
+  than during view construction. Numeric time submission prefers `on_confirm`,
+  falling back to `on_change`, and invalid drafts cannot submit. Dial part and
+  period changes follow the same deferred callback contract.
+- Add a focused `desktop_contracts` native example for keyboard hints, callbacks,
+  toggle selection, themes, reduced motion, dialogs and continuous progress.
+
 - Correct common toggle-button selected/unselected palettes by variant. Tonal
   selection now changes color, Filled toggles have a neutral unselected state,
   and enabled selected Outlined toggles lose their outline. Ordinary action,

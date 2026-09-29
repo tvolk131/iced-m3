@@ -1,5 +1,6 @@
 mod adaptive;
 mod baseline;
+mod beta4_contracts;
 mod completion;
 mod compositing_probe;
 mod composition_foundations;
