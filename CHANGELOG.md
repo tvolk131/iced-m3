@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+## 0.1.0-beta.4 — 2026-09-29
+
+This beta corrects toggle selection colors, keyboard tooltip behavior and callback
+timing. There are no public signature changes; iced 0.14 and the Rust 1.88 minimum
+are unchanged. Code that relied on select/time-picker callbacks running while
+building a view should move that work into application initialization or updates.
+
 - Plain tooltips now reveal on focus as well as hover, with independent dismissal
   state. Rich tooltips allow Tab to continue to the next page control and
   Shift+Tab to return to their trigger; menus retain contained traversal.
@@ -11,7 +18,6 @@
   period changes follow the same deferred callback contract.
 - Add a focused `desktop_contracts` native example for keyboard hints, callbacks,
   toggle selection, themes, reduced motion, dialogs and continuous progress.
-
 - Correct common toggle-button selected/unselected palettes by variant. Tonal
   selection now changes color, Filled toggles have a neutral unselected state,
   and enabled selected Outlined toggles lose their outline. Ordinary action,
@@ -181,7 +187,7 @@ This release does not claim complete Material 3 conformance or a stable 1.0 API.
 ## Compatibility
 
 - **During beta:** public APIs may change between prereleases. Pin
-  `iced-m3 = "=0.1.0-beta.2"` and upgrade deliberately; subsequent release notes
+  `iced-m3 = "=0.1.0-beta.4"` and upgrade deliberately; subsequent release notes
   will identify breaking changes and migration steps.
 - **After beta:** compatible fixes stay within a `0.x` minor series. Breaking
   public API changes advance the minor version while the crate remains below

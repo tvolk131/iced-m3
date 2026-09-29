@@ -17,7 +17,7 @@ Install from crates.io:
 
 ```toml
 [dependencies]
-iced-m3 = "=0.1.0-beta.3"
+iced-m3 = "=0.1.0-beta.4"
 iced = { version = "=0.14.0", default-features = false, features = ["tiny-skia", "thread-pool"] }
 ```
 
