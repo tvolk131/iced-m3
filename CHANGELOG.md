@@ -1,5 +1,17 @@
 # Release notes
 
+## Unreleased
+
+- Correct common toggle-button selected/unselected palettes by variant. Tonal
+  selection now changes color, Filled toggles have a neutral unselected state,
+  and enabled selected Outlined toggles lose their outline. Ordinary action,
+  icon-button, chip, segmented-button, custom-palette and disabled recipes remain
+  separate. Text toggles retain their documented library-specific treatment.
+- Add independent rendered selection-role checks and pointer/keyboard selection
+  round trips, including related controls and a theme with distinct role colors.
+  Document review expectations and show action/toggle state comparisons in the
+  generated button examples.
+
 ## 0.1.0-beta.3 — 2026-09-28
 
 This beta adds opt-in Expressive spring motion and action recipes, fixes desktop

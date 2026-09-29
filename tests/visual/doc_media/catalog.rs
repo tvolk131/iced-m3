@@ -24,34 +24,39 @@ doc_examples! {
     }
     button_group {
         title: "Button group", size: (440.0, 104.0), scale: 1, budget: 1_500_000,
-        compare: true, animated: true, variants_size: (440.0, 274.0),
-        caption: "Hover and hold Review, then release. Standard and Expressive are compared on the same clock; both have spring motion, with different responses.",
-        view: fn view(connected: bool) -> Element<'static, Message> {
+        compare: true, animated: true, variants_size: (440.0, 460.0),
+        caption: "Create starts selected. Hold and release Review to select it, move away, then select Create again. Selection persists after hover and press feedback end. Standard and Expressive use the same input sequence.",
+        view: fn view(connected: bool, selected: u8) -> Element<'static, Message> {
             button_group([
-                button("Create").on_press(Message::Action),
-                button("Review").on_press(Message::Action),
-                button("Share").on_press(Message::Action),
+                button("Create").variant(ButtonVariant::Tonal).selected(selected == 0).on_press(Message::Select(0)),
+                button("Review").variant(ButtonVariant::Tonal).selected(selected == 1).on_press(Message::Select(1)),
+                button("Share").variant(ButtonVariant::Tonal).selected(selected == 2).on_press(Message::Select(2)),
             ]).connected(connected).into()
         },
-        make: |_| view(false),
+        make: |s| view(false, u8::from(s.active)),
         variants: || widget::column![
-            typography("Spaced", TypeScale::TitleSmall), view(false),
-            typography("Connected", TypeScale::TitleSmall), view(true),
+            typography("Spaced: Review selected", TypeScale::TitleSmall), view(false, 1),
+            typography("Connected: Create selected", TypeScale::TitleSmall), view(true, 0),
+            typography("Connected: Review selected", TypeScale::TitleSmall), view(true, 1),
+            typography("Connected: Share selected", TypeScale::TitleSmall), view(true, 2),
         ].spacing(16).into(),
     }
     button {
         title: "Button", size: (200.0, 96.0), scale: 2, budget: 350_000,
-        compare: false, animated: true, variants_size: (360.0, 424.0),
+        compare: false, animated: true, variants_size: (480.0, 440.0),
         caption: "Hover, hold, and release Save. Expressive shape and press feedback; release publishes an action.",
-        view: fn view(label: &'static str, variant: ButtonVariant, disabled: bool) -> Element<'static, Message> {
-            button(label).variant(variant).disabled(disabled).on_press(Message::Action).into()
+        view: fn view(label: &'static str, variant: ButtonVariant, selected: Option<bool>, disabled: bool) -> Element<'static, Message> {
+            let action = button(label).variant(variant).disabled(disabled).on_press(Message::Action);
+            match selected { Some(selected) => action.selected(selected).into(), None => action.into() }
         },
-        make: |_| view("Save", ButtonVariant::Filled, false),
-        variants: || widget::column![
-            view("Filled", ButtonVariant::Filled, false), view("Tonal", ButtonVariant::Tonal, false),
-            view("Elevated", ButtonVariant::Elevated, false), view("Outlined", ButtonVariant::Outlined, false),
-            view("Text", ButtonVariant::Text, false), view("Disabled", ButtonVariant::Filled, true),
-        ].spacing(12).into(),
+        make: |_| view("Save", ButtonVariant::Filled, None, false),
+        variants: || {
+            let mut rows = widget::column![typography("Action / Unselected toggle / Selected toggle", TypeScale::TitleSmall)].spacing(12);
+            for (name, variant) in [("Filled", ButtonVariant::Filled), ("Tonal", ButtonVariant::Tonal), ("Elevated", ButtonVariant::Elevated), ("Outlined", ButtonVariant::Outlined), ("Text", ButtonVariant::Text)] {
+                rows = rows.push(widget::row![view(name, variant, None, false), view("Unselected", variant, Some(false), false), view("Selected", variant, Some(true), false)].spacing(12));
+            }
+            rows.push(widget::row![view("Disabled action", ButtonVariant::Filled, None, true), view("Disabled toggle", ButtonVariant::Tonal, Some(true), true)].spacing(12)).into()
+        },
     }
     icon_button {
         title: "Icon button", size: (128.0, 96.0), scale: 2, budget: 150_000,

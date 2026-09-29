@@ -54,6 +54,30 @@ repaint correctness. For release CPU/GPU timing comparisons and the dialog
 investigation, see [rendering performance](PERFORMANCE.md). Run the ignored
 benchmark explicitly on a consistent machine; shared CI has no wall-clock gates.
 
+## Selection-state checks
+
+Run `cargo test --locked --no-default-features --lib selection_contracts` when
+changing selection styling or a shared button rendering branch. These ordinary
+CI tests render explicit background/foreground/border expectations independently
+of golden images. The common-toggle expectations follow the pinned AndroidX
+reference in [EXPRESSIVE.md](EXPRESSIVE.md); Text toggles and disabled treatments
+retain the library's existing recipes. Related-control checks protect the
+baseline role contracts for icon buttons, chips, segmented buttons, tabs,
+navigation, checkboxes, radios and switches; they are not a full conformance audit.
+
+Use both default themes and a diagnostic theme with distinct role colors. Do not
+require every custom palette to make selected/unselected colors different. Check
+specific roles and regions: a whole-image inequality can pass just because a
+corner or shadow changed. Exercise actual activation, update application state,
+rebuild, clear focus/hover feedback, and check the settled result. A missing
+selection fill must fail even when focus, ripples and shape animation work.
+
+For review, show actions next to unselected/selected toggles, and include selected
+first/middle/last items in connected groups. Ask which item remains selected
+after the pointer leaves. Keep assertions independent of rendering helpers that
+resolve the production palette. Establish the failure before fixing it, then
+temporarily restore the faulty branch to verify that the new test rejects it.
+
 ## Documentation
 
 For executable component previews, run `cargo xtask doc-media build`.

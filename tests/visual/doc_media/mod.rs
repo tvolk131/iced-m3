@@ -113,7 +113,7 @@ fn render(example: &Example, standard: bool) -> Vec<Image> {
     );
     let repeat = !matches!(
         example.id,
-        "button_group" | "button" | "fab" | "card" | "split_button" | "toolbar"
+        "button" | "fab" | "card" | "split_button" | "toolbar"
     );
     for tick in 0..180 {
         ui.at(1000 + tick * 1000 / 60);
@@ -126,7 +126,9 @@ fn render(example: &Example, standard: bool) -> Vec<Image> {
                         "radio" => ui
                             .find(if state.active { "Personal" } else { "Team" })
                             .center(),
-                        "button_group" => ui.find("Review").center(),
+                        "button_group" => ui
+                            .find(if state.active { "Create" } else { "Review" })
+                            .center(),
                         "button" => ui.find("Save").center(),
                         "card" | "list_item" => ui.find("Design notes").center(),
                         "filter_chip" => ui.find("Unread").center(),
@@ -161,7 +163,7 @@ fn render(example: &Example, standard: bool) -> Vec<Image> {
                         "switch" | "checkbox" | "icon_button" | "filter_chip" | "list_item" => {
                             Message::Toggle(!state.active)
                         }
-                        "radio" | "tabs" | "navigation_bar" => {
+                        "radio" | "tabs" | "navigation_bar" | "button_group" => {
                             Message::Select(u8::from(!state.active))
                         }
                         "segmented_buttons" => Message::Segments(crate::SegmentSelection::Single(
@@ -434,19 +436,71 @@ fn beside(left: &Image, right: &Image) -> Image {
         pixels,
     }
 }
+fn variant_view(example: &Example, dark: bool) -> Element<'static, Message> {
+    widget::column![
+        typography(if dark { "Dark" } else { "Light" }, TypeScale::TitleMedium),
+        (example.variants)(),
+    ]
+    .spacing(16)
+    .padding(24)
+    .width(Length::Fill)
+    .height(Length::Fill)
+    .into()
+}
+
+#[test]
+fn selection_doc_grids_keep_all_choices_visible() {
+    use iced::advanced::widget::Operation;
+    #[derive(Default)]
+    struct Choices(Vec<iced::Rectangle>);
+    impl Operation for Choices {
+        fn traverse(&mut self, f: &mut dyn FnMut(&mut dyn Operation)) {
+            f(self);
+        }
+        fn focusable(
+            &mut self,
+            _: Option<&widget::Id>,
+            bounds: iced::Rectangle,
+            _: &mut dyn iced::advanced::widget::operation::Focusable,
+        ) {
+            self.0.push(bounds);
+        }
+    }
+    for example in examples::registry()
+        .into_iter()
+        .filter(|e| matches!(e.id, "button" | "button_group"))
+    {
+        for dark in [false, true] {
+            let mut ui = Harness::new(
+                variant_view(&example, dark),
+                example.variants_size,
+                theme(dark).expressive(),
+            );
+            ui.frame();
+            let mut choices = Choices::default();
+            ui.operate(&mut choices);
+            assert!(choices.0.len() >= 12, "missing choices: {}", example.id);
+            for b in choices.0 {
+                assert!(
+                    b.height >= 40.
+                        && b.y >= 24.
+                        && b.y + b.height <= example.variants_size.height - 24.
+                        && b.x >= 24.
+                        && b.x + b.width <= example.variants_size.width - 24.,
+                    "clipped choice in {}: {b:?}",
+                    example.id
+                );
+            }
+        }
+    }
+}
+
 fn variants(example: &Example) -> Image {
     let frames: Vec<_> = [false, true]
         .into_iter()
         .map(|dark| {
             let mut ui = Harness::new(
-                widget::column![
-                    typography(if dark { "Dark" } else { "Light" }, TypeScale::TitleMedium),
-                    (example.variants)(),
-                ]
-                .spacing(16)
-                .padding(24)
-                .width(Length::Fill)
-                .height(Length::Fill),
+                variant_view(example, dark),
                 example.variants_size,
                 theme(dark).expressive(),
             );
