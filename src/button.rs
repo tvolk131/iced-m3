@@ -464,8 +464,8 @@ struct State {
     layer: Transition,
     ripple: crate::ripple::PressRipple,
     origin: iced::Point,
-    ripple_image: RefCell<Option<([f32; 10], iced::advanced::svg::Handle)>>,
-    shadow: crate::elevation::Cache,
+    ripple_image: crate::ripple::Cache,
+    shadow: crate::elevation::TransitionCache,
     motion: Cell<Motion>,
     content_disabled: bool,
     selection: Transition,
@@ -1068,12 +1068,13 @@ impl<Message: Clone> Widget<Message, Theme, Renderer> for Button<'_, Message> {
             } else {
                 (state.layer.value / 0.08).clamp(0.0, 1.0)
             };
-            crate::elevation::draw(
+            crate::elevation::draw_transition(
                 renderer,
                 theme,
                 bounds,
                 radius,
-                resting as f32 + (hovered as f32 - resting as f32) * amount,
+                (resting, hovered),
+                amount,
                 *viewport,
                 &state.shadow,
             );

@@ -1,5 +1,141 @@
 # Rendering performance
 
+## Hover elevation — 2026-10-09
+
+Large clickable cards previously generated a new full-surface, two-blur SVG for
+each fractional hover elevation. Both iced renderers rasterize SVG filters on
+the CPU, including the Metal backend. The changing handle defeated raster reuse.
+
+Interactive elevation now crossfades separate resting/hovered shadow templates.
+Only their drawing opacity changes during hover; the handle and raster dimensions
+remain stable. Large surfaces tile straight edges around the exact curved corners.
+A shallow surface retains its full short axis, preserving overlapping corner
+blurs while still bounding the long axis. The shared tiler supports asymmetric
+corners and uses layer clipping at tile joins to avoid fractional-scale seams.
+Custom fractional `elevated` shadows retain their existing geometry semantics,
+using bounded tiles too (see the follow-up audit below).
+
+Crossfading is an approximation of the previous intermediate blur geometry;
+resting and hovered appearances are checked against the original Gaussian
+outlines. Widget APIs, hit testing and animation timing are unchanged. Renderer
+cache eviction, scale/color changes and changing corner shapes can still cause
+small templates to be rasterized again; retaining an SVG handle does not pin its
+renderer allocation forever.
+
+Run the diagnostic benchmark on an idle machine:
+
+```sh
+ICED_TEST_BACKEND=tiny-skia cargo test --locked --release --lib profile_hover_rendering -- --ignored --nocapture
+ICED_TEST_BACKEND=wgpu cargo test --locked --release --lib profile_hover_rendering -- --ignored --nocapture
+```
+
+The fixture renders a real 1330×250 card at 2×, advances hover-in/out at explicit
+16ms timestamps, and measures 20 transition frames separately from idle frames.
+It includes the first use of the hovered endpoint. GPU repaint includes submission
+and completion, but not window presentation, vsync or screenshot readback.
+These are renderer measurements, not whole-application frame rates.
+
+Local Apple M4 Pro / Metal, Rust 1.98.1, release profile, default features:
+
+| Card | Software before | Software after | Metal before | Metal after |
+| --- | ---: | ---: | ---: | ---: |
+| Elevated | 78.51ms | 19.19ms | 77.11ms | 1.45ms |
+| Filled | 320.68ms | 9.81ms | 321.31ms | 1.38ms |
+| Outlined | 323.63ms | 9.45ms | 321.89ms | 1.41ms |
+| Elevated, transparent shadow | 2.57ms | 2.41ms | 1.30ms | 1.32ms |
+
+The before measurement used an isolated beta.4 source copy with instrumentation
+to record shadow handle IDs; the after benchmark is retained here. Both use the
+same viewport, card dimensions, transition samples and repaint machinery. Raw
+local logs are under `target/hover-shadow-review/performance/`.
+Software rendering still pays for clipped image composition and damaged-region
+painting; this fix does not establish a sub-millisecond or 60fps software budget.
+Metal repaint is now close to the shadow-free control. Recording commands takes
+about 0.01ms during the fixed transition. Timings are diagnostic, never CI gates.
+
+Ordinary tests in `tests/performance/hover.rs` assert bounded raster dimensions
+and reuse of endpoint handle/size pairs during interrupted hover, reversal and
+modal covering/uncovering. Both contracts failed against the original code.
+`tests/visual/shadow_motion.rs` checks endpoint fidelity at 1×, 1.25× and 2×,
+light/dark themes, narrow/shallow/asymmetric shapes, visible intermediate changes,
+reversal and unmodified surface interiors. Run it with `ICED_TEST_BACKEND=wgpu`
+to exercise hardware clipping as well. Canonical references cover actual button,
+FAB, dialog and gallery transitions, including the changed intermediate shadows.
+
+Consumers can temporarily disable Material shadows without disabling hover
+feedback by setting `theme.colors.shadow = iced::Color::TRANSPARENT`.
+
+## Animation audit — 2026-10-09
+
+The follow-up audit found two more expensive paths: bounded press ripples and
+custom animated elevation. A ripple previously rendered a circle through an SVG
+clipping mask, creating extra full-surface intermediates. Its fading opacity was
+also embedded in the SVG, invalidating the raster on every fade frame.
+
+Ripples now paint the radial gradient directly into the rounded outline, with a
+transparent outer stop. Fading uses renderer opacity and reuses the raster.
+Expansion still rasterizes changing geometry; it is cheaper, not free. Custom
+fractional elevation and sheet shadows now use the same perimeter tiler as hover
+shadows. Fractional blur geometry is preserved rather than rounded to integer
+levels or approximated with a crossfade.
+
+Run the diagnostic fixtures on an idle machine:
+
+```sh
+ICED_TEST_BACKEND=tiny-skia cargo test --locked --release --lib profile_animation_rendering -- --ignored --nocapture
+ICED_TEST_BACKEND=wgpu cargo test --locked --release --lib profile_animation_rendering -- --ignored --nocapture
+```
+
+`ICED_PERF_SCENE` selects `RippleExpand`, `RippleFade`, `CustomShadow`,
+`LinearWave`, `Loaders`, `Rings`, `StaggeredLoaders`, or `StaggeredRings`.
+The benchmark reports 1×/2×, first-render cost, median command-recording cost,
+and median repaint cost, with frozen controls. First-render cost includes renderer
+initialization and is not directly comparable across scenarios. Ripple fixtures
+isolate the actual drawing helper; the others build real widget trees. These
+measurements exclude presentation/vsync and screenshot readback. Ordinary tests
+also exercise a real card's press/hold/release and verify message delivery.
+
+Matched M4 Pro / Metal, Rust 1.98.1 release medians at 2× (30 samples):
+
+| Changing scene | Software before | Software after | Metal before | Metal after |
+| --- | ---: | ---: | ---: | ---: |
+| 1330×250 ripple expansion | 29.14ms | 10.59ms | 26.92ms | 7.82ms |
+| Same ripple fading | 48.55ms | 4.35ms | 45.10ms | 1.36ms |
+| 1330×250 fractional elevation | 80.91ms | 15.60ms | 74.59ms | 6.71ms |
+
+The initial audit already included the hover optimization above. Raw local logs
+are under `target/animation-audit/`. Timings are diagnostic, never CI gates.
+
+A 1330px traveling wave cost 0.71ms software / 1.71ms Metal repaint. Sixteen
+48px loading indicators with staggered clocks cost 0.47ms / 1.35ms; sixteen wavy
+loading rings cost 1.39ms / 1.53ms. Staggered fixtures sample across complete
+morph/loading cycles so identical poses cannot hide cache misses. Command
+recording was under 0.25ms for these fixtures. This does not establish a general
+performance guarantee for arbitrary sizes, populations or surrounding content.
+No comparable rendering cliff was found in these indicator workloads.
+
+CI contracts require opacity-only ripple fading to reuse its raster and custom
+elevation to keep raster dimensions bounded. Pixel tests compare the optimized
+ripple against the former circle/clip construction at multiple progress values,
+opacities, scales, themes and corner shapes. Moving opacity out of the 8-bit SVG
+intermediate changes rounding by at most two channel units in software and five
+on Metal in this matrix. Fractional-shadow comparisons retain a one-pixel raster
+rounding allowance; integer levels allow two channel units and fractional levels
+four. Existing interaction references cover the resulting control appearances.
+
+Determinate waves now travel by default independently of progress updates, at
+one wavelength per second. Explicit zero speed remains stationary. Tests cover
+constant values, custom wavelengths, pause/resume, speed changes, completion,
+viewport clipping and reduced motion. See [LOADING_PROGRESS.md](LOADING_PROGRESS.md)
+for the distinction between Material Compose and Android Views defaults.
+
+Remaining costs: expanding ripples still scale with rendered area; fractional
+custom shadows rebuild small blur templates as their geometry changes; software
+painting and layered damage retain the upstream costs described below. This is
+a targeted audit, not an exhaustive proof of all component performance.
+
+## Settled dialog repainting
+
 The dialog investigation found avoidable shadow repainting in iced-m3 and a
 separate cost in iced 0.14's software renderer. The library fix reduces the
 matched dialog benchmark's software repaint median by about 30%. Software

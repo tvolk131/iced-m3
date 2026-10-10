@@ -28,7 +28,7 @@ wave defaults apply.
 | `size(px)` | Linear stroke thickness, or circular allocated diameter; defaults 4 / 48px |
 | `wave_amplitude(px)` | 3px linear / 1.6px circular; zero flattens the wave; circular amplitude is bounded inside its radius |
 | `wavelength(px)` | 40px measured linear / 20px loading linear / 15px circular; fitted to a whole number of waves |
-| `wave_speed(px_per_second)` | 0, matching the reference default; positive and negative values enable opposite travel directions |
+| `wave_speed(px_per_second)` | Measured: one wavelength per second; loading: 0 additional travel. Explicit 0 keeps the pattern stationary; negative values reverse travel |
 | `paused(true)` | Freeze loading and wave travel; application changes to measured progress still take effect |
 
 Linear layout reserves `thickness + 2 × amplitude`: the default wave is 10px
@@ -41,16 +41,25 @@ pinned token file. Both can still be overridden.
 
 Wave shape near completion follows the source's amplitude range: full amplitude
 between 10% and 90%, transitioning flat outside it over 500ms with the shared
-motion scaling. At 100%, the settled indicator is a full flat bar/ring. Stationary
-measured indicators stop requesting frames. Optional traveling waves continue
+motion scaling. At 100%, the settled indicator is a full flat bar/ring. Measured
+waves travel even when their percentage is unchanged, following Material Compose's
+default. `.wave_speed(0.)` selects the stationary Android Views behavior and stops
+requesting frames after measured transitions settle. Traveling waves continue
 only while visible, active, unpaused, permitted by reduced-motion settings and
 showing a nonzero wave.
 
 ## Shape and motion references
 
-Reference revision: Material Components for Android
+Geometry and loading-motion reference: Material Components for Android
 `d12048664f383e88148afb18e971aa6dd24ed42e`, token version 34.0.0. This is a pinned,
 auditable profile, not a claim to follow future changes automatically.
+
+Measured-wave travel defaults follow [Material Compose's wavy progress implementation](https://android.googlesource.com/platform/frameworks/support/+/383a96e0e6e21b2155de1ff320ef3c78f4c288f7/compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/WavyProgressIndicator.kt):
+one wavelength per second, independent of changes to the measured value. This is
+an implementation default, not a mandatory speed stated by the M3 design guide.
+The loading profiles below already move their active segments; extra wave travel
+remains opt-in there. Explicit speeds work in both modes. Changing speed preserves
+the current phase, and pausing/offscreen time is discarded when travel resumes.
 
 The loading sequence is **soft burst → cookie 9 → pentagon → pill → sunny →
 cookie 4 → oval**. The original shapes and pairwise feature matching are exported

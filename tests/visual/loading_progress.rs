@@ -204,6 +204,126 @@ fn wavy_geometry_reserves_space_preserves_parent_and_has_visible_gaps() {
 }
 
 #[test]
+fn default_determinate_waves_travel_independently_of_progress_updates() {
+    for circular in [false, true] {
+        for wavelength in [None, Some(64.)] {
+            let make = || {
+                let indicator = if circular {
+                    circular_progress(0.5).size(80.)
+                } else {
+                    linear_progress(0.5).width(280)
+                };
+                if let Some(wavelength) = wavelength {
+                    indicator.wavelength(wavelength).wavy(true)
+                } else {
+                    indicator.wavy(true)
+                }
+            };
+            let speed = wavelength.unwrap_or(if circular { 15. } else { 40. });
+            let mut moving = ui(make(), Size::new(320., 140.), false);
+            let mut explicit = ui(make().wave_speed(speed), Size::new(320., 140.), false);
+            moving.at(0);
+            explicit.at(0);
+            let initial = moving.frame();
+            explicit.frame();
+            assert_eq!(moving.at(250), window::RedrawRequest::NextFrame);
+            explicit.at(250);
+            assert!(
+                initial != moving.frame(),
+                "An unchanged percentage must not stop the default wave"
+            );
+            assert!(
+                moving.frame() == explicit.frame(),
+                "Default travel must follow the configured wavelength"
+            );
+            moving.at(1000);
+            assert!(
+                moving.frame() == initial,
+                "One second must complete one wave period"
+            );
+
+            let mut stopped = ui(make().wave_speed(0.), Size::new(320., 140.), false);
+            stopped.at(0);
+            let still = stopped.frame();
+            assert_eq!(stopped.at(5000), window::RedrawRequest::Wait);
+            assert!(still == stopped.frame());
+        }
+    }
+}
+
+#[test]
+fn default_wave_pause_speed_changes_and_completion_preserve_scheduling() {
+    for circular in [false, true] {
+        let make = |value| {
+            (if circular {
+                circular_progress(value).size(80.)
+            } else {
+                linear_progress(value).width(280)
+            })
+            .wavy(true)
+        };
+        let size = Size::new(320., 140.);
+        let mut view = ui(make(0.5), size, false);
+        view.at(0);
+        view.frame();
+        view.at(250);
+        let quarter = view.frame();
+        view.rebuild(host(make(0.5).paused(true)));
+        view.at(250);
+        assert_eq!(view.at(10000), window::RedrawRequest::Wait);
+        assert!(view.frame() == quarter);
+        view.rebuild(host(make(0.5)));
+        view.at(10000);
+        assert!(
+            view.frame() == quarter,
+            "Resume must not catch up paused time"
+        );
+        view.at(10250);
+        let half = view.frame();
+        assert!(half != quarter);
+        view.rebuild(host(make(0.5).wave_speed(-30.)));
+        view.at(10250);
+        assert!(
+            view.frame() == half,
+            "Changing speed must not jump to a new phase"
+        );
+        view.at(10375);
+        assert!(view.frame() != half);
+
+        // Both empty and complete indicators flatten and stop continuous work.
+        for value in [0., 1.] {
+            let mut endpoint = ui(make(value), size, false);
+            endpoint.frame();
+            assert_eq!(endpoint.at(5000), window::RedrawRequest::Wait);
+        }
+        let mut reduced = Harness::with_backend(
+            host(make(0.5)),
+            size,
+            Theme::light().reduced_motion(true),
+            &std::env::var("ICED_TEST_BACKEND").unwrap_or_else(|_| "tiny-skia".into()),
+        );
+        let still = reduced.frame();
+        assert_eq!(reduced.at(5000), window::RedrawRequest::Wait);
+        assert!(still == reduced.frame());
+
+        // Scrolling outside the viewport must also discard the hidden interval.
+        let mut clipped = ui(widget::container(make(0.5)).padding(0), size, false);
+        clipped.at(0);
+        clipped.frame();
+        clipped.at(250);
+        let before = clipped.frame();
+        clipped.rebuild(host(
+            widget::container(make(0.5)).padding(iced::Padding::ZERO.top(300)),
+        ));
+        clipped.at(250);
+        assert_eq!(clipped.at(20000), window::RedrawRequest::Wait);
+        clipped.rebuild(host(widget::container(make(0.5)).padding(0)));
+        clipped.at(20000);
+        assert!(clipped.frame() == before);
+    }
+}
+
+#[test]
 fn loading_and_waves_pause_resume_and_obey_reduced_motion() {
     let mut flat = ui(
         linear_progress(0.5)

@@ -66,6 +66,8 @@ impl PressRipple {
 
 /// Cache the bounded SVG so its clipping follows ancestor transforms on both
 /// renderers. The hover layer is painted separately and remains visible.
+pub(crate) type Cache = std::cell::RefCell<Option<([f32; 9], iced::advanced::svg::Handle)>>;
+
 pub(crate) fn draw_bounded(
     renderer: &mut iced::Renderer,
     bounds: iced::Rectangle,
@@ -74,7 +76,7 @@ pub(crate) fn draw_bounded(
     origin: iced::Point,
     progress: f32,
     color: iced::Color,
-    cache: &std::cell::RefCell<Option<([f32; 10], iced::advanced::svg::Handle)>>,
+    cache: &Cache,
 ) {
     use iced::advanced::svg::{Handle, Renderer as _, Svg};
     let key = [
@@ -87,7 +89,6 @@ pub(crate) fn draw_bounded(
         origin.x,
         origin.y,
         progress,
-        color.a,
     ];
     let mut cache = cache.borrow_mut();
     if cache.as_ref().is_none_or(|(old, _)| *old != key) {
@@ -111,14 +112,18 @@ pub(crate) fn draw_bounded(
             w - br,
             h - bl
         );
+        // Paint the gradient directly into the rounded outline. Its transparent
+        // outer stop already bounds the circle; an SVG clipPath would allocate
+        // and composite additional full-surface masks on every expansion frame.
         let svg = format!(
-            r#"<svg xmlns="http://www.w3.org/2000/svg" width="{w}" height="{h}" viewBox="0 0 {w} {h}"><defs><clipPath id="clip"><path d="{path}"/></clipPath><radialGradient id="edge"><stop offset="80%" stop-opacity="1"/><stop offset="100%" stop-opacity="0"/></radialGradient></defs><g opacity="{}" clip-path="url(#clip)"><circle cx="{cx}" cy="{cy}" r="{radius}" fill="url(#edge)"/></g></svg>"#,
-            color.a
+            r#"<svg xmlns="http://www.w3.org/2000/svg" width="{w}" height="{h}" viewBox="0 0 {w} {h}"><defs><radialGradient id="edge" gradientUnits="userSpaceOnUse" cx="{cx}" cy="{cy}" r="{radius}"><stop offset="80%" stop-opacity="1"/><stop offset="100%" stop-opacity="0"/></radialGradient></defs><path d="{path}" fill="url(#edge)"/></svg>"#
         );
         *cache = Some((key, Handle::from_memory(svg.into_bytes())));
     }
     renderer.draw_svg(
-        Svg::from(&cache.as_ref().unwrap().1).color(iced::Color { a: 1.0, ..color }),
+        Svg::from(&cache.as_ref().unwrap().1)
+            .color(iced::Color { a: 1.0, ..color })
+            .opacity(color.a),
         bounds,
         clip,
     );
