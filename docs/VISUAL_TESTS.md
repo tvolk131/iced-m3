@@ -2,13 +2,18 @@
 
 Every current component family has reference-image coverage. The suite stores
 3,047 PNGs across component states, timed animation frames and gallery
-compositions. These complement the ordinary interaction tests. A passing comparison means the rendered pixels match the
-reviewed reference; it does not establish complete Material 3 compliance.
+compositions. These complement the ordinary interaction tests. A passing
+comparison means the rendered pixels match the reviewed reference; it does not
+establish complete Material 3 compliance. This guide owns the current reference
+coverage and procedure; [VALIDATION.md](VALIDATION.md) retains historical findings.
 
 ## Run and review
 
+Use the [canonical environment](#reproducibility-and-limits), including Rust
+1.92.0, for both comparisons and intentional updates:
+
 ```sh
-cargo test --locked --no-default-features --all-targets visual_references -- --ignored
+cargo +1.92.0 test --locked --no-default-features --all-targets visual_references -- --ignored
 python3 tests/visual/report.py
 ```
 
@@ -27,7 +32,7 @@ Generating artifacts never accepts a new baseline. To intentionally update after
 a design change, run locally:
 
 ```sh
-UPDATE_VISUAL_REFERENCES=1 cargo test --locked --no-default-features --all-targets visual_references -- --ignored
+UPDATE_VISUAL_REFERENCES=1 cargo +1.92.0 test --locked --no-default-features --all-targets visual_references -- --ignored
 python3 tests/visual/report.py
 ```
 
@@ -42,9 +47,11 @@ an update run compares against the newly written baseline.
 
 The harness in `tests/visual/harness.rs` drives iced's real `UserInterface`, widget
 tree, layout, overlays and renderer. Mouse events use a scoped, thread-local test
-clock; redraw events carry explicit timestamps. Taking a screenshot does not
-advance time, dispatch a redraw event or sleep. Rebuilding a view preserves its
-widget cache, so tests exercise application-controlled values and ongoing gestures.
+clock; redraw events carry explicit timestamps. `frame()` and `capture(name)` do not
+advance time, dispatch a redraw event or sleep. `capture_at(milliseconds, name)`
+explicitly advances to an absolute test timestamp with one redraw before capture.
+Rebuilding a view preserves its widget cache, so tests exercise
+application-controlled values and ongoing gestures.
 
 The clock override exists only under `cfg(test)` in the library's unit suite.
 Production continues to use the system clock, with no public testing API,
@@ -143,7 +150,7 @@ this is not yet a uniform contract suite for every component or motion scheme.
 | --- | --- |
 | Typography | All 15 roles, including font weight and size, in both themes |
 | Surfaces, divider, badges | Three surface variants, divider, zero/small/overflow counts |
-| Buttons | All four variants; idle, hover, held, release and disabled states |
+| Buttons | Five baseline variants at rest/disabled and with keyboard focus; shared hover, held and release motion |
 | Icon buttons and legacy chips | Variants, selection and disabled combinations; shared button feedback |
 | Switches, checkboxes, radios | Timed hover/press/release, both initial values, disabled during press; mixed/error checkbox examples |
 | Fields | Floating label moves up and back at fixed times; filled, error, wrapped supporting text, disabled and secure states |
@@ -161,6 +168,9 @@ this is not yet a uniform contract suite for every component or motion scheme.
 | Search | Docked/full-window expansion and collapse at fixed times, empty and populated queries in both themes |
 | Chip families | Assist/suggestion/filter/input; hover, held, selection transition, remove held and disabled |
 | Range slider | Separated/coincident/endpoints; hover, held bubble, drag, release and disabled |
+| Adaptive navigation and pickers | Breakpoint layouts, keyboard focus/held keys, app-bar collapse/ellipsis, date/range/year/manual entry, 12/24-hour time drafts and picker actions |
+| Expressive and carousel | Action sizes/shapes, group press/rebound, switch springs, rail width, FAB-menu lifecycles, all carousel layouts/masks/snapping and sheet resizing |
+| Loading and waves | Canonical morphs, linear/circular waves, extrema, pause/resume, measured/loading handoffs, buffers and multicolor cycles |
 | Gallery | Workspace, Activity, Settings, Export; file details, modal side/bottom sheets, scrolled notes/actions, FAB overview and New workspace; search suggestions/results, combined filters and empty results at 320/390/1160px |
 
 The existing interaction tests cover additional cancellation, focus, editing,
@@ -168,227 +178,151 @@ scrolling and message semantics. There is no attempt to snapshot every possible
 combination. Shared rendering paths receive focused animation coverage instead
 of duplicating every frame for each helper built on them.
 
-## Value and progress regression checks
+### Finding the detailed captures
 
-`tests/visual/values.rs` adds 158 reference images and checks dragging across
-rebuilds, step deduplication, endpoint clamps, cancellation, disabled/invalid
-input, root-dialog blocking, controlled single/multiple selection and idle frame
-scheduling. Indeterminate frames must be identical under two independent clock
-origins. Paused, viewport-clipped and zero-motion indicators stop requesting
-animation frames, and resuming excludes the paused interval.
+Use these prefixes in the visual report to inspect the scenarios condensed in
+the family table. The linked guides retain their design sources and adaptations.
 
-A selected-segment border regression failed before the foreground outline layer
-was added and passes afterward. A scroll comparison verifies unchanged pixels
-for the slider, check/icon segments and circular progress under a 60px native
-scroll translation. Both rendering properties also pass on wgpu/Metal. The
-reference PNGs remain canonical Tiny Skia output, not cross-renderer goldens.
+| Report prefix | Distinct scenarios and guide |
+| --- | --- |
+| `sheet-*`, `fab-*`, `gallery-sheets` | Sheet interruption, nested menus, scrolled content and FAB sizes/colors; [sheets and FABs](SHEETS.md) |
+| `search-*`, `chip-variants`, `range-slider-*` | Docked/full search, empty/populated queries, independent chip removal and overlapping range handles; [search and filtering](SEARCH.md) |
+| `adaptive-*`, `picker-*`, `completion-*` | Breakpoint layouts, held keyboard focus, picker modes, carousel masks and FAB-menu exit; [catalog completion](COMPLETION.md) |
+| `desktop-*` | Three-level/edge-flipped menus, full-screen fixed headers and scrolled bodies at 320/840px, calendars above/below their triggers, modal rail entry/exit; [desktop behavior](DESKTOP.md) |
+| `polish-*` | Basic/full-screen dialog translation, menu type-ahead, button feedback, tooltip delay and both snackbar visibility directions; [motion](MOTION_POLISH.md) |
+| `fidelity-*` | Normal/error filled/outlined field hover/focus/disable, selection-control keyboard focus with optional switch icons, cards and chips; [source audit](FIDELITY.md) |
+| `desktop-completion-*`, `gallery-desktop-completion` | Shaped title ellipsis, three-level dialog stacks, manual-date validity and discard confirmation; [desktop completion](DESKTOP_COMPLETION.md) |
+| `variants-*` | Narrow/error/disabled adorned fields, held/released trailing actions, empty/error dropdowns, 12/24-hour drafts, card drag states, lowered FABs, independent buffer and color transitions; [variants](DESKTOP_VARIANTS.md) |
+| `finish-*`, `gallery-finish` | Elevation levels, picker footers/errors, slider hover/hold, progress extrema and 400/1100px compositions; [desktop fidelity](DESKTOP_FIDELITY.md) |
 
-The linear motion regression checks actual colored pixel runs: early single
-segment, substantial growth, contraction, a brief two-segment handoff, exit and
-repeat. It rejects the old symmetric animation. Reference captures now include
-the 1100–1250ms handoff and later contraction/exit frames. To regenerate a looping
-preview of 60 real renderer frames in both themes:
+The following are **capture offsets**, in milliseconds from each phase's start,
+not prescribed component durations. Fixtures live under `tests/visual/` and run
+in both themes; the source arrays remain authoritative when adding samples.
+
+| Fixture | Sampled phases |
+| --- | --- |
+| `search.rs`: search | Expand 0/50/100/200/300; collapse 0/50/125/200/250 |
+| `search.rs`: chips/range | Chip selection 0/50/100/200; range held 0/50/100/150 |
+| `desktop.rs`: rail width | Expand and collapse 0/50/100/200/300 |
+| `polish.rs`: button ripple | Held 0/50/100/225/350/450/600; release 0/50/100/150/300 |
+| `polish.rs`: menu | Open 0/50/100/200/350/500; close 0/50/100/150/250 |
+| `polish.rs`: tooltip | Open 0/50/100/150/300 after the 500ms hover delay |
+| `variants.rs`: multicolor progress | Multiple cycles sampled through 7800ms |
+
+## Targeted rendering and interaction checks
+
+In addition to the reference families above, ordinary tests independently check
+properties that an accidentally approved image could otherwise hide:
+
+- **Values/progress** (`values.rs`, `variants.rs`, `loading_progress.rs`): drag
+  rebuilds, step deduplication, clamps/cancellation, invalid ranges, controlled
+  selection, modal blocking and idle scheduling. Independent clock origins must
+  produce identical frames; paused/clipped/reduced-motion indicators stop
+  scheduling, and resuming excludes paused time. Visible indicators keep moving
+  after keyboard window-focus loss, as checked in `interaction_contracts.rs`.
+- **Paint order and scroll translation:** the selected-segment outline remains
+  visible; sliders, check/icon segments and circular progress retain pixels after
+  a 60px native scroll. `snackbar_surface_occludes_background_text` compares the
+  notice interior with and without text behind it in both themes. Its
+  [scrolled gallery reference](../tests/visual/references/gallery/settings-dark-snackbar.png)
+  reproduces the reported Workspace unpinned composition.
+- **Sheets and FABs** (`sheets.rs`): continuous reversal, no idle redraws, blocking
+  through exit, cancellation of covered presses, matching outside-click origins,
+  nested-menu Escape, native typing, scroll retention, standard/modal changes,
+  invalid dimensions, root-dialog precedence and paused snackbar deadlines.
+- **Search/chips/ranges** (`search.rs`): native autofocus/edit/clear/submit,
+  exit-time input capture, nested menus, scroll/reopen, reversible/zero motion,
+  opaque surfaces, independent chip removal, coincident handles, extreme/snapped
+  ranges and gesture cancellation. Reference inputs are unfocused before capture
+  to exclude native caret blinking; autofocus/typing retain behavioral checks.
+- **Navigation/pickers/carousels** (`adaptive.rs`, `pickers.rs`, `desktop.rs`,
+  `polish.rs`, `completion.rs`): group entry/memory, nested focus scrolling, native
+  ID-based focus, calendar row/week/month/year traversal, bounds/disabled days, menu
+  keyboard/hover behavior and edge placement. Dial hands must stay in the dial,
+  carousel children must reject masked clicks, and closing FAB menus cancel holds.
+- **Popup motion** (`polish.rs`): menu prefixes/repeated letters/Unicode,
+  disabled rows, bounded diagonal pointer intent, calendar focus restoration,
+  reversal/cancellation and idle redraws. Pixel probes measure ripple opacity,
+  pointer origin and preserved hover/rounding; nested content and shadows must
+  stay inside an animated reveal, and a covered invoker's ripple must finish.
+- **State fidelity** (`fidelity.rs`, `desktop_completion.rs`, `variants.rs`,
+  `desktop_fidelity.rs`): independent color swatches, spatial bounds, focus without
+  activation, reduced motion, hover elevation returning to rest during a hold,
+  stacked-dialog caret/focus return, picker validation/actions, adorned fields,
+  dropdowns, card states, lowered FABs, buffer transitions and color continuity.
+
+The paths above are under `tests/visual/`. Focused properties have also been run
+on Metal; [VALIDATION.md](VALIDATION.md) records which investigations did so and
+their limits. For example, on a machine with an available GPU:
+
+```sh
+ICED_TEST_BACKEND=wgpu cargo test --locked --lib snackbar_surface_occludes_background_text
+ICED_TEST_BACKEND=wgpu cargo test --locked --lib visual_tests::search
+```
+
+### Linear progress motion
+
+`linear_indeterminate_pixels_grow_contract_and_handoff_between_segments` checks
+actual colored runs: early single segment, growth, contraction, brief two-segment
+handoff, exit and repeat. It rejects the old symmetric sweeps. References include
+1100–1250ms handoff frames and later contraction/exit. Generate a 60-frame looping
+preview in both themes with:
 
 ```sh
 WRITE_PROGRESS_PREVIEW=1 cargo test --locked --no-default-features --lib linear_indeterminate_pixels
 ```
 
-Open `target/visual-report/progress-motion/index.html` for playback and frame
-scrubbing. These extra preview images are review artifacts, not golden references.
-
-## Reproducibility and limits
-
-The sheets/FAB milestone adds 358 references. Ordinary tests separately verify
-continuous reversal, no idle redraws, modal blocking through exit, cancelled
-covered presses, outside-click origins, nested-menu Escape, native typing,
-scroll retention, standard/modal changes, dimension validation, root-dialog
-precedence and suspended snackbar timers. Sheet occlusion, reversal and held FAB
-rendering are also checked on Metal through `ICED_TEST_BACKEND=wgpu`; the golden
-suite always selects Tiny Skia. See [SHEETS.md](SHEETS.md) for the component scope.
-
-References were captured on Apple Silicon, macOS 26.6.2, Rust 1.92.0, with the
-checked-in Cargo.lock, bundled Roboto, Tiny Skia and a fixed 2× scale. The visual
-CI job uses the macOS 26 Arm64 runner and the same compiler, lockfile, fonts,
-renderer and scale. All 2,665 references passed in
-[the first successful remote run](https://github.com/tvolk131/iced-m3/actions/runs/34933165692).
-OS image updates can still affect rendering; inspect such differences before
-refreshing references. Exact cross-platform or cross-renderer equality is not
-promised. GPU blending is deliberately not compared to software golden pixels.
-
-The clock controls this library's finite transitions, progress loops and popup timers. It does
-not replace every upstream iced/system clock: native caret blinking, IME and
-platform font fallback need separate checks. Floating-label snapshots change the
-controlled value without focusing the native input, avoiding caret variability.
-These snapshots verify sampled frames and state transitions, not real-time frame
-rate or perceived animation smoothness.
-
-To add coverage, put a fixture in `tests/visual/mod.rs`, drive real input through
-`Harness`, capture meaningful milestones with `capture`, and assert messages and
-settling where relevant. Generate and visually review its references explicitly.
-Do not replace interaction assertions with snapshots alone.
-
-## Snackbar overlap regression
-
-The reported **Workspace unpinned** corruption was caused by text and rectangle
-batching in a shared rendering layer. Drawing the snackbar after its background
-was insufficient: background text could still paint over the snackbar surface.
-`snackbar::Host::draw` now draws the complete notice in a separate foreground
-layer, following iced's own stack layering pattern.
-
-`snackbar_surface_occludes_background_text` compares the snackbar interior with
-and without text behind it. It failed before the fix on both Tiny Skia and
-wgpu/Metal and passes afterward in light and dark themes. Run its GPU check on a
-machine with an available graphics device:
-
-```sh
-ICED_TEST_BACKEND=wgpu cargo test --locked --lib snackbar_surface_occludes_background_text
-```
-
-The [fixed Settings composition](../tests/visual/references/gallery/settings-dark-snackbar.png)
-also captures the original scrolled-gallery situation.
-
-## Search and filtering regression checks
-
-`tests/visual/search.rs` adds 136 timed component references, with another 30
-gallery compositions. Search expands at 0/50/100/200/300ms and collapses at
-0/50/125/200/250ms. Chip selection uses 0/50/100/200ms and range-slider held
-feedback uses 0/50/100/150ms. Ordinary tests cover native query editing, explicit
-clear/submit, modal input capture, nested menus, scrolling/reopening, reversible
-and zero-duration motion, independent input-chip removal, overlapping handles,
-invalid/extreme ranges and gesture cancellation.
-
-Search inputs are explicitly unfocused by the reference harness before pixel
-capture so native caret blinking cannot make goldens nondeterministic. Autofocus
-and typing have separate behavioral tests. See [SEARCH.md](SEARCH.md) for scope.
-The 19 updated older references are gallery compositions affected by the new file
-workflow; every pre-existing component reference remains byte-for-byte unchanged.
-
-Run the new behavioral/rendering-property cases with Metal using
-`ICED_TEST_BACKEND=wgpu cargo test --lib visual_tests::search`. All 14 cases passed
-on this machine. Golden comparisons remain pinned to Tiny Skia.
-
-
-## Adaptive navigation and catalog completion references
-
-This pass adds 204 frames for adaptive navigation, keyboard focus and held keys,
-app-bar collapse, date/range/year and time pickers, filled fields, extended FABs,
-Expressive previews, carousel masks/snapping, FAB-menu entrance/exit and sheet
-resizing. The complete suite has 1,287 references, including 101 gallery
-compositions, in 195 review groups. All 22 reference test functions pass with
-both feature configurations; golden rendering remains pinned to Tiny Skia.
-
-All 1,083 preceding references were intentionally updated after replacing the
-approximate accent scheme with HCT tonal-spot colors. New gallery compositions
-also include adaptive navigation and the Schedule workflow. No preceding
-reference was removed. Light/dark and wide/narrow results, picker hand placement,
-carousel cropping, app-bar collapse and menu/sheet motion were visually reviewed.
-
-Twenty new interaction/rendering cases also pass on wgpu/Metal. In particular,
-clock-hand pixels must remain inside the dial, carousel children cannot receive
-clicks beyond their visible mask, and closing FAB menus cancel held child actions.
-These assertions complement exact reference comparisons. They do not measure
-real-time smoothness or establish full Material/Expressive conformance. See
-[implemented behavior and remaining boundaries](COMPLETION.md).
-
-## Desktop polish references
-
-This pass adds 72 component frames and 16 gallery compositions in light and dark
-themes. Cascading menus cover keyboard entry, three levels, held actions and edge
-flipping. Rail width changes are captured at 0/50/100/200/300ms in each direction;
-modal rails include intermediate entrance and exit frames. Full-screen dialogs
-cover fixed headers and scrolled bodies at 320 and 840px. Docked calendars are
-captured above and below their triggers. The gallery adds 390 and 1280px views of
-the editor, navigation panel, submenu and docked calendar.
-
-All 1,186 preceding component references remain byte-for-byte unchanged. Twenty-two
-older gallery frames were updated for the new calendar control and automatic
-scrolling to the selected Schedule/Export tab. No preceding reference was removed.
-The complete suite has 24 reference functions; reference pixels use Tiny Skia in
-both build configurations.
-
-Eighteen new ordinary component tests cover one Tab stop per group, remembered
-entry, nested scroll reveal, native ID-based focus, calendar rows/week navigation,
-menu hover timing and dismissal, dialog actions, docked date/range selection,
-reversible/reduced-motion rails and modal isolation through exit. Two gallery tests
-exercise editor Save/Cancel validation and closing navigation after selection.
-See [desktop behavior and remaining limits](DESKTOP.md).
-
-## Motion and interaction polish references
-
-The motion pass adds 128 precise frames for button ripples, menu opening/closing,
-basic/full-screen dialogs, plain tooltips and snackbars in both themes. Four more
-frames extend existing tooltip and flipped-submenu sequences through their new
-settled times. Every one of the preceding 1,375 reference files is retained.
-There are now 25 reference test functions.
-
-Button captures include held 0/50/100/225/350/450/600ms and released
-0/50/100/150/300ms. Menus include 0/50/100/200/350/500ms opening, type-ahead focus,
-and 0/50/100/150/250ms closing. Dialogs cover opening/closing and full-screen
-translation. Tooltip timing begins after its 500ms delay. Snackbar sequences
-include both visibility directions with stable background content.
-
-Ordinary pixel tests independently assert ripple opacity, pointer origin,
-preserved hover/rounding, clipping of nested layers and shadows at a menu's
-animated edge, and an invoker finishing its ripple while a menu remains open.
-Keyboard tests exercise menu prefixes/repeated letters/Unicode, disabled rows,
-bounded diagonal pointer intent, calendar month/year changes and restored focus.
-The retained surface tests cover reversal, cancellation, input blocking and idle
-redraws. See [motion implementation and limits](MOTION_POLISH.md).
-
-
-## Baseline fidelity state references
-
-`fidelity-*` adds 88 frames in 28 light/dark groups: normal/error outlined and
-filled field hover/focus/disabled states; five button variants and keyboard focus;
-checkbox/radio/switch focus (including switch icons); and cards/chips. Existing
-selection, picker, sheet, navigation and gallery references were reviewed and
-updated for the corrected recipes. Six ordinary renderer tests compare actual
-state colors with reference swatches and verify spatial bounds, focus without
-activation, reduced motion and hover elevation returning to rest during a hold.
-These assertions run on both Tiny Skia and Metal; exact PNG comparisons continue
-to use Tiny Skia. See [the source audit](FIDELITY.md) for token versions and limits.
-
-## Desktop completion references
-
-The `desktop-completion-*` groups add 120 images for shaped title ellipsis,
-three stacked dialogs with timed opening/closing, compact calendars, valid and
-invalid manual entry, and gallery discard confirmations. The focused fidelity
-field frames now use a fixed text selection: native iced caret blinking uses
-wall time, while Material motion uses the harness clock. See
-[desktop completion](DESKTOP_COMPLETION.md) for scope and behavior.
-
-## Desktop variants follow-up
-
-The [desktop variants pass](DESKTOP_VARIANTS.md) adds 206 references: 190 component
-frames and 16 gallery compositions. Field groups cover filled/outlined icons,
-affixes, floating labels, errors, disabled/narrow states and a held/released
-trailing action. Dropdown groups cover default/focus/open/disabled/empty-error
-states. Numeric time entry covers 12/24-hour valid, focused and invalid drafts.
-Card groups cover all three surfaces in resting/disabled/dragged states; FAB
-groups compare regular/lowered elevation and the lowered surface color. Buffer
-frames exercise an independent finite transition, and four-color indicators
-cover multiple cycles through 7800ms.
-
-Both feature configurations pass all 32 reference functions. The 29 existing
-images that changed are dropdown and gallery compositions affected by the new
-field trigger or the clock toggle. The remaining 1,686 earlier images are
-byte-identical. No references were removed. Native focused inputs use a selected
-value in reference frames so their wall-clock caret cannot destabilize captures.
-
-## Desktop fidelity references
-
-The `finish-*` groups add 118 component frames; `gallery-finish` adds four
-400/1100px light/dark compositions. They cover elevation levels, picker actions
-and errors, slider hover scaling/held feedback, and progress extrema and motion.
-The full suite now has 34 strict reference functions. See
-[DESKTOP_FIDELITY.md](DESKTOP_FIDELITY.md) for sources and renderer assertions.
+Open `target/visual-report/progress-motion/index.html` for playback/scrubbing.
+These extra captures are review artifacts, not additional golden references.
 
 ### Fixed dialog footers
 
-`dialog-fixed-actions-{light,dark}` covers the automatic action entrance at
-149ms, 225ms and 275ms, the settled 400px panel, a scrolled body, a short window, and
-an extra-narrow window with wrapped footer actions. Behavioral tests verify
-body-first keyboard traversal, offscreen focus reveal, the reserved scrollbar
-gutter, nested select dismissal, fixed actions after resizing, and blocked
-activation during exit in both `modal` and `stack`. The independent desktop
-consumer also scrolls, resizes and saves a real settings form through this API.
+`dialog-fixed-actions-{light,dark}` captures action entrance at 149/225/275ms,
+a settled 400px panel, scrolling, a short window and wrapped narrow footer actions.
+Behavioral checks require body-first traversal, offscreen focus reveal, scrollbar
+gutter clearance, nested select dismissal, fixed actions after resizing and
+blocked exit-time activation in both `modal` and `stack`. The independent desktop
+consumer also scrolls, resizes and saves a settings form through this API.
+
+## Reproducibility and limits
+
+References were captured on Apple Silicon, macOS 26.6.2, Rust 1.92.0, with the
+checked-in Cargo.lock, bundled Roboto, Tiny Skia and a fixed 2× scale. Visual CI
+uses macOS 26 Arm64 with the same compiler, lockfile, fonts, renderer and scale.
+OS image updates can still affect rendering; inspect differences before refreshing
+references. Exact cross-platform or cross-renderer equality is not promised.
+GPU blending is deliberately not compared to software golden pixels.
+
+The private clock controls Material transitions, progress loops and popup timers,
+not every upstream/system clock. Native caret blinking, IME and platform font
+fallback need separate checks. Floating-label references change controlled values
+without input focus; focused-field fixtures select text to suppress the blinking
+caret. These captures verify sampled states, not real-time frame rate or perceived
+smoothness. Native gesture, accessibility and platform limits are recorded in
+[VALIDATION.md](VALIDATION.md) and [LIMITATIONS.md](LIMITATIONS.md).
+
+Add fixtures under `tests/visual/`, drive real input through `Harness`, and keep
+messages, controlled-value rebuilds and settling assertions explicit. Use
+`capture` for the current frame or `capture_at` to advance time before capture;
+retain explicit rendering when inspecting/cropping pixels. Generate and visually
+review references deliberately. Snapshots do not replace interaction assertions.
+
+## Manual inspection generators
+
+Earlier generators remain useful for broad scene inspection:
+
+```sh
+cargo test --locked --no-default-features --test interactions milestone_one_snapshots -- --ignored
+cargo test --locked --no-default-features --example gallery gallery_snapshots -- --ignored
+cargo test --locked --no-default-features --test workflows workflow_snapshots -- --ignored
+cargo test --locked --no-default-features --test navigation navigation_snapshots -- --ignored
+ICED_TEST_BACKEND=wgpu cargo test --locked --example gallery gallery_snapshots -- --ignored
+```
+
+They write to `target/visuals/`; their outputs are inspection artifacts, not
+portable pixel assertions. For canonical loader/wave playback and its capture
+commands, see [LOADING_PROGRESS.md](LOADING_PROGRESS.md#review-and-tests).
+For benchmarks with matched conditions and explicit timing boundaries, see
+[PERFORMANCE.md](PERFORMANCE.md). For generated rustdoc previews, see
+[DOC_MEDIA.md](DOC_MEDIA.md); those images are generated separately and stay out
+of Git.

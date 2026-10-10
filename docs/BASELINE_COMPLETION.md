@@ -53,8 +53,9 @@ Tests cover quick taps, held gesture cancellation, finite ripple scheduling with
 an instant dialog, all three indicator types behind seven overlay compositions,
 real window focus, explicit pause, reduced motion, and snackbar actions surviving
 modal coverage. Light/dark timed references cover both ripple completion and
-ongoing progress. Ripple and dialog durations are unchanged. Validation and image
-counts are recorded in [VALIDATION.md](VALIDATION.md).
+ongoing progress. Ripple and dialog durations are unchanged. Historical findings
+are recorded in [VALIDATION.md](VALIDATION.md); current reference coverage is in
+[VISUAL_TESTS.md](VISUAL_TESTS.md).
 
 ## Range labels
 
@@ -170,7 +171,7 @@ preservation, chip layout/avatar retention, range-label separation, exact header
 spacing and the gallery's controlled preview values. Existing interaction,
 scroll, nested-menu, focus, occlusion and caret tests run alongside them. Both
 themes have new fixed-time reference sequences. See [VALIDATION.md](VALIDATION.md)
-for final counts and executed checks.
+for historical checks and [VISUAL_TESTS.md](VISUAL_TESTS.md) for current coverage.
 
 This milestone does not certify full M3 conformance. Remaining work includes
 native accessibility, native text tracking/caret styling, locale/RTL,

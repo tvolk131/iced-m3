@@ -116,7 +116,9 @@ existing ripple/overlay/scroll regressions pass with Metal as well as software.
 122 additional reference images cover both themes, all shadow levels, picker
 footers, held sliders, small progress fractions and precise circular frames.
 
-See [VALIDATION.md](VALIDATION.md) for complete counts and executed commands.
+See [VALIDATION.md](VALIDATION.md) for historical findings,
+[CONTRIBUTING.md](CONTRIBUTING.md) for current commands and
+[VISUAL_TESTS.md](VISUAL_TESTS.md) for reference coverage.
 The broader remaining work includes native accessibility integration, native
 text tracking/caret styling, locale/RTL, cross-platform validation, and full
 Expressive shape/size/motion fidelity. None is implied complete by this pass.

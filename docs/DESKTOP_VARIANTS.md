@@ -153,5 +153,5 @@ multicolor cycles. Gallery compositions cover 390px and 1280px layouts.
 This completes the scoped variants pass. Native screen-reader semantics, exact
 tracking/caret colors, locale/RTL adapters, cross-platform native validation,
 full shadow recipes, carousel physics and complete Expressive motion remain in
-[the fidelity matrix](FIDELITY.md). See [validation results](VALIDATION.md) for the
-executed checks and current reference totals.
+[the fidelity matrix](FIDELITY.md). See [historical validation](VALIDATION.md) for
+executed checks and [visual tests](VISUAL_TESTS.md) for current reference coverage.

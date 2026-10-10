@@ -95,8 +95,10 @@ are now included; localized formatting and alternative calendar systems remain f
 Behavior and precise reference frames live in `tests/visual/desktop.rs`, with
 complete app compositions and draft/selection workflow tests in the gallery.
 Canonical references use Tiny Skia, bundled Roboto and a fixed 2× scale. GPU tests
-use the same headless iced runtime with wgpu/Metal; remote Windows/Linux and native
-screen-reader support remain unverified. Current totals are in [VALIDATION.md](VALIDATION.md).
+use the same headless iced runtime with wgpu/Metal. At this milestone, remote
+Windows/Linux and native screen-reader support were unverified. See
+[VALIDATION.md](VALIDATION.md) for historical results, [VISUAL_TESTS.md](VISUAL_TESTS.md)
+for current automated coverage and [LIMITATIONS.md](LIMITATIONS.md) for support boundaries.
 
 Primary design references:
 
