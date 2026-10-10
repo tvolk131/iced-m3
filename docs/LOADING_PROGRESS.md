@@ -131,7 +131,6 @@ completion handoffs, endpoint values, custom waves and narrow/wide gallery layou
 ```sh
 cargo test --locked --lib loading_progress
 ICED_TEST_BACKEND=wgpu cargo test --locked --lib loading_progress
-cargo test --locked --no-default-features --all-targets visual_references -- --ignored
 cargo test --locked --no-default-features --lib capture_loading_progress_preview -- --ignored
 python3 tests/visual/loading-preview.py
 ```
@@ -140,4 +139,6 @@ The local motion player replays 30fps captures from the actual renderer; it does
 not interpolate missing frames. Reproduce performance measurements separately
 with `profile_loading_progress` in release mode. They include screenshot readback,
 so they compare paths on this host rather than promise native-window frame rates.
-Executed results and image counts are recorded in [VALIDATION.md](VALIDATION.md).
+Historical measurements are recorded in [VALIDATION.md](VALIDATION.md).
+Canonical comparison commands and current reference coverage are in
+[VISUAL_TESTS.md](VISUAL_TESTS.md).

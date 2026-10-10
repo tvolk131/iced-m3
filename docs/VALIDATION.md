@@ -24,10 +24,12 @@ oracles retain the former full-outline shadow and clipped-circle ripple across
 themes, scales and shapes. See [measurements and remaining costs](PERFORMANCE.md)
 and [wave defaults and pinned references](LOADING_PROGRESS.md).
 
-Default/software all-target suites, 51 canonical reference suites on Rust 1.92.0,
-strict Clippy, formatting and the Rust 1.88 all-target check passed. Updated shadow
-and ripple images were reviewed. Metal passed the ripple oracle, integer and
-fractional shadow comparisons, and seven loading/progress checks. Generated docs
+Default/software all-target suites passed, including 269 library tests with 48
+diagnostic/reference tests ignored by the ordinary run. Separately, 51 canonical
+reference suites passed on Rust 1.92.0. Strict Clippy, formatting and the Rust 1.88
+all-target check passed. Updated shadow and ripple images were reviewed. Metal
+passed the ripple oracle, integer and fractional shadow comparisons, and seven
+loading/progress checks. Generated docs
 passed 140 doctests; the staged archive passed media, extracted-package and
 independent consumer checks in both feature configurations. Timings remain
 opt-in diagnostics, not CI thresholds or native-window frame-rate guarantees.
@@ -384,6 +386,10 @@ registration was idempotent, generated semantic color pairs reached 4.5:1 for
 black/white/saturated RGB accents in both themes, and empty floating labels
 settled without perpetual redraws. These specific probes do not guarantee every
 custom palette's contrast or every platform's text behavior.
+
+An oversized-dialog test kept its bottom action reachable by scrolling at
+320×480. After floating-label settling, typing scheduled only future caret
+redraws rather than continuous immediate frames.
 
 ### Visual and native checks
 

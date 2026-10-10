@@ -178,6 +178,37 @@ scrolling and message semantics. There is no attempt to snapshot every possible
 combination. Shared rendering paths receive focused animation coverage instead
 of duplicating every frame for each helper built on them.
 
+### Finding the detailed captures
+
+Use these prefixes in the visual report to inspect the scenarios condensed in
+the family table. The linked guides retain their design sources and adaptations.
+
+| Report prefix | Distinct scenarios and guide |
+| --- | --- |
+| `sheet-*`, `fab-*`, `gallery-sheets` | Sheet interruption, nested menus, scrolled content and FAB sizes/colors; [sheets and FABs](SHEETS.md) |
+| `search-*`, `chip-variants`, `range-slider-*` | Docked/full search, empty/populated queries, independent chip removal and overlapping range handles; [search and filtering](SEARCH.md) |
+| `adaptive-*`, `picker-*`, `completion-*` | Breakpoint layouts, held keyboard focus, picker modes, carousel masks and FAB-menu exit; [catalog completion](COMPLETION.md) |
+| `desktop-*` | Three-level/edge-flipped menus, full-screen fixed headers and scrolled bodies at 320/840px, calendars above/below their triggers, modal rail entry/exit; [desktop behavior](DESKTOP.md) |
+| `polish-*` | Basic/full-screen dialog translation, menu type-ahead, button feedback, tooltip delay and both snackbar visibility directions; [motion](MOTION_POLISH.md) |
+| `fidelity-*` | Normal/error filled/outlined field hover/focus/disable, selection-control keyboard focus with optional switch icons, cards and chips; [source audit](FIDELITY.md) |
+| `desktop-completion-*`, `gallery-desktop-completion` | Shaped title ellipsis, three-level dialog stacks, manual-date validity and discard confirmation; [desktop completion](DESKTOP_COMPLETION.md) |
+| `variants-*` | Narrow/error/disabled adorned fields, held/released trailing actions, empty/error dropdowns, 12/24-hour drafts, card drag states, lowered FABs, independent buffer and color transitions; [variants](DESKTOP_VARIANTS.md) |
+| `finish-*`, `gallery-finish` | Elevation levels, picker footers/errors, slider hover/hold, progress extrema and 400/1100px compositions; [desktop fidelity](DESKTOP_FIDELITY.md) |
+
+The following are **capture offsets**, in milliseconds from each phase's start,
+not prescribed component durations. Fixtures live under `tests/visual/` and run
+in both themes; the source arrays remain authoritative when adding samples.
+
+| Fixture | Sampled phases |
+| --- | --- |
+| `search.rs`: search | Expand 0/50/100/200/300; collapse 0/50/125/200/250 |
+| `search.rs`: chips/range | Chip selection 0/50/100/200; range held 0/50/100/150 |
+| `desktop.rs`: rail width | Expand and collapse 0/50/100/200/300 |
+| `polish.rs`: button ripple | Held 0/50/100/225/350/450/600; release 0/50/100/150/300 |
+| `polish.rs`: menu | Open 0/50/100/200/350/500; close 0/50/100/150/250 |
+| `polish.rs`: tooltip | Open 0/50/100/150/300 after the 500ms hover delay |
+| `variants.rs`: multicolor progress | Multiple cycles sampled through 7800ms |
+
 ## Targeted rendering and interaction checks
 
 In addition to the reference families above, ordinary tests independently check
@@ -205,8 +236,8 @@ properties that an accidentally approved image could otherwise hide:
   ranges and gesture cancellation. Reference inputs are unfocused before capture
   to exclude native caret blinking; autofocus/typing retain behavioral checks.
 - **Navigation/pickers/carousels** (`adaptive.rs`, `pickers.rs`, `desktop.rs`,
-  `completion.rs`): group entry/memory, nested focus scrolling, native ID-based
-  focus, calendar row/week/month/year traversal, bounds/disabled days, menu
+  `polish.rs`, `completion.rs`): group entry/memory, nested focus scrolling, native
+  ID-based focus, calendar row/week/month/year traversal, bounds/disabled days, menu
   keyboard/hover behavior and edge placement. Dial hands must stay in the dial,
   carousel children must reject masked clicks, and closing FAB menus cancel holds.
 - **Popup motion** (`polish.rs`): menu prefixes/repeated letters/Unicode,
