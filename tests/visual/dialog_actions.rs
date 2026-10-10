@@ -1,4 +1,4 @@
-use super::{harness::Harness, input::key, reference, theme};
+use super::{harness::Harness, input::key, theme};
 use crate::{Element, TypeScale, button, dialog, focus, typography};
 use iced::advanced::widget::{Operation, operation};
 use iced::{Event, Length, Rectangle, Size, Vector, keyboard, mouse, widget};
@@ -280,16 +280,13 @@ fn visual_references_dialog_fixed_actions() {
             (275, "02b-actions-fade"),
             (600, "03-open"),
         ] {
-            ui.at(time);
-            reference::check(&format!("{prefix}/{name}"), &ui.frame());
+            ui.capture_at(time, &format!("{prefix}/{name}"));
         }
         to_bottom(&mut ui);
         ui.leave();
-        ui.at(900);
-        reference::check(&format!("{prefix}/04-scrolled"), &ui.frame());
+        ui.capture_at(900, &format!("{prefix}/04-scrolled"));
         ui.resize(Size::new(320., 280.));
-        ui.at(1000);
-        reference::check(&format!("{prefix}/05-narrow-short"), &ui.frame());
+        ui.capture_at(1000, &format!("{prefix}/05-narrow-short"));
         ui.resize(Size::new(260., 280.));
         ui.at(1100);
         let cancel = ui.find("Cancel");
@@ -298,6 +295,6 @@ fn visual_references_dialog_fixed_actions() {
             save.y >= cancel.y + cancel.height,
             "Narrow actions wrap onto separate lines"
         );
-        reference::check(&format!("{prefix}/06-wrapped-actions"), &ui.frame());
+        ui.capture(&format!("{prefix}/06-wrapped-actions"));
     }
 }

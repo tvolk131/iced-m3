@@ -1,4 +1,4 @@
-use super::{harness::Harness, reference, theme};
+use super::{harness::Harness, theme};
 use crate::{Element, Tab, TabVariant, Theme, list, list_item, tabs};
 use iced::{Background, Color, Event, Length, Size, mouse, widget};
 
@@ -196,35 +196,31 @@ fn visual_references_composition_foundations() {
                 )
             };
             let mut ui = Harness::new(view(0), Size::new(440., 280.), theme(dark));
-            ui.at(0);
-            reference::check(
+            ui.capture_at(
+                0,
                 &format!("composition-foundations/{mode}-secondary-{secondary}-rest"),
-                &ui.frame(),
             );
             let target = ui.find("Files");
             ui.move_to(target.center());
             ui.at(150);
             ui.down();
             for time in [200, 375, 600] {
-                ui.at(time);
-                reference::check(
+                ui.capture_at(
+                    time,
                     &format!("composition-foundations/{mode}-secondary-{secondary}-held-{time}"),
-                    &ui.frame(),
                 );
             }
             ui.up();
             ui.rebuild(view(1));
-            ui.at(700);
-            reference::check(
+            ui.capture_at(
+                700,
                 &format!("composition-foundations/{mode}-secondary-{secondary}-selection-moving"),
-                &ui.frame(),
             );
             ui.at(1100);
             ui.leave();
-            ui.at(1300);
-            reference::check(
+            ui.capture_at(
+                1300,
                 &format!("composition-foundations/{mode}-secondary-{secondary}-selected"),
-                &ui.frame(),
             );
         }
         for fill in [false, true] {
@@ -249,10 +245,9 @@ fn visual_references_composition_foundations() {
                 .spacing(16),
             );
             let mut ui = Harness::new(content, Size::new(440., 280.), theme(dark));
-            ui.at(0);
-            reference::check(
+            ui.capture_at(
+                0,
                 &format!("composition-foundations/{mode}-gradient-{fill}"),
-                &ui.frame(),
             );
         }
     }

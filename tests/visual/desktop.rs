@@ -483,7 +483,7 @@ fn docked_range_picker_keeps_first_endpoint_open() {
 #[test]
 #[ignore = "reference suite; run with --ignored"]
 fn visual_references_desktop_variants_and_motion() {
-    use super::{reference, themed_name};
+    use super::themed_name;
     for dark in [false, true] {
         let mut ui = Harness::new(
             focus::scope(cascade()),
@@ -493,33 +493,27 @@ fn visual_references_desktop_variants_and_motion() {
         ui.at(0);
         let case = themed_name("desktop-cascade", dark);
         open_cascade(&mut ui);
-        ui.at(500);
-        reference::check(&format!("{case}/01-keyboard-submenu"), &ui.frame());
+        ui.capture_at(500, &format!("{case}/01-keyboard-submenu"));
         press(&mut ui, Named::ArrowDown);
         press(&mut ui, Named::ArrowRight);
-        ui.at(1000);
-        reference::check(&format!("{case}/02-three-levels"), &ui.frame());
+        ui.capture_at(1000, &format!("{case}/02-three-levels"));
         press(&mut ui, Named::Space);
         for t in [0, 75, 150] {
-            ui.at(1000 + t);
-            reference::check(&format!("{case}/03-held-{t:03}ms"), &ui.frame());
+            ui.capture_at(1000 + t, &format!("{case}/03-held-{t:03}ms"));
         }
         ui.event(key(Named::Space).release());
-        ui.at(1600);
-        reference::check(&format!("{case}/04-closed"), &ui.frame());
+        ui.capture_at(1600, &format!("{case}/04-closed"));
         let mut ui = Harness::new(rail_shell(false), Size::new(600.0, 340.0), theme(dark));
         ui.at(0);
         ui.frame();
         let case = themed_name("desktop-rail-width", dark);
         ui.rebuild(rail_shell(true));
         for t in [0, 50, 100, 200, 300] {
-            ui.at(t);
-            reference::check(&format!("{case}/01-expand-{t:03}ms"), &ui.frame());
+            ui.capture_at(t, &format!("{case}/01-expand-{t:03}ms"));
         }
         ui.rebuild(rail_shell(false));
         for t in [0, 50, 100, 200, 300] {
-            ui.at(300 + t);
-            reference::check(&format!("{case}/02-collapse-{t:03}ms"), &ui.frame());
+            ui.capture_at(300 + t, &format!("{case}/02-collapse-{t:03}ms"));
         }
         let mut ui = Harness::new(modal_rail(false), Size::new(600.0, 400.0), theme(dark));
         ui.at(0);
@@ -527,13 +521,11 @@ fn visual_references_desktop_variants_and_motion() {
         ui.rebuild(modal_rail(true));
         let case = themed_name("desktop-modal-rail", dark);
         for t in [0, 75, 150, 300, 500] {
-            ui.at(t);
-            reference::check(&format!("{case}/01-open-{t:03}ms"), &ui.frame());
+            ui.capture_at(t, &format!("{case}/01-open-{t:03}ms"));
         }
         ui.rebuild(modal_rail(false));
         for t in [0, 75, 150, 250, 400] {
-            ui.at(500 + t);
-            reference::check(&format!("{case}/02-close-{t:03}ms"), &ui.frame());
+            ui.capture_at(500 + t, &format!("{case}/02-close-{t:03}ms"));
         }
         for width in [320.0, 840.0] {
             let dialog = crate::full_screen_dialog(
@@ -564,11 +556,11 @@ fn visual_references_desktop_variants_and_motion() {
             );
             ui.at(0);
             let case = themed_name(&format!("desktop-full-screen-{}", width as u32), dark);
-            reference::check(&format!("{case}/00-open"), &ui.frame());
+            ui.capture(&format!("{case}/00-open"));
             for _ in 0..3 {
                 press(&mut ui, Named::Tab);
             }
-            reference::check(&format!("{case}/01-last-focused"), &ui.frame());
+            ui.capture(&format!("{case}/01-last-focused"));
         }
         for bottom in [false, true] {
             let picker = date_popup(
@@ -586,8 +578,8 @@ fn visual_references_desktop_variants_and_motion() {
                 .padding(16);
             let mut ui = Harness::new(focus::scope(content), Size::new(390.0, 620.0), theme(dark));
             ui.click("Choose date");
-            ui.at(500);
-            reference::check(
+            ui.capture_at(
+                500,
                 &format!(
                     "{}/00-open",
                     themed_name(
@@ -599,7 +591,6 @@ fn visual_references_desktop_variants_and_motion() {
                         dark
                     )
                 ),
-                &ui.frame(),
             );
         }
         let mut ui = Harness::new(
@@ -611,13 +602,12 @@ fn visual_references_desktop_variants_and_motion() {
         let row = ui.find("Export");
         ui.move_to(row.center());
         for t in [0, 100, 200, 350, 700] {
-            ui.at(t);
-            reference::check(
+            ui.capture_at(
+                t,
                 &format!(
                     "{}/hover-{t:03}ms",
                     themed_name("desktop-cascade-flipped", dark)
                 ),
-                &ui.frame(),
             );
         }
     }

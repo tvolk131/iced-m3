@@ -1,4 +1,4 @@
-use super::{harness::Harness, reference, theme};
+use super::{harness::Harness, theme};
 use crate::{Element, MenuItem, NavigationItem, SelectOption, TextFieldVariant, Theme};
 use iced::advanced::{Layout, Widget, layout, renderer, widget::Tree};
 use iced::{Color, Length, Size, widget};
@@ -331,10 +331,9 @@ fn visual_references_surface_composition() {
                     Size::new(360., 120.),
                     theme(dark),
                 );
-                view.at(0);
-                reference::check(
+                view.capture_at(
+                    0,
                     &format!("surface-composition/{mode}-{kind}-disabled-{disabled}"),
-                    &view.frame(),
                 );
             }
         }
@@ -349,18 +348,16 @@ fn visual_references_surface_composition() {
         view.down();
         view.up();
         for time in [0, 40, 80, 120, 200] {
-            view.at(time);
-            reference::check(
+            view.capture_at(
+                time,
                 &format!("surface-composition/{mode}-floating-{time:03}ms"),
-                &view.frame(),
             );
         }
         let content = disabled_components();
         let mut view = Harness::new(content, Size::new(360., 460.), theme(dark));
-        view.at(0);
-        reference::check(
+        view.capture_at(
+            0,
             &format!("surface-composition/{mode}-disabled-components"),
-            &view.frame(),
         );
     }
 }

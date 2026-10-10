@@ -2607,8 +2607,8 @@ mod tests {
                         Size::new(width, 1000.0),
                         gallery.theme(),
                     );
-                    ui.at(0);
-                    reference::check(
+                    ui.capture_at(
+                        0,
                         &format!(
                             "gallery-export/{}/{}/{}",
                             if dark { "dark" } else { "light" },
@@ -2619,7 +2619,6 @@ mod tests {
                                 _ => "running",
                             }
                         ),
-                        &ui.frame(),
                     );
                 }
             }
@@ -2691,14 +2690,13 @@ mod tests {
                     );
                     ui.frame();
                     ui.at(0);
-                    ui.at(1);
-                    reference::check(
+                    ui.capture_at(
+                        1,
                         &format!(
                             "gallery-sheets/{}/{}/{case}",
                             if dark { "dark" } else { "light" },
                             width as u32
                         ),
-                        &ui.frame(),
                     );
                     if case == "details" {
                         ui.move_to((width - 60.0, 720.0));
@@ -2706,14 +2704,11 @@ mod tests {
                             delta: iced::mouse::ScrollDelta::Lines { x: 0.0, y: -100.0 },
                         }));
                         ui.leave();
-                        reference::check(
-                            &format!(
-                                "gallery-sheets/{}/{case}-{}/scrolled",
-                                if dark { "dark" } else { "light" },
-                                width as u32
-                            ),
-                            &ui.frame(),
-                        );
+                        ui.capture(&format!(
+                            "gallery-sheets/{}/{case}-{}/scrolled",
+                            if dark { "dark" } else { "light" },
+                            width as u32
+                        ));
                     }
                 }
             }
@@ -2726,13 +2721,12 @@ mod tests {
                 Size::new(760.0, 580.0),
                 gallery.theme(),
             );
-            ui.at(0);
-            reference::check(
+            ui.capture_at(
+                0,
                 &format!(
                     "gallery-fabs/{}/overview",
                     if dark { "dark" } else { "light" }
                 ),
-                &ui.frame(),
             );
         }
     }
@@ -3105,7 +3099,7 @@ mod tests {
                 ui.leave();
                 ui.at(1000);
             }
-            reference::check(&format!("gallery/{name}"), &ui.frame());
+            ui.capture(&format!("gallery/{name}"));
         }
     }
     #[test]
@@ -3214,14 +3208,11 @@ mod tests {
                     );
                     ui.at(0);
                     ui.operate(&mut iced::advanced::widget::operation::focusable::unfocus::<()>());
-                    reference::check(
-                        &format!(
-                            "gallery-search/{}/{}/{case}",
-                            if dark { "dark" } else { "light" },
-                            width as u32
-                        ),
-                        &ui.frame(),
-                    );
+                    ui.capture(&format!(
+                        "gallery-search/{}/{}/{case}",
+                        if dark { "dark" } else { "light" },
+                        width as u32
+                    ));
                 }
             }
         }
@@ -3265,15 +3256,14 @@ mod tests {
                         Size::new(width, 1000.0),
                         gallery.theme(),
                     );
-                    ui.at(0);
-                    reference::check(
+                    ui.capture_at(
+                        0,
                         &format!(
                             "gallery-completion/{}/{}/schedule-{}",
                             if dark { "dark" } else { "light" },
                             width as u32,
                             if input { "input" } else { "calendar" }
                         ),
-                        &ui.frame(),
                     );
                 }
             }
@@ -3286,13 +3276,12 @@ mod tests {
                 Size::new(1040.0, 1450.0),
                 gallery.theme(),
             );
-            ui.at(0);
-            reference::check(
+            ui.capture_at(
+                0,
                 &format!(
                     "gallery-completion/{}/components/more",
                     if dark { "dark" } else { "light" }
                 ),
-                &ui.frame(),
             );
         }
     }
@@ -3312,14 +3301,13 @@ mod tests {
                     Size::new(width, 780.),
                     gallery.theme(),
                 );
-                ui.at(0);
-                reference::check(
+                ui.capture_at(
+                    0,
                     &format!(
                         "gallery-loading-progress/{}/{}/paused",
                         if dark { "dark" } else { "light" },
                         width as u32
                     ),
-                    &ui.frame(),
                 );
             }
         }
@@ -3394,14 +3382,11 @@ mod tests {
                 );
                 ui.at(0);
                 ui.operate(&mut iced::advanced::widget::operation::focusable::unfocus::<()>());
-                reference::check(
-                    &format!(
-                        "gallery-desktop/{}/{}/full-screen-editor",
-                        if dark { "dark" } else { "light" },
-                        width as u32
-                    ),
-                    &ui.frame(),
-                );
+                ui.capture(&format!(
+                    "gallery-desktop/{}/{}/full-screen-editor",
+                    if dark { "dark" } else { "light" },
+                    width as u32
+                ));
                 let gallery = Gallery {
                     dark,
                     navigation_modal_open: true,
@@ -3414,14 +3399,13 @@ mod tests {
                 );
                 ui.at(0);
                 ui.frame();
-                ui.at(500);
-                reference::check(
+                ui.capture_at(
+                    500,
                     &format!(
                         "gallery-desktop/{}/{}/modal-navigation",
                         if dark { "dark" } else { "light" },
                         width as u32
                     ),
-                    &ui.frame(),
                 );
                 let gallery = Gallery {
                     dark,
@@ -3434,14 +3418,13 @@ mod tests {
                 );
                 ui.click("More");
                 ui.click("Navigation");
-                ui.at(1000);
-                reference::check(
+                ui.capture_at(
+                    1000,
                     &format!(
                         "gallery-desktop/{}/{}/submenu",
                         if dark { "dark" } else { "light" },
                         width as u32
                     ),
-                    &ui.frame(),
                 );
                 let gallery = Gallery {
                     dark,
@@ -3455,14 +3438,13 @@ mod tests {
                     gallery.theme(),
                 );
                 ui.click("Open calendar");
-                ui.at(1000);
-                reference::check(
+                ui.capture_at(
+                    1000,
                     &format!(
                         "gallery-desktop/{}/{}/docked-calendar",
                         if dark { "dark" } else { "light" },
                         width as u32
                     ),
-                    &ui.frame(),
                 );
             }
         }
@@ -3498,14 +3480,11 @@ mod tests {
                     ui.frame();
                     ui.at(600);
                     ui.operate(&mut iced::advanced::widget::operation::focusable::unfocus::<()>());
-                    reference::check(
-                        &format!(
-                            "gallery-desktop-completion/{}/{}/{name}",
-                            if dark { "dark" } else { "light" },
-                            width as u32
-                        ),
-                        &ui.frame(),
-                    );
+                    ui.capture(&format!(
+                        "gallery-desktop-completion/{}/{}/{name}",
+                        if dark { "dark" } else { "light" },
+                        width as u32
+                    ));
                 }
             }
         }
@@ -3552,14 +3531,13 @@ mod tests {
                     );
                     ui.at(0);
                     ui.frame();
-                    ui.at(1750);
-                    reference::check(
+                    ui.capture_at(
+                        1750,
                         &format!(
                             "gallery-variants/{}/{}/{name}",
                             if dark { "dark" } else { "light" },
                             width as u32
                         ),
-                        &ui.frame(),
                     );
                 }
                 let gallery = Gallery {
@@ -3575,14 +3553,13 @@ mod tests {
                 );
                 ui.at(0);
                 ui.frame();
-                ui.at(600);
-                reference::check(
+                ui.capture_at(
+                    600,
                     &format!(
                         "gallery-variants/{}/{}/manual-clock",
                         if dark { "dark" } else { "light" },
                         width as u32
                     ),
-                    &ui.frame(),
                 );
             }
         }
@@ -3603,14 +3580,13 @@ mod tests {
                 );
                 ui.at(0);
                 ui.frame();
-                ui.at(667);
-                reference::check(
+                ui.capture_at(
+                    667,
                     &format!(
                         "gallery-finish/{}/{}/details",
                         if dark { "dark" } else { "light" },
                         width as u32
                     ),
-                    &ui.frame(),
                 );
             }
         }
@@ -3642,14 +3618,13 @@ mod tests {
                 );
                 ui.at(0);
                 ui.frame();
-                ui.at(450);
-                reference::check(
+                ui.capture_at(
+                    450,
                     &format!(
                         "gallery-baseline/{}/{}/feedback",
                         if dark { "dark" } else { "light" },
                         width as u32
                     ),
-                    &ui.frame(),
                 );
             }
         }

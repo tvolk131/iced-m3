@@ -1,4 +1,4 @@
-use super::{harness::Harness, input::key, reference, theme};
+use super::{harness::Harness, input::key, theme};
 use crate::{Date, DateSelection, Element, TypeScale, button, dialog, focus, typography};
 use iced::{Event, Length, Size, keyboard::key::Named, widget};
 
@@ -427,19 +427,17 @@ fn visual_references_desktop_completion() {
             for depth in 1..=3 {
                 ui.rebuild(stack(depth));
                 for ms in [0, 100, 300, 600] {
-                    ui.at(depth as u64 * 1000 + ms);
-                    reference::check(
+                    ui.capture_at(
+                        depth as u64 * 1000 + ms,
                         &format!("desktop-completion-stack/{color}/{width}/open-{depth}-{ms:03}ms"),
-                        &ui.frame(),
                     );
                 }
             }
             ui.rebuild(stack(1));
             for ms in [0, 100, 200, 600] {
-                ui.at(4000 + ms);
-                reference::check(
+                ui.capture_at(
+                    4000 + ms,
                     &format!("desktop-completion-stack/{color}/{width}/close-two-{ms:03}ms"),
-                    &ui.frame(),
                 );
             }
             let bars = [
@@ -468,10 +466,9 @@ fn visual_references_desktop_completion() {
             for (name, collapse) in [("expanded", 0.0), ("half", 0.5), ("collapsed", 1.0)] {
                 let mut ui =
                     Harness::new(make(collapse), Size::new(width as f32, 480.0), theme(dark));
-                ui.at(0);
-                reference::check(
+                ui.capture_at(
+                    0,
                     &format!("desktop-completion-titles/{color}/{width}/{name}"),
-                    &ui.frame(),
                 );
             }
         }
@@ -488,14 +485,13 @@ fn visual_references_desktop_completion() {
                         Size::new(390.0, 560.0),
                         theme(dark),
                     );
-                    ui.at(0);
-                    reference::check(
+                    ui.capture_at(
+                        0,
                         &format!(
                             "desktop-completion-picker/{color}/{}-{}/{name}",
                             if compact { "compact" } else { "modal" },
                             if range { "range" } else { "single" }
                         ),
-                        &ui.frame(),
                     );
                 }
             }

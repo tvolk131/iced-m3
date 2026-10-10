@@ -1,4 +1,4 @@
-use super::{harness::Harness, reference, theme, themed_name};
+use super::{harness::Harness, theme, themed_name};
 use crate::{
     Date, DateSelection, Element, Time, TimePart, date_input, date_picker, time_input, time_picker,
 };
@@ -131,15 +131,13 @@ fn visual_references_date_and_time_pickers() {
         ] {
             let case = themed_name(&format!("picker-date-{name}"), dark);
             let mut ui = make_ui(calendar(selection, years), Size::new(360.0, 540.0), dark);
-            ui.at(0);
-            reference::check(&format!("{case}/00-default"), &ui.frame());
+            ui.capture_at(0, &format!("{case}/00-default"));
             if !years {
                 let p = ui.find("18").center();
                 ui.move_to(p);
                 ui.down();
                 for t in [0, 75, 150] {
-                    ui.at(t);
-                    reference::check(&format!("{case}/01-held-{t:03}ms"), &ui.frame());
+                    ui.capture_at(t, &format!("{case}/01-held-{t:03}ms"));
                 }
             }
         }
@@ -153,8 +151,7 @@ fn visual_references_date_and_time_pickers() {
                     dark,
                 );
                 let mut ui = make_ui(clock(format24, part), Size::new(360.0, 470.0), dark);
-                ui.at(0);
-                reference::check(&format!("{case}/00-default"), &ui.frame());
+                ui.capture_at(0, &format!("{case}/00-default"));
             }
         }
         let fields = widget::column![
@@ -169,10 +166,9 @@ fn visual_references_date_and_time_pickers() {
             Size::new(360.0, 430.0),
             dark,
         );
-        ui.at(0);
-        reference::check(
+        ui.capture_at(
+            0,
             &format!("{}/00-input", themed_name("picker-input", dark)),
-            &ui.frame(),
         );
     }
 }

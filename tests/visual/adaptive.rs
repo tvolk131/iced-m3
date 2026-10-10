@@ -1,4 +1,4 @@
-use super::{harness::Harness, input::key, reference, theme, themed_name};
+use super::{harness::Harness, input::key, theme, themed_name};
 use crate::{
     AppBarVariant, Element, NavigationItem, NavigationLayout, TypeScale, app_bar, button, checkbox,
     focus, navigation_bar, navigation_rail, typography,
@@ -207,14 +207,12 @@ fn visual_references_adaptive_navigation_and_focus() {
         for (label, size, element) in variants {
             let case = themed_name(&format!("adaptive-{label}"), dark);
             let mut ui = make_ui(focus::scope(element), size, dark);
-            ui.at(0);
-            reference::check(&format!("{case}/00-default"), &ui.frame());
+            ui.capture_at(0, &format!("{case}/00-default"));
             press(&mut ui, Named::Tab);
-            reference::check(&format!("{case}/01-focus"), &ui.frame());
+            ui.capture(&format!("{case}/01-focus"));
             press(&mut ui, Named::Space);
             for t in [0, 75, 150] {
-                ui.at(t);
-                reference::check(&format!("{case}/02-held-{t:03}ms"), &ui.frame());
+                ui.capture_at(t, &format!("{case}/02-held-{t:03}ms"));
             }
         }
         let case = themed_name("adaptive-app-bars", dark);
@@ -240,21 +238,19 @@ fn visual_references_adaptive_navigation_and_focus() {
             Size::new(480.0, 1200.0),
             dark,
         );
-        ui.at(0);
-        reference::check(&format!("{case}/variants"), &ui.frame());
+        ui.capture_at(0, &format!("{case}/variants"));
         let mut ui = make_ui(controls(), Size::new(400.0, 320.0), dark);
         ui.at(0);
         press(&mut ui, Named::Tab);
         press(&mut ui, Named::Tab);
         press(&mut ui, Named::Space);
         for t in [0, 75, 150, 225] {
-            ui.at(t);
-            reference::check(
+            ui.capture_at(
+                t,
                 &format!(
                     "{}/held-{t:03}ms",
                     themed_name("adaptive-checkbox-focus", dark)
                 ),
-                &ui.frame(),
             );
         }
     }

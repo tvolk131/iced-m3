@@ -318,13 +318,12 @@ fn visual_references_modal_ripple() {
             ui.up();
             ui.rebuild(ripple_dialog(true, stacked, nested));
             for ms in [0, 75, 225, 375, 690] {
-                ui.at(210 + ms);
-                reference::check(
+                ui.capture_at(
+                    210 + ms,
                     &format!(
                         "modal-ripple/{}/{host}/after-open-{ms:03}ms",
                         if dark { "dark" } else { "light" }
                     ),
-                    &ui.frame(),
                 );
             }
         }
@@ -417,13 +416,11 @@ fn visual_references_dialog_regressions() {
                 if stacked { "stack" } else { "single" }
             );
             for ms in [0, 50, 100, 250, 500, 600] {
-                ui.at(ms);
-                reference::check(&format!("{name}/open-{ms:03}ms"), &ui.frame());
+                ui.capture_at(ms, &format!("{name}/open-{ms:03}ms"));
             }
             ui.rebuild(dialog(false, stacked));
             for ms in [0, 50, 100, 150] {
-                ui.at(600 + ms);
-                reference::check(&format!("{name}/close-{ms:03}ms"), &ui.frame());
+                ui.capture_at(600 + ms, &format!("{name}/close-{ms:03}ms"));
             }
         }
     }
@@ -500,26 +497,22 @@ fn visual_references_spring_dialog_fade() {
                 if dark { "dark" } else { "light" },
                 if stacked { "stack" } else { "single" }
             );
-            reference::check(&format!("{case}/00-open"), &ui.frame());
+            ui.capture(&format!("{case}/00-open"));
             ui.click("Cancel");
             assert_eq!(ui.messages, [Message::Close]);
             ui.rebuild(dialog(false, stacked));
             for ms in [0, 40, 80, 120, 180, 240, 320, 400] {
-                ui.at(ms);
-                reference::check(&format!("{case}/01-close-{ms:03}ms"), &ui.frame());
+                ui.capture_at(ms, &format!("{case}/01-close-{ms:03}ms"));
             }
             ui.rebuild(dialog(true, stacked));
             ui.at(400);
-            ui.at(440);
-            reference::check(&format!("{case}/02-reopen-040ms"), &ui.frame());
+            ui.capture_at(440, &format!("{case}/02-reopen-040ms"));
             ui.rebuild(dialog(false, stacked));
             ui.at(440);
-            ui.at(460);
-            reference::check(&format!("{case}/03-reverse-020ms"), &ui.frame());
+            ui.capture_at(460, &format!("{case}/03-reverse-020ms"));
             ui.rebuild(dialog(true, stacked));
             ui.at(460);
-            ui.at(800);
-            reference::check(&format!("{case}/04-open-again"), &ui.frame());
+            ui.capture_at(800, &format!("{case}/04-open-again"));
         }
     }
 }

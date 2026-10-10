@@ -365,19 +365,16 @@ fn visual_references_desktop_fidelity() {
             let mut ui = ui(element, Size::new(320.0, 140.0), theme(dark));
             ui.at(0);
             let group = format!("finish-slider-{range}-{mode}");
-            reference::check(&format!("{group}/idle"), &ui.frame());
+            ui.capture(&format!("{group}/idle"));
             ui.move_to((if range { 148.8 } else { 160.0 }, 80.0));
             for ms in [0, 25, 50, 75, 100, 150] {
-                ui.at(ms);
-                reference::check(&format!("{group}/hover-{ms:03}"), &ui.frame());
+                ui.capture_at(ms, &format!("{group}/hover-{ms:03}"));
             }
             ui.down();
-            ui.at(350);
-            reference::check(&format!("{group}/held"), &ui.frame());
+            ui.capture_at(350, &format!("{group}/held"));
             ui.up();
             ui.leave();
-            ui.at(550);
-            reference::check(&format!("{group}/released"), &ui.frame());
+            ui.capture_at(550, &format!("{group}/released"));
         }
         for circular in [false, true] {
             for indeterminate in [false, true] {
@@ -395,8 +392,7 @@ fn visual_references_desktop_fidelity() {
                 let group = format!("finish-progress-{circular}-{indeterminate}-{mode}");
                 if indeterminate {
                     for ms in [0, 167, 333, 667, 1000, 1166, 1334, 1350, 2017, 5334, 5400] {
-                        ui.at(ms);
-                        reference::check(&format!("{group}/{ms:04}"), &ui.frame());
+                        ui.capture_at(ms, &format!("{group}/{ms:04}"));
                     }
                 } else {
                     for (i, value) in [0.0, 0.005, 0.01, 0.25, 0.5, 0.99, 1.0]
@@ -405,8 +401,7 @@ fn visual_references_desktop_fidelity() {
                     {
                         ui.rebuild(host(make(value)));
                         ui.at(i as u64 * 300);
-                        ui.at(i as u64 * 300 + 250);
-                        reference::check(&format!("{group}/value-{i}"), &ui.frame());
+                        ui.capture_at(i as u64 * 300 + 250, &format!("{group}/value-{i}"));
                     }
                 }
             }

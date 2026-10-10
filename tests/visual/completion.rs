@@ -1,4 +1,4 @@
-use super::{harness::Harness, reference, theme, themed_name};
+use super::{harness::Harness, theme, themed_name};
 use crate::{
     ButtonVariant, CarouselVariant, Element, TextFieldVariant, Theme, TypeScale, button, card,
     carousel, focus, typography,
@@ -218,13 +218,12 @@ fn visual_references_completion_variants() {
         let mut ui = make_ui(variants(), Size::new(500.0, 760.0), theme(dark));
         ui.at(0);
         let case = themed_name("completion-variants", dark);
-        reference::check(&format!("{case}/00-default"), &ui.frame());
+        ui.capture(&format!("{case}/00-default"));
         let p = ui.find("Move").center();
         ui.move_to(p);
         ui.down();
         for t in [0, 50, 100, 150] {
-            ui.at(t);
-            reference::check(&format!("{case}/01-held-{t:03}ms"), &ui.frame());
+            ui.capture_at(t, &format!("{case}/01-held-{t:03}ms"));
         }
         for variant in [
             CarouselVariant::MultiBrowse,
@@ -235,11 +234,10 @@ fn visual_references_completion_variants() {
             let mut ui = make_ui(cards(0, variant), Size::new(600.0, 200.0), theme(dark));
             ui.at(0);
             let case = themed_name(&format!("completion-carousel-{variant:?}"), dark);
-            reference::check(&format!("{case}/00-default"), &ui.frame());
+            ui.capture(&format!("{case}/00-default"));
             ui.rebuild(cards(1, variant));
             for t in [0, 50, 100, 200] {
-                ui.at(t);
-                reference::check(&format!("{case}/01-snap-{t:03}ms"), &ui.frame());
+                ui.capture_at(t, &format!("{case}/01-snap-{t:03}ms"));
             }
         }
         let mut ui = make_ui(
@@ -250,8 +248,7 @@ fn visual_references_completion_variants() {
         ui.at(0);
         let case = themed_name("completion-loading", dark);
         for t in [0, 100, 325, 650, 975, 1300, 1950, 2600, 3250, 3900, 4550] {
-            ui.at(t);
-            reference::check(&format!("{case}/frame-{t:04}ms"), &ui.frame());
+            ui.capture_at(t, &format!("{case}/frame-{t:04}ms"));
         }
     }
 }
@@ -355,8 +352,7 @@ fn visual_references_extended_fab() {
         ui.rebuild(extended_action(false, false));
         let case = themed_name("completion-fab", dark);
         for t in [0, 50, 100, 200, 400] {
-            ui.at(t);
-            reference::check(&format!("{case}/collapse-{t:03}ms"), &ui.frame());
+            ui.capture_at(t, &format!("{case}/collapse-{t:03}ms"));
         }
     }
 }
@@ -449,13 +445,11 @@ fn visual_references_completion_menus_and_sheets() {
         ui.rebuild(fab_actions(true));
         let case = themed_name("completion-fab-menu", dark);
         for t in [0, 50, 100, 200] {
-            ui.at(t);
-            reference::check(&format!("{case}/01-open-{t:03}ms"), &ui.frame());
+            ui.capture_at(t, &format!("{case}/01-open-{t:03}ms"));
         }
         ui.rebuild(fab_actions(false));
         for t in [200, 250, 300, 400] {
-            ui.at(t);
-            reference::check(&format!("{case}/02-close-{:03}ms", t - 200), &ui.frame());
+            ui.capture_at(t, &format!("{case}/02-close-{:03}ms", t - 200));
         }
         for modal in [false, true] {
             let mut ui = make_ui(sheet(200.0, modal), Size::new(600.0, 600.0), theme(dark));
@@ -469,17 +463,15 @@ fn visual_references_completion_menus_and_sheets() {
                 ),
                 dark,
             );
-            reference::check(&format!("{case}/00-open"), &ui.frame());
+            ui.capture(&format!("{case}/00-open"));
             ui.move_to((300.0, 414.0));
             ui.down();
             ui.move_to((300.0, 270.0));
             ui.rebuild(sheet(344.0, modal));
-            ui.at(350);
-            reference::check(&format!("{case}/01-drag"), &ui.frame());
+            ui.capture_at(350, &format!("{case}/01-drag"));
             ui.up();
             ui.rebuild(sheet(400.0, modal));
-            ui.at(400);
-            reference::check(&format!("{case}/02-snap"), &ui.frame());
+            ui.capture_at(400, &format!("{case}/02-snap"));
         }
     }
 }

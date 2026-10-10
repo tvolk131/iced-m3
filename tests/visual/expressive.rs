@@ -307,7 +307,6 @@ fn group_motion_preserves_content_space_in_narrow_and_asymmetric_layouts() {
 #[test]
 #[ignore = "reference suite; run with --ignored"]
 fn visual_references_group_spring_motion() {
-    use super::reference;
     for dark in [false, true] {
         let theme = if dark { Theme::dark() } else { Theme::light() }.expressive();
         for connected in [false, true] {
@@ -323,18 +322,16 @@ fn visual_references_group_spring_motion() {
                     Size::new(1100., 80.),
                     theme.clone(),
                 );
-                reference::check(&format!("{case}/00-rest"), &ui.frame());
+                ui.capture(&format!("{case}/00-rest"));
                 let point = bounds(&mut ui)[pressed].center();
                 ui.move_to(point);
                 ui.down();
                 for ms in [40, 140, 1000] {
-                    ui.at(ms);
-                    reference::check(&format!("{case}/01-press-{ms:04}"), &ui.frame());
+                    ui.capture_at(ms, &format!("{case}/01-press-{ms:04}"));
                 }
                 ui.up();
                 for ms in [1020, 1140, 2000] {
-                    ui.at(ms);
-                    reference::check(&format!("{case}/02-release-{ms:04}"), &ui.frame());
+                    ui.capture_at(ms, &format!("{case}/02-release-{ms:04}"));
                 }
             }
             let mut ui = Harness::new(
@@ -349,8 +346,7 @@ fn visual_references_group_spring_motion() {
             ui.at(40);
             ui.up();
             for ms in [40, 60, 140, 300, 2000] {
-                ui.at(ms);
-                reference::check(&format!("{case}/quick-release/{ms:04}"), &ui.frame());
+                ui.capture_at(ms, &format!("{case}/quick-release/{ms:04}"));
             }
         }
     }
@@ -653,7 +649,6 @@ fn expressive_dialog_presence_reverses_without_losing_the_host() {
 #[test]
 #[ignore = "reference suite; run with --ignored"]
 fn visual_references_expressive_actions() {
-    use super::reference;
     use crate::{ButtonShape, ButtonSize, ButtonVariant, IconButtonWidth};
     for dark in [false, true] {
         for standard in [false, true] {
@@ -670,21 +665,16 @@ fn visual_references_expressive_actions() {
                 if standard { "standard" } else { "expressive" }
             );
             let mut ui = Harness::new(group(), Size::new(500., 100.), theme.clone());
-            reference::check(&format!("expressive/{mode}-group-rest"), &ui.frame());
+            ui.capture(&format!("expressive/{mode}-group-rest"));
             let center = bounds(&mut ui)[1].center();
             ui.move_to(center);
             ui.down();
             for ms in [0, 45, 100, 180, 400, 1000] {
-                ui.at(ms);
-                reference::check(&format!("expressive/{mode}-group-held-{ms}"), &ui.frame());
+                ui.capture_at(ms, &format!("expressive/{mode}-group-held-{ms}"));
             }
             ui.up();
             for ms in [1045, 1100, 1180, 1400, 2000] {
-                ui.at(ms);
-                reference::check(
-                    &format!("expressive/{mode}-group-release-{ms}"),
-                    &ui.frame(),
-                );
+                ui.capture_at(ms, &format!("expressive/{mode}-group-release-{ms}"));
             }
             if standard {
                 continue;
@@ -709,18 +699,11 @@ fn visual_references_expressive_actions() {
                     ].spacing(24))
                     };
                     let mut ui = Harness::new(content(), Size::new(950., 350.), theme.clone());
-                    reference::check(
-                        &format!("expressive/{mode}-{name}-{shape_name}-rest"),
-                        &ui.frame(),
-                    );
+                    ui.capture(&format!("expressive/{mode}-{name}-{shape_name}-rest"));
                     let point = bounds(&mut ui)[0].center();
                     ui.move_to(point);
                     ui.down();
-                    ui.at(180);
-                    reference::check(
-                        &format!("expressive/{mode}-{name}-{shape_name}-press"),
-                        &ui.frame(),
-                    );
+                    ui.capture_at(180, &format!("expressive/{mode}-{name}-{shape_name}-press"));
                 }
             }
             let connected = || {
@@ -734,12 +717,11 @@ fn visual_references_expressive_actions() {
                 )
             };
             let mut ui = Harness::new(connected(), Size::new(500., 100.), theme);
-            reference::check(&format!("expressive/{mode}-connected"), &ui.frame());
+            ui.capture(&format!("expressive/{mode}-connected"));
             let point = bounds(&mut ui)[1].center();
             ui.move_to(point);
             ui.down();
-            ui.at(180);
-            reference::check(&format!("expressive/{mode}-connected-press"), &ui.frame());
+            ui.capture_at(180, &format!("expressive/{mode}-connected-press"));
         }
     }
 }
@@ -878,27 +860,19 @@ fn visual_references_expressive_controls() {
         let theme = if dark { Theme::dark() } else { Theme::light() }.expressive();
         let name = if dark { "dark" } else { "light" };
         let mut ui = Harness::new(controls(false), Size::new(450., 330.), theme);
-        super::reference::check(
-            &format!("expressive-controls/{name}/00-default"),
-            &ui.frame(),
-        );
+        ui.capture(&format!("expressive-controls/{name}/00-default"));
         ui.at(0);
         ui.rebuild(controls(true));
         ui.at(0);
         for ms in [40, 100, 140, 180, 240, 1000] {
-            ui.at(ms);
-            super::reference::check(
-                &format!("expressive-controls/{name}/01-select-{ms:04}"),
-                &ui.frame(),
-            );
+            ui.capture_at(ms, &format!("expressive-controls/{name}/01-select-{ms:04}"));
         }
         ui.rebuild(controls(false));
         ui.at(1000);
         for ms in [1040, 1100, 1180, 1400, 2000] {
-            ui.at(ms);
-            super::reference::check(
+            ui.capture_at(
+                ms,
                 &format!("expressive-controls/{name}/02-deselect-{ms:04}"),
-                &ui.frame(),
             );
         }
     }

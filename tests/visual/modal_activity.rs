@@ -279,13 +279,12 @@ fn visual_references_modal_activity() {
             ui.rebuild(fixture(host, true, false));
             ui.at(100);
             for ms in [800, 1037, 1274] {
-                ui.at(ms);
-                reference::check(
+                ui.capture_at(
+                    ms,
                     &format!(
                         "modal-activity/{}/{host}/{ms:04}ms",
                         if dark { "dark" } else { "light" }
                     ),
-                    &ui.frame(),
                 );
             }
         }
