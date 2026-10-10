@@ -8,6 +8,9 @@ use iced_test::renderer::wgpu::{self as iced_wgpu, wgpu};
 use iced_test::runtime::{UserInterface, user_interface::Cache};
 use std::time::{Duration, Instant};
 
+mod animation;
+mod hover;
+
 const WIDTH: u32 = 1280;
 const HEIGHT: u32 = 800;
 const SCALE: f32 = 2.;

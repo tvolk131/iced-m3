@@ -17,7 +17,8 @@ pub struct ShadowLayer {
     pub opacity: f32,
 }
 /// Key and ambient measurements for elevation levels 0 through 5. Fractional
-/// levels interpolate adjacent measurements for continuous hover transitions.
+/// levels interpolate adjacent measurements. Interactive controls crossfade
+/// cached endpoint shadows instead of rasterizing every fractional level.
 pub fn layers(level: f32) -> [ShadowLayer; 2] {
     const KEY: [(f32, f32); 6] = [(0., 0.), (1., 2.), (1., 2.), (1., 3.), (2., 3.), (4., 4.)];
     const AMBIENT: [(f32, f32, f32); 6] = [
@@ -54,6 +55,52 @@ pub fn layers(level: f32) -> [ShadowLayer; 2] {
     ]
 }
 pub(crate) type Cache = RefCell<Option<([f32; 7], Handle)>>;
+
+/// Keep each endpoint independent: drawing the other must not replace its SVG.
+#[derive(Default)]
+pub(crate) struct TransitionCache {
+    resting: Cache,
+    hovered: Cache,
+}
+
+/// Animate opacity, not SVG filter geometry. The renderer caches by handle,
+/// physical size and color, so every sample uses the same two small rasters.
+/// Cache eviction may rebuild an endpoint; its blur work remains bounded by
+/// the corners and shadow extent instead of the area of the whole surface.
+pub(crate) fn draw_transition(
+    renderer: &mut Renderer,
+    theme: &Theme,
+    bounds: Rectangle,
+    radius: iced::border::Radius,
+    levels: (u8, u8),
+    amount: f32,
+    viewport: Rectangle,
+    cache: &TransitionCache,
+) {
+    let (resting, hovered) = levels;
+    let amount = if resting == hovered {
+        0.
+    } else {
+        amount.clamp(0., 1.)
+    };
+    for (level, opacity, cache) in [
+        (resting, 1. - amount, &cache.resting),
+        (hovered, amount, &cache.hovered),
+    ] {
+        draw_tiled(
+            renderer,
+            theme,
+            bounds,
+            bounds.height,
+            radius,
+            level as f32,
+            opacity,
+            viewport,
+            cache,
+        );
+    }
+}
+
 fn outline(w: f32, h: f32, r: [f32; 4], x: f32, y: f32) -> String {
     let [tl, tr, br, bl] = r;
     format!(
@@ -80,8 +127,46 @@ pub(crate) fn draw(
     viewport: Rectangle,
     cache: &Cache,
 ) {
+    draw_tiled(
+        renderer,
+        theme,
+        bounds,
+        bounds.height,
+        radius,
+        level,
+        1.,
+        viewport,
+        cache,
+    );
+}
+
+/// Full-outline oracle for pixel comparisons; production shadows use tiles.
+#[cfg(test)]
+pub(crate) fn draw_reference(
+    renderer: &mut Renderer,
+    theme: &Theme,
+    bounds: Rectangle,
+    radius: iced::border::Radius,
+    level: f32,
+    viewport: Rectangle,
+    cache: &Cache,
+) {
+    draw_with_opacity(renderer, theme, bounds, radius, level, 1., viewport, cache);
+}
+
+fn draw_with_opacity(
+    renderer: &mut Renderer,
+    theme: &Theme,
+    bounds: Rectangle,
+    radius: iced::border::Radius,
+    level: f32,
+    opacity: f32,
+    viewport: Rectangle,
+    cache: &Cache,
+) {
     if !theme.shadows
         || theme.colors.shadow.a <= 0.
+        || opacity <= 0.
         || !level.is_finite()
         || level <= 0.
         || bounds.width <= 0.
@@ -154,7 +239,7 @@ pub(crate) fn draw(
                 ..theme.colors.shadow
             }),
             rotation: iced::Radians(0.),
-            opacity: theme.colors.shadow.a,
+            opacity: theme.colors.shadow.a * opacity,
         },
         Rectangle {
             x: bounds.x - pad,
@@ -180,9 +265,34 @@ pub(crate) fn draw_resizing(
     viewport: Rectangle,
     cache: &Cache,
 ) {
+    draw_tiled(
+        renderer,
+        theme,
+        bounds,
+        full_height,
+        radius.into(),
+        level,
+        1.,
+        viewport,
+        cache,
+    );
+}
+
+fn draw_tiled(
+    renderer: &mut Renderer,
+    theme: &Theme,
+    bounds: Rectangle,
+    full_height: f32,
+    radius: iced::border::Radius,
+    level: f32,
+    opacity: f32,
+    viewport: Rectangle,
+    cache: &Cache,
+) {
     use iced::advanced::Renderer as _;
     if !theme.shadows
         || theme.colors.shadow.a <= 0.
+        || opacity <= 0.
         || !level.is_finite()
         || level <= 0.
         || bounds.width <= 0.
@@ -196,22 +306,35 @@ pub(crate) fn draw_resizing(
         .fold(0., f32::max)
         .ceil()
         + 1.;
-    let edge = radius + extent;
-    // Small surfaces have interacting corner blurs and need the exact outline.
-    if bounds.height < 2. * edge || bounds.width < 2. * edge {
-        draw(
-            renderer,
-            theme,
-            bounds,
-            radius.into(),
-            level,
-            viewport,
-            cache,
+    // Normalize against the real surface, before shrinking the raster template.
+    // Preserve asymmetric corners (e.g. connected buttons) as well as pills.
+    let limit = bounds.width.min(bounds.height) / 2.;
+    let radius = iced::border::Radius {
+        top_left: radius.top_left.clamp(0., limit),
+        top_right: radius.top_right.clamp(0., limit),
+        bottom_right: radius.bottom_right.clamp(0., limit),
+        bottom_left: radius.bottom_left.clamp(0., limit),
+    };
+    let edge = radius
+        .top_left
+        .max(radius.top_right)
+        .max(radius.bottom_right)
+        .max(radius.bottom_left)
+        + extent;
+    let width = bounds.width.min(2. * edge + 64.);
+    // On a short axis the corner blurs overlap, so keep that axis whole. A wide,
+    // shallow surface can still tile horizontally instead of blurring its area.
+    let height = if bounds.height < 2. * edge {
+        bounds.height
+    } else {
+        full_height.min(2. * edge + 64.)
+    };
+    if width == bounds.width && height == bounds.height {
+        draw_with_opacity(
+            renderer, theme, bounds, radius, level, opacity, viewport, cache,
         );
         return;
     }
-    let width = bounds.width.min(2. * edge + 64.);
-    let height = full_height.min(2. * edge + 64.);
     let xs = shadow_patches(bounds.width, width, edge, extent);
     let ys = shadow_patches(bounds.height, height, edge, extent);
     for (xi, &(x, sx, w)) in xs.iter().enumerate() {
@@ -239,7 +362,7 @@ pub(crate) fn draw_resizing(
             };
             // Corner tiles must keep their full extents: their blur also covers
             // the straight perimeter up to the neighboring edge tile.
-            if yi > 0 && yi + 1 < ys.len() {
+            if xs.len() > 1 && yi > 0 && yi + 1 < ys.len() {
                 if xi == 0 {
                     ink.width = ink.width.min((bounds.x + guard).ceil() - ink.x);
                 } else if xi + 1 == xs.len() {
@@ -248,7 +371,7 @@ pub(crate) fn draw_resizing(
                     ink.width = right - ink.x;
                 }
             }
-            if xi > 0 && xi + 1 < xs.len() {
+            if ys.len() > 1 && xi > 0 && xi + 1 < xs.len() {
                 if yi == 0 {
                     ink.height = ink.height.min((bounds.y + guard).ceil() - ink.y);
                 } else if yi + 1 == ys.len() {
@@ -261,7 +384,7 @@ pub(crate) fn draw_resizing(
                 continue;
             };
             renderer.with_layer(clip, |renderer| {
-                draw(
+                draw_with_opacity(
                     renderer,
                     theme,
                     Rectangle {
@@ -270,9 +393,12 @@ pub(crate) fn draw_resizing(
                         width,
                         height,
                     },
-                    radius.into(),
+                    radius,
                     level,
-                    clip,
+                    opacity,
+                    // The layer provides the hard tile boundary. An additional
+                    // antialiased SVG clip can expose seams at fractional scale.
+                    viewport,
                     cache,
                 );
             });
@@ -281,6 +407,9 @@ pub(crate) fn draw_resizing(
 }
 // (destination offset, source offset, length). Source regions never scale.
 fn shadow_patches(length: f32, template: f32, edge: f32, extent: f32) -> Vec<(f32, f32, f32)> {
+    if length == template {
+        return vec![(-extent, -extent, length + 2. * extent)];
+    }
     let mut patches = vec![(-extent, -extent, edge + extent)];
     let mut start = edge;
     let step = (template - 2. * edge).max(1.);

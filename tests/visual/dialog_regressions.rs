@@ -65,7 +65,7 @@ fn resizing_dialog_shadow_reuses_a_small_raster_and_preserves_the_outline() {
                 drop(cached);
                 renderer.reset(viewport);
                 renderer.with_layer(clip, |renderer| {
-                    crate::elevation::draw(
+                    crate::elevation::draw_reference(
                         renderer,
                         &theme,
                         bounds,

@@ -38,7 +38,7 @@ pub struct Progress {
     wavy: bool,
     wave_amplitude: Option<f32>,
     wavelength: Option<f32>,
-    wave_speed: f32,
+    wave_speed: Option<f32>,
 }
 #[cfg_attr(iced_m3_doc_media, doc = include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/docs/generated/linear_progress-primary.md")))]
 pub fn linear_progress(value: f32) -> Progress {
@@ -55,7 +55,7 @@ pub fn linear_progress(value: f32) -> Progress {
         wavy: false,
         wave_amplitude: None,
         wavelength: None,
-        wave_speed: 0.0,
+        wave_speed: None,
     }
 }
 #[cfg_attr(iced_m3_doc_media, doc = include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/docs/generated/circular_progress-primary.md")))]
@@ -73,13 +73,15 @@ pub fn circular_progress(value: f32) -> Progress {
         wavy: false,
         wave_amplitude: None,
         wavelength: None,
-        wave_speed: 0.0,
+        wave_speed: None,
     }
 }
 impl Progress {
     /// Opt into Material Expressive waves. Linear layout reserves the thickness
     /// plus twice the amplitude; circular uses its existing diameter. Circular
     /// loading uses one grow/retreat section over a visible inactive track.
+    /// Measured waves travel by one wavelength per second even at a fixed value;
+    /// use `.wave_speed(0.)` for a stationary pattern.
     pub fn wavy(mut self, wavy: bool) -> Self {
         self.wavy = wavy;
         self
@@ -100,14 +102,25 @@ impl Progress {
         }
         self
     }
-    /// Wave travel in logical pixels per second. Zero (Material's default) keeps
-    /// the wave pattern stationary. Negative values reverse its direction.
+    /// Wave travel in logical pixels per second. Measured waves default to one
+    /// wavelength per second, following Material's Compose implementation.
+    /// Indeterminate waves retain their loading motion without extra travel.
+    /// Zero keeps the pattern stationary. Negative values reverse its direction.
     /// Travel pauses with `.paused(true)`, viewport clipping and reduced motion.
     pub fn wave_speed(mut self, speed: f32) -> Self {
         if speed.is_finite() {
-            self.wave_speed = speed.clamp(-10000.0, 10000.0);
+            self.wave_speed = Some(speed.clamp(-10000.0, 10000.0));
         }
         self
+    }
+    fn wave_speed_for(&self, indeterminate: bool) -> f32 {
+        self.wave_speed.unwrap_or_else(|| {
+            if indeterminate {
+                0.
+            } else {
+                self.wavelength_for(false)
+            }
+        })
     }
     fn amplitude(&self) -> f32 {
         if !self.wavy {
@@ -213,7 +226,7 @@ struct State {
     track_arc: ArcCache,
     wave_cache: wave::Cache,
     amplitude: Transition,
-    wave_elapsed: Duration,
+    wave_phase: f64,
     wave_last: Option<Instant>,
 }
 impl Widget<(), Theme, Renderer> for Progress {
@@ -236,7 +249,7 @@ impl Widget<(), Theme, Renderer> for Progress {
             amplitude: Transition::standard(f32::from(
                 self.indeterminate || (0.1..=0.9).contains(&self.value()),
             )),
-            wave_elapsed: Duration::ZERO,
+            wave_phase: 0.,
             wave_last: None,
         })
     }
@@ -413,14 +426,20 @@ impl Widget<(), Theme, Renderer> for Progress {
             if changed || running {
                 shell.request_redraw();
             }
+            let speed = self.wave_speed_for(state.indeterminate);
             if animate
-                && self.wave_speed != 0.0
+                && speed != 0.0
                 && self.amplitude() > 0.0
                 && state.amplitude.value > 0.0
                 && (state.indeterminate || state.progress.value > 0.0)
             {
                 if let Some(last) = state.wave_last {
-                    state.wave_elapsed += now.saturating_duration_since(last);
+                    // Integrate travel rather than multiplying all elapsed time
+                    // by the latest speed. Changing speed/mode must not jump phase.
+                    state.wave_phase = (state.wave_phase
+                        + now.saturating_duration_since(last).as_secs_f64() * speed as f64
+                            / self.wavelength_for(state.indeterminate) as f64)
+                        .rem_euclid(1.);
                 }
                 state.wave_last = Some(now);
                 shell.request_redraw();
@@ -504,8 +523,7 @@ impl Widget<(), Theme, Renderer> for Progress {
                 let phase = if theme.effective_motion().medium.is_zero() {
                     0.
                 } else {
-                    (state.wave_elapsed.as_secs_f64() * self.wave_speed as f64 / wavelength as f64)
-                        .rem_euclid(1.) as f32
+                    state.wave_phase as f32
                 };
                 wave::draw(
                     renderer,

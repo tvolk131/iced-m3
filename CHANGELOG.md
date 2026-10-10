@@ -2,6 +2,19 @@
 
 ## Unreleased
 
+- Fix expensive hover elevation on large cards and buttons by crossfading cached
+  endpoint shadows and tiling small corner/edge templates. Wide, shallow surfaces
+  also avoid full-width blur work. Public APIs and animation timing are unchanged.
+- Add hover raster-reuse, modal-cover, reversal, and shadow-fidelity regressions,
+  plus an opt-in release benchmark for both rendering backends.
+- Avoid full-surface SVG clipping masks during press ripple expansion and reuse
+  the same raster during fading. Extend tiled shadows to custom fractional
+  elevation and sheets while preserving their blur geometry.
+- Animate determinate wavy progress by default at one wavelength per second,
+  including when the measured value is unchanged. `.wave_speed(0.)` retains a
+  stationary pattern. Pausing, clipping, reduced motion and completion stop
+  continuous work; changing speed preserves the current wave phase.
+
 ## 0.1.0-beta.4 — 2026-09-29
 
 This beta corrects toggle selection colors, keyboard tooltip behavior and callback
