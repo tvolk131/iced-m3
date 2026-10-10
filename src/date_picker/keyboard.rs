@@ -2,10 +2,10 @@
 use super::Date;
 use crate::{Element, Theme, focus};
 use iced::advanced::{
-    Clipboard, Layout, Shell, Widget, layout, overlay, renderer,
-    widget::{Operation, Tree, tree},
+    Clipboard, Layout, Shell, Widget, layout,
+    widget::{Tree, tree},
 };
-use iced::{Event, Length, Rectangle, Renderer, Size, Vector, keyboard, mouse};
+use iced::{Event, Rectangle, Renderer, keyboard, mouse};
 
 pub(super) struct Calendar<'a, Message> {
     pub content: Element<'a, Message>,
@@ -21,20 +21,25 @@ struct State {
     pending: Option<Date>,
 }
 impl<Message> Widget<Message, Theme, Renderer> for Calendar<'_, Message> {
+    crate::widget_delegate::delegate!(
+        Message,
+        content,
+        [
+            children,
+            diff,
+            size,
+            operate,
+            draw,
+            mouse_interaction,
+            overlay
+        ]
+    );
+
     fn tag(&self) -> tree::Tag {
         tree::Tag::of::<State>()
     }
     fn state(&self) -> tree::State {
         tree::State::new(State::default())
-    }
-    fn children(&self) -> Vec<Tree> {
-        vec![Tree::new(&self.content)]
-    }
-    fn diff(&self, t: &mut Tree) {
-        t.diff_children(std::slice::from_ref(&self.content));
-    }
-    fn size(&self) -> Size<Length> {
-        self.content.as_widget().size()
     }
     fn layout(&mut self, t: &mut Tree, r: &Renderer, limits: &layout::Limits) -> layout::Node {
         let node = self
@@ -57,11 +62,6 @@ impl<Message> Widget<Message, Theme, Renderer> for Calendar<'_, Message> {
             }
         }
         node
-    }
-    fn operate(&mut self, t: &mut Tree, l: Layout<'_>, r: &Renderer, o: &mut dyn Operation) {
-        self.content
-            .as_widget_mut()
-            .operate(&mut t.children[0], l, r, o);
     }
     fn update(
         &mut self,
@@ -148,43 +148,5 @@ impl<Message> Widget<Message, Theme, Renderer> for Calendar<'_, Message> {
         self.content
             .as_widget_mut()
             .update(&mut t.children[0], e, l, c, r, cb, s, v);
-    }
-    fn draw(
-        &self,
-        t: &Tree,
-        r: &mut Renderer,
-        theme: &Theme,
-        style: &renderer::Style,
-        l: Layout<'_>,
-        c: mouse::Cursor,
-        v: &Rectangle,
-    ) {
-        self.content
-            .as_widget()
-            .draw(&t.children[0], r, theme, style, l, c, v);
-    }
-    fn mouse_interaction(
-        &self,
-        t: &Tree,
-        l: Layout<'_>,
-        c: mouse::Cursor,
-        v: &Rectangle,
-        r: &Renderer,
-    ) -> mouse::Interaction {
-        self.content
-            .as_widget()
-            .mouse_interaction(&t.children[0], l, c, v, r)
-    }
-    fn overlay<'b>(
-        &'b mut self,
-        t: &'b mut Tree,
-        l: Layout<'b>,
-        r: &Renderer,
-        v: &Rectangle,
-        translation: Vector,
-    ) -> Option<overlay::Element<'b, Message, Theme, Renderer>> {
-        self.content
-            .as_widget_mut()
-            .overlay(&mut t.children[0], l, r, v, translation)
     }
 }

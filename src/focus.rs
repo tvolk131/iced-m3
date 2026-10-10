@@ -2,14 +2,14 @@
 use crate::{Element, Theme};
 mod operations;
 use iced::advanced::{
-    Clipboard, Layout, Shell, Widget, layout, overlay, renderer,
+    Clipboard, Layout, Shell, Widget, layout,
     widget::{
         Operation, Tree,
         operation::focusable::{self, Focusable},
         tree,
     },
 };
-use iced::{Event, Length, Rectangle, Renderer, Size, Vector, keyboard, mouse, widget};
+use iced::{Event, Rectangle, Renderer, keyboard, mouse, widget};
 use operations::{Entries, Reveal, Roving, ScrollChanges, Select, Traversal};
 
 #[derive(Debug)]
@@ -396,6 +396,12 @@ struct State {
     reveal_pending: bool,
 }
 impl<Message> Widget<Message, Theme, Renderer> for Scope<'_, Message> {
+    crate::widget_delegate::delegate!(
+        Message,
+        content,
+        [children, size, draw, mouse_interaction, overlay]
+    );
+
     fn tag(&self) -> tree::Tag {
         tree::Tag::of::<State>()
     }
@@ -406,9 +412,6 @@ impl<Message> Widget<Message, Theme, Renderer> for Scope<'_, Message> {
             reveal_pending: true,
         })
     }
-    fn children(&self) -> Vec<Tree> {
-        vec![Tree::new(&self.content)]
-    }
     fn diff(&self, t: &mut Tree) {
         t.diff_children(std::slice::from_ref(&self.content));
         let state = t.state.downcast_mut::<State>();
@@ -417,9 +420,6 @@ impl<Message> Widget<Message, Theme, Renderer> for Scope<'_, Message> {
             state.remembered = self.active;
             state.reveal_pending = true;
         }
-    }
-    fn size(&self) -> Size<Length> {
-        self.content.as_widget().size()
     }
     fn layout(&mut self, t: &mut Tree, r: &Renderer, l: &layout::Limits) -> layout::Node {
         let node = self
@@ -579,44 +579,6 @@ impl<Message> Widget<Message, Theme, Renderer> for Scope<'_, Message> {
         if !self.arrows && matches!(e, Event::Keyboard(keyboard::Event::KeyPressed { .. })) {
             reveal(&mut self.content, &mut t.children[0], l, r);
         }
-    }
-    fn draw(
-        &self,
-        t: &Tree,
-        r: &mut Renderer,
-        th: &Theme,
-        s: &renderer::Style,
-        l: Layout<'_>,
-        c: mouse::Cursor,
-        v: &Rectangle,
-    ) {
-        self.content
-            .as_widget()
-            .draw(&t.children[0], r, th, s, l, c, v);
-    }
-    fn mouse_interaction(
-        &self,
-        t: &Tree,
-        l: Layout<'_>,
-        c: mouse::Cursor,
-        v: &Rectangle,
-        r: &Renderer,
-    ) -> mouse::Interaction {
-        self.content
-            .as_widget()
-            .mouse_interaction(&t.children[0], l, c, v, r)
-    }
-    fn overlay<'b>(
-        &'b mut self,
-        t: &'b mut Tree,
-        l: Layout<'b>,
-        r: &Renderer,
-        v: &Rectangle,
-        tr: Vector,
-    ) -> Option<overlay::Element<'b, Message, Theme, Renderer>> {
-        self.content
-            .as_widget_mut()
-            .overlay(&mut t.children[0], l, r, v, tr)
     }
 }
 

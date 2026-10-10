@@ -102,6 +102,7 @@ pub mod variants;
 #[cfg(test)]
 #[path = "../tests/visual/mod.rs"]
 mod visual_tests;
+mod widget_delegate;
 
 pub use app_bar::{AppBar, AppBarVariant, app_bar};
 pub use fab::{Fab, FabColor, FabSize, extended_fab, fab};
