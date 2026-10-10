@@ -19,8 +19,7 @@ fn make_ui(
     size: Size,
     theme: Theme,
 ) -> Harness<'static, Message> {
-    let backend = std::env::var("ICED_TEST_BACKEND").unwrap_or_else(|_| "tiny-skia".into());
-    Harness::with_backend(element, size, theme, &backend)
+    Harness::configured(element, size, theme)
 }
 fn cards(index: usize, variant: CarouselVariant) -> Element<'static, Message> {
     focus::scope(

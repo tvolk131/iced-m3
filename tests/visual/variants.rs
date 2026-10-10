@@ -1,10 +1,6 @@
-use super::{harness::Harness, reference, theme};
+use super::{harness::Harness, input::key, reference, theme};
 use crate::{Element, TextFieldVariant, Time, TimePart, TypeScale, focus, typography};
-use iced::{
-    Event, Size,
-    keyboard::{self, key::Named},
-    widget, window,
-};
+use iced::{Size, keyboard::key::Named, widget, window};
 
 #[derive(Debug, Clone, PartialEq)]
 enum Message {
@@ -17,33 +13,8 @@ enum Message {
     Action,
     Select(u8),
 }
-fn key(name: Named, up: bool) -> Event {
-    let key = keyboard::Key::Named(name);
-    let physical_key =
-        keyboard::key::Physical::Unidentified(keyboard::key::NativeCode::Unidentified);
-    if up {
-        Event::Keyboard(keyboard::Event::KeyReleased {
-            key: key.clone(),
-            modified_key: key,
-            physical_key,
-            location: keyboard::Location::Standard,
-            modifiers: keyboard::Modifiers::empty(),
-        })
-    } else {
-        Event::Keyboard(keyboard::Event::KeyPressed {
-            key: key.clone(),
-            modified_key: key,
-            physical_key,
-            location: keyboard::Location::Standard,
-            modifiers: keyboard::Modifiers::empty(),
-            text: None,
-            repeat: false,
-        })
-    }
-}
 fn press(ui: &mut Harness<'_, Message>, name: Named) {
-    ui.event(key(name, false));
-    ui.event(key(name, true));
+    ui.tap_key(key(name));
 }
 fn host(e: impl Into<Element<'static, Message>>) -> Element<'static, Message> {
     focus::scope(widget::container(e).padding(16))
@@ -53,12 +24,7 @@ fn ui(
     size: Size,
     dark: bool,
 ) -> Harness<'static, Message> {
-    Harness::with_backend(
-        host(e),
-        size,
-        theme(dark),
-        &std::env::var("ICED_TEST_BACKEND").unwrap_or_else(|_| "tiny-skia".into()),
-    )
+    Harness::configured(host(e), size, theme(dark))
 }
 fn mark() -> Element<'static, Message> {
     Element::new(crate::glyph::Glyph::Search)

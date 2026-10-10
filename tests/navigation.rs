@@ -1,15 +1,17 @@
-use iced::advanced::{
-    Layout, Renderer as _, Shell, Widget, layout,
-    renderer::{self, Headless},
-    widget::Tree,
-};
-use iced::{Event, Length, Point, Rectangle, Size, Vector, mouse, widget, window};
+#[path = "support/pointer.rs"]
+mod pointer;
+#[path = "support/widget.rs"]
+mod widget_harness;
+use iced::advanced::{Layout, Renderer as _, Widget, layout, renderer, widget::Tree};
+use iced::{Event, Length, Point, Rectangle, Size, mouse, widget, window};
 use iced_m3::{
     ButtonVariant, Element, MenuItem, NavigationItem, Tab, TabVariant, Theme, app_bar, button,
     checkbox, icon_button, list, list_item, menu, navigation_rail, switch, tabs,
 };
 use iced_test::{Simulator, simulator};
+use pointer::{press, redraw, release};
 use std::time::{Duration, Instant};
+use widget_harness::Harness;
 #[derive(Clone, Debug, PartialEq)]
 enum Message {
     Select(u8),
@@ -17,15 +19,6 @@ enum Message {
     Child,
     Toggle(bool),
     Dismiss,
-}
-fn press() -> Event {
-    Event::Mouse(mouse::Event::ButtonPressed(mouse::Button::Left))
-}
-fn release() -> Event {
-    Event::Mouse(mouse::Event::ButtonReleased(mouse::Button::Left))
-}
-fn redraw(now: Instant) -> Event {
-    Event::Window(window::Event::RedrawRequested(now))
 }
 fn tab_view(selected: u8, disabled: bool, variant: TabVariant) -> Element<'static, Message> {
     tabs(
@@ -42,6 +35,10 @@ fn tab_view(selected: u8, disabled: bool, variant: TabVariant) -> Element<'stati
     .width(360)
     .into()
 }
+fn ui(element: impl Into<Element<'static, Message>>) -> Harness<Message> {
+    Harness::new(element, Size::new(400.0, 260.0), 2.0)
+}
+
 #[test]
 fn tabs_emit_controlled_values_and_ignore_disabled_options() {
     for variant in [TabVariant::Primary, TabVariant::Secondary] {
@@ -223,89 +220,13 @@ fn root_dialog_blocks_navigation_and_list_actions() {
     assert_eq!(ui.into_messages().count(), 0);
 }
 
-struct Harness {
-    element: Element<'static, Message>,
-    tree: Tree,
-    node: layout::Node,
-    renderer: iced::Renderer,
-}
-impl Harness {
-    fn new(element: impl Into<Element<'static, Message>>) -> Self {
-        let renderer = iced::futures::executor::block_on(<iced::Renderer as Headless>::new(
-            iced::Font::DEFAULT,
-            16.0.into(),
-            Some("tiny-skia"),
-        ))
-        .unwrap();
-        let mut element = element.into();
-        let mut tree = Tree::new(&element);
-        let node = element.as_widget_mut().layout(
-            &mut tree,
-            &renderer,
-            &layout::Limits::new(Size::ZERO, Size::new(400.0, 260.0)),
-        );
-        Self {
-            element,
-            tree,
-            node,
-            renderer,
-        }
-    }
-    fn rebuild(&mut self, element: impl Into<Element<'static, Message>>) {
-        self.element = element.into();
-        self.tree.diff(&self.element);
-        self.node = self.element.as_widget_mut().layout(
-            &mut self.tree,
-            &self.renderer,
-            &layout::Limits::new(Size::ZERO, Size::new(400.0, 260.0)),
-        );
-    }
-    fn event(
-        &mut self,
-        event: Event,
-        point: Option<Point>,
-    ) -> (Vec<Message>, window::RedrawRequest) {
-        let mut messages = Vec::new();
-        let mut shell = Shell::new(&mut messages);
-        self.element.as_widget_mut().update(
-            &mut self.tree,
-            &event,
-            Layout::new(&self.node),
-            point.map_or(mouse::Cursor::Unavailable, mouse::Cursor::Available),
-            &self.renderer,
-            &mut iced::advanced::clipboard::Null,
-            &mut shell,
-            &Rectangle::with_size(Size::new(400.0, 260.0)),
-        );
-        let request = shell.redraw_request();
-        (messages, request)
-    }
-    fn frame(&mut self, offset: f32) -> Vec<u8> {
-        let viewport = Rectangle::with_size(Size::new(400.0, 260.0));
-        self.renderer.reset(viewport);
-        self.renderer
-            .with_translation(Vector::new(0.0, -offset), |renderer| {
-                self.element.as_widget().draw(
-                    &self.tree,
-                    renderer,
-                    &Theme::light(),
-                    &Default::default(),
-                    Layout::with_offset(Vector::new(0.0, offset), &self.node),
-                    mouse::Cursor::Unavailable,
-                    &(viewport + Vector::new(0.0, offset)),
-                )
-            });
-        self.renderer
-            .screenshot(Size::new(800, 520), 2.0, Theme::light().colors.surface)
-    }
-}
 fn pixel(image: &[u8], x: usize, y: usize) -> &[u8] {
     &image[(y * 800 + x) * 4..(y * 800 + x + 1) * 4]
 }
 #[test]
 fn tab_indicator_animates_across_rebuilds_settles_and_follows_scroll_translation() {
     for variant in [TabVariant::Primary, TabVariant::Secondary] {
-        let mut ui = Harness::new(tab_view(1, false, variant));
+        let mut ui = ui(tab_view(1, false, variant));
         let now = Instant::now();
         ui.event(redraw(now), None);
         let before = ui.frame(0.0);
@@ -327,7 +248,7 @@ fn tab_indicator_animates_across_rebuilds_settles_and_follows_scroll_translation
 }
 #[test]
 fn disabling_tabs_during_a_press_cancels_it() {
-    let mut ui = Harness::new(tab_view(1, false, TabVariant::Primary));
+    let mut ui = ui(tab_view(1, false, TabVariant::Primary));
     let point = Some(Point::new(180.0, 24.0));
     ui.event(press(), point);
     ui.rebuild(tab_view(1, true, TabVariant::Primary));
@@ -338,9 +259,9 @@ fn disabling_tabs_during_a_press_cancels_it() {
 #[test]
 fn long_app_bar_titles_cannot_paint_over_actions() {
     let make = |title| app_bar(title).action(button("More").on_press(Message::Child));
-    let mut empty = Harness::new(make(""));
+    let mut empty = ui(make(""));
     let empty = empty.frame(0.0);
-    let mut long = Harness::new(make(
+    let mut long = ui(make(
         "A long workspace title that keeps going past its available space",
     ));
     let long = long.frame(0.0);
@@ -371,7 +292,7 @@ fn primary_icon_tabs_reserve_room_for_badges_at_narrow_width() {
 }
 #[test]
 fn list_rows_grow_for_wrapped_text_and_preserve_child_gestures_on_rebuild() {
-    let mut ui = Harness::new(list_item("Headline").supporting_text("A long description that wraps over many lines at narrow widths and must remain fully inside the list row.").width(160));
+    let mut ui = ui(list_item("Headline").supporting_text("A long description that wraps over many lines at narrow widths and must remain fully inside the list row.").width(160));
     assert!(ui.node.size().height > 72.0);
     assert!(ui.frame(0.0) == ui.frame(450.0));
     let point = Some(Point::new(312.0, 36.0));
@@ -388,11 +309,9 @@ fn list_rows_grow_for_wrapped_text_and_preserve_child_gestures_on_rebuild() {
 #[test]
 fn switch_label_remains_visible_and_hover_only_surrounds_the_thumb() {
     for checked in [false, true] {
-        let mut ui = Harness::new(
-            switch(checked)
-                .label("Switch label")
-                .on_toggle(Message::Toggle),
-        );
+        let mut ui = ui(switch(checked)
+            .label("Switch label")
+            .on_toggle(Message::Toggle));
         let before = ui.frame(0.0);
         assert!(
             (152..320).any(|x| (24..72).any(|y| pixel(&before, x, y) != pixel(&before, 799, 519))),
@@ -427,7 +346,7 @@ fn switch_label_remains_visible_and_hover_only_surrounds_the_thumb() {
 }
 #[test]
 fn disabled_switch_cancels_an_active_gesture_and_has_no_hover_motion() {
-    let mut ui = Harness::new(switch(false).label("Switch").on_toggle(Message::Toggle));
+    let mut ui = ui(switch(false).label("Switch").on_toggle(Message::Toggle));
     let point = Some(Point::new(24.0, 24.0));
     ui.event(press(), point);
     ui.rebuild(switch(false).label("Switch"));
@@ -484,9 +403,9 @@ impl From<Ink> for Element<'static, Message> {
 }
 #[test]
 fn icon_button_variants_use_distinct_material_foregrounds_and_selection_surfaces() {
-    let mut standard = Harness::new(icon_button(Ink).on_press(Message::Child));
+    let mut standard = ui(icon_button(Ink).on_press(Message::Child));
     let standard = standard.frame(0.0);
-    let mut selected = Harness::new(icon_button(Ink).selected(true).on_press(Message::Child));
+    let mut selected = ui(icon_button(Ink).selected(true).on_press(Message::Child));
     let selected = selected.frame(0.0);
     assert_ne!(pixel(&standard, 40, 40), pixel(&selected, 40, 40));
     assert_eq!(
@@ -499,19 +418,15 @@ fn icon_button_variants_use_distinct_material_foregrounds_and_selection_surfaces
         ButtonVariant::Filled,
         ButtonVariant::Tonal,
     ] {
-        let mut off = Harness::new(
-            icon_button(Ink)
-                .variant(variant)
-                .selected(false)
-                .on_press(Message::Child),
-        );
+        let mut off = ui(icon_button(Ink)
+            .variant(variant)
+            .selected(false)
+            .on_press(Message::Child));
         let off = off.frame(0.0);
-        let mut on = Harness::new(
-            icon_button(Ink)
-                .variant(variant)
-                .selected(true)
-                .on_press(Message::Child),
-        );
+        let mut on = ui(icon_button(Ink)
+            .variant(variant)
+            .selected(true)
+            .on_press(Message::Child));
         let on = on.frame(0.0);
         assert_ne!(
             pixel(&off, 40, 16),
@@ -522,7 +437,7 @@ fn icon_button_variants_use_distinct_material_foregrounds_and_selection_surfaces
 }
 #[test]
 fn selected_rail_item_retains_visible_hover_feedback() {
-    let mut ui = Harness::new(rail(1));
+    let mut ui = ui(rail(1));
     let before = ui.frame(0.0);
     let point = Some(Point::new(40.0, 32.0));
     ui.event(redraw(Instant::now()), point);

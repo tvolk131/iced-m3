@@ -1,4 +1,4 @@
-use super::{harness::Harness, reference, theme};
+use super::{harness::Harness, input::key, reference, theme};
 use crate::{Element, TypeScale, button, dialog, focus, typography};
 use iced::advanced::widget::{Operation, operation};
 use iced::{Event, Length, Rectangle, Size, Vector, keyboard, mouse, widget};
@@ -68,13 +68,7 @@ fn ui(
     size: Size,
     dark: bool,
 ) -> Harness<'static, Message> {
-    let backend = std::env::var("ICED_TEST_BACKEND").unwrap_or_else(|_| "tiny-skia".into());
-    let mut ui = Harness::with_backend(
-        scene(open, stacked, fields, max_height),
-        size,
-        theme(dark),
-        &backend,
-    );
+    let mut ui = Harness::configured(scene(open, stacked, fields, max_height), size, theme(dark));
     ui.at(0);
     ui.frame();
     ui
@@ -121,27 +115,6 @@ fn to_bottom(ui: &mut Harness<'_, Message>) {
         delta: mouse::ScrollDelta::Pixels { x: 0., y: -4000. },
     }));
     ui.frame();
-}
-fn key(ui: &mut Harness<'_, Message>, name: keyboard::key::Named) {
-    let key = keyboard::Key::Named(name);
-    let physical_key =
-        keyboard::key::Physical::Unidentified(keyboard::key::NativeCode::Unidentified);
-    ui.event(Event::Keyboard(keyboard::Event::KeyPressed {
-        key: key.clone(),
-        modified_key: key.clone(),
-        physical_key,
-        location: keyboard::Location::Standard,
-        modifiers: keyboard::Modifiers::empty(),
-        text: None,
-        repeat: false,
-    }));
-    ui.event(Event::Keyboard(keyboard::Event::KeyReleased {
-        key: key.clone(),
-        modified_key: key,
-        physical_key,
-        location: keyboard::Location::Standard,
-        modifiers: keyboard::Modifiers::empty(),
-    }));
 }
 
 #[test]
@@ -202,17 +175,17 @@ fn dialog_footer_preserves_body_first_tab_order_and_focus_reveal() {
         let mut ui = ui(true, stacked, 8, 400., Size::new(720., 550.), false);
         let footer = bounds(&mut ui, "settings-footer");
         for i in 1..8 {
-            key(&mut ui, keyboard::key::Named::Tab);
+            ui.tap_key(key(keyboard::key::Named::Tab));
             let field = bounds(&mut ui, &format!("setting-{i}"));
             let body = scroll(&mut ui).0;
             assert!(field.y >= body.y && field.y + field.height <= body.y + body.height);
             assert_eq!(bounds(&mut ui, "settings-footer"), footer);
         }
-        key(&mut ui, keyboard::key::Named::Tab); // Select
-        key(&mut ui, keyboard::key::Named::Tab); // Cancel
-        key(&mut ui, keyboard::key::Named::Enter);
-        key(&mut ui, keyboard::key::Named::Tab); // Save
-        key(&mut ui, keyboard::key::Named::Enter);
+        ui.tap_key(key(keyboard::key::Named::Tab)); // Select
+        ui.tap_key(key(keyboard::key::Named::Tab)); // Cancel
+        ui.tap_key(key(keyboard::key::Named::Enter));
+        ui.tap_key(key(keyboard::key::Named::Tab)); // Save
+        ui.tap_key(key(keyboard::key::Named::Enter));
         assert_eq!(ui.messages, [Message::Cancel, Message::Save]);
     }
 }
@@ -228,12 +201,12 @@ fn dialog_footer_preserves_nested_select_and_escape_routing() {
         assert_eq!(ui.messages, [Message::Select(0)]);
         ui.messages.clear();
         ui.click("Editor");
-        key(&mut ui, keyboard::key::Named::Escape);
+        ui.tap_key(key(keyboard::key::Named::Escape));
         assert!(
             ui.messages.is_empty(),
             "First Escape belongs to the dropdown"
         );
-        key(&mut ui, keyboard::key::Named::Escape);
+        ui.tap_key(key(keyboard::key::Named::Escape));
         assert_eq!(ui.messages, [Message::Cancel]);
     }
 }
@@ -248,7 +221,7 @@ fn dialog_footer_is_inert_during_retained_exit() {
         ui.move_to(save);
         ui.down();
         ui.up();
-        key(&mut ui, keyboard::key::Named::Enter);
+        ui.tap_key(key(keyboard::key::Named::Enter));
         assert!(ui.messages.is_empty());
         ui.at(500);
         ui.frame();

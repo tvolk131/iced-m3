@@ -365,12 +365,7 @@ fn dialog(open: bool, stacked: bool) -> Element<'static, Message> {
     }
 }
 fn ui(open: bool, stacked: bool, theme: Theme) -> Harness<'static, Message> {
-    let mut ui = Harness::with_backend(
-        dialog(open, stacked),
-        Size::new(640., 480.),
-        theme,
-        &backend(),
-    );
+    let mut ui = Harness::configured(dialog(open, stacked), Size::new(640., 480.), theme);
     ui.at(0);
     ui.frame();
     ui

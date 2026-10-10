@@ -1,4 +1,4 @@
-use super::{harness::Harness, reference, theme, themed_name};
+use super::{harness::Harness, input::key, reference, theme, themed_name};
 use crate::{
     CarouselVariant, Element, MenuItem, Theme, TypeScale, button, carousel, dialog, lazy_carousel,
     menu, search_bar, staged, typography,
@@ -18,24 +18,10 @@ fn ui<'a>(
     size: Size,
     theme: Theme,
 ) -> Harness<'a, Message> {
-    let backend = std::env::var("ICED_TEST_BACKEND").unwrap_or_else(|_| "tiny-skia".into());
-    Harness::with_backend(content, size, theme, &backend)
-}
-fn key(key: keyboard::Key, text: Option<&str>) -> Event {
-    Event::Keyboard(keyboard::Event::KeyPressed {
-        modified_key: key.clone(),
-        key,
-        physical_key: keyboard::key::Physical::Unidentified(
-            keyboard::key::NativeCode::Unidentified,
-        ),
-        location: keyboard::Location::Standard,
-        modifiers: keyboard::Modifiers::empty(),
-        text: text.map(Into::into),
-        repeat: false,
-    })
+    Harness::configured(content, size, theme)
 }
 fn escape() -> Event {
-    key(keyboard::Key::Named(keyboard::key::Named::Escape), None)
+    key(keyboard::key::Named::Escape).press()
 }
 fn unfocus(ui: &mut Harness<'_, Message>) {
     ui.operate(&mut iced::advanced::widget::operation::focusable::unfocus::<()>());
@@ -241,8 +227,8 @@ fn search_retains_content_width_and_full_header_height_and_blocks_closing_input(
         view.down();
         view.up();
         view.event(escape());
-        view.event(key(keyboard::Key::Named(keyboard::key::Named::Tab), None));
-        view.event(key(keyboard::Key::Named(keyboard::key::Named::Enter), None));
+        view.event(key(keyboard::key::Named::Tab).press());
+        view.event(key(keyboard::key::Named::Enter).press());
         assert!(
             view.messages.is_empty(),
             "closing content cannot focus, activate or dismiss twice"
@@ -296,7 +282,7 @@ fn lazy_carousel_bounds_work_preserves_overlapping_editor_state_and_global_callb
         built.borrow().len() < 48,
         "scrolling only rebuilds a bounded overscan region"
     );
-    view.event(key(keyboard::Key::Character("z".into()), Some("z")));
+    view.event(key(keyboard::Key::Character("z".into())).text("z").press());
     assert_eq!(
         view.messages,
         [Message::Input(4, "abcdz".into())],

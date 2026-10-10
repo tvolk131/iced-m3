@@ -1,7 +1,7 @@
-use super::{harness::Harness, reference, theme, themed_name};
+use super::{harness::Harness, input::key, reference, theme, themed_name};
 use crate::{Date, DateSelection, Element, MenuItem, TypeScale, button, focus, menu, typography};
 use iced::{
-    Event, Length, Point, Size,
+    Length, Point, Size,
     keyboard::{self, key::Named},
     widget, window,
 };
@@ -14,57 +14,17 @@ enum Message {
     Close,
 }
 fn ui(content: impl Into<Element<'static, Message>>, size: Size) -> Harness<'static, Message> {
-    Harness::with_backend(
-        content,
-        size,
-        theme(false),
-        &std::env::var("ICED_TEST_BACKEND").unwrap_or_else(|_| "tiny-skia".into()),
-    )
-}
-fn key(key: keyboard::Key, release: bool, modifiers: keyboard::Modifiers) -> Event {
-    let physical_key =
-        keyboard::key::Physical::Unidentified(keyboard::key::NativeCode::Unidentified);
-    if release {
-        Event::Keyboard(keyboard::Event::KeyReleased {
-            key: key.clone(),
-            modified_key: key,
-            physical_key,
-            location: keyboard::Location::Standard,
-            modifiers,
-        })
-    } else {
-        Event::Keyboard(keyboard::Event::KeyPressed {
-            key: key.clone(),
-            modified_key: key,
-            physical_key,
-            location: keyboard::Location::Standard,
-            modifiers,
-            text: None,
-            repeat: false,
-        })
-    }
+    Harness::configured(content, size, theme(false))
 }
 fn press(ui: &mut Harness<'_, Message>, name: Named) {
-    ui.event(key(
-        keyboard::Key::Named(name),
-        false,
-        keyboard::Modifiers::empty(),
-    ));
+    ui.event(key(name).press());
 }
 fn activate(ui: &mut Harness<'_, Message>) {
     press(ui, Named::Enter);
-    ui.event(key(
-        keyboard::Key::Named(Named::Enter),
-        true,
-        keyboard::Modifiers::empty(),
-    ));
+    ui.event(key(Named::Enter).release());
 }
 fn type_key(ui: &mut Harness<'_, Message>, text: &str) {
-    ui.event(key(
-        keyboard::Key::Character(text.into()),
-        false,
-        keyboard::Modifiers::empty(),
-    ));
+    ui.event(key(keyboard::Key::Character(text.into())).press());
 }
 fn actions() -> Element<'static, Message> {
     focus::scope(
@@ -112,11 +72,11 @@ fn menu_typeahead_prefix_repeat_timeout_unicode_and_disabled_rows() {
     type_key(&mut ui, "z");
     ui.at(750);
     type_key(&mut ui, "b");
-    ui.event(key(
-        keyboard::Key::Character("a".into()),
-        false,
-        keyboard::Modifiers::CTRL,
-    ));
+    ui.event(
+        key(keyboard::Key::Character("a".into()))
+            .modifiers(keyboard::Modifiers::CTRL)
+            .press(),
+    );
     activate(&mut ui);
     assert_eq!(ui.messages, [Message::Action(3)]);
 }
@@ -185,11 +145,11 @@ fn calendar_arrow_crosses_year_and_shift_page_moves_one_year() {
         ui.messages.last(),
         Some(&Message::Date(DateSelection::Single(Some(jan))))
     );
-    ui.event(key(
-        keyboard::Key::Named(Named::PageDown),
-        false,
-        keyboard::Modifiers::SHIFT,
-    ));
+    ui.event(
+        key(Named::PageDown)
+            .modifiers(keyboard::Modifiers::SHIFT)
+            .press(),
+    );
     assert_eq!(
         ui.messages.last(),
         Some(&Message::Month(Date::new(2028, 1, 1).unwrap()))

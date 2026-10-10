@@ -15,12 +15,7 @@ fn ui(
     size: Size,
     theme: Theme,
 ) -> Harness<'static, Message> {
-    Harness::with_backend(
-        content,
-        size,
-        theme,
-        &std::env::var("ICED_TEST_BACKEND").unwrap_or_else(|_| "tiny-skia".into()),
-    )
+    Harness::configured(content, size, theme)
 }
 fn pattern(content: impl Into<Element<'static, Message>>) -> Element<'static, Message> {
     widget::stack![

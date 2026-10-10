@@ -1,9 +1,9 @@
 //! Independent state-role expectations, rather than self-approved screenshots.
 //! Toggle reference: AndroidX 8fd64ac21a546397597caa1527fd2e589ea2915e,
 //! ToggleButton.kt and Filled/Tonal/Elevated/OutlinedButtonTokens.kt.
-use super::{harness::Harness, reference::Image};
+use super::{harness::Harness, input::key, reference::Image};
 use crate::{ButtonVariant as Variant, Element, Theme, button, button_group, focus};
-use iced::{Color, Event, Size, keyboard, widget};
+use iced::{Color, Size, keyboard, widget};
 
 const VARIANTS: [Variant; 5] = [
     Variant::Tonal,
@@ -147,32 +147,6 @@ fn group(selected: u8, connected: bool) -> Element<'static, u8> {
         .connected(connected),
     )
 }
-fn key(h: &mut Harness<'_, u8>, name: keyboard::key::Named, release: bool) {
-    let key = keyboard::Key::Named(name);
-    h.event(Event::Keyboard(if release {
-        keyboard::Event::KeyReleased {
-            key: key.clone(),
-            modified_key: key,
-            physical_key: keyboard::key::Physical::Unidentified(
-                keyboard::key::NativeCode::Unidentified,
-            ),
-            location: keyboard::Location::Standard,
-            modifiers: keyboard::Modifiers::empty(),
-        }
-    } else {
-        keyboard::Event::KeyPressed {
-            key: key.clone(),
-            modified_key: key,
-            physical_key: keyboard::key::Physical::Unidentified(
-                keyboard::key::NativeCode::Unidentified,
-            ),
-            location: keyboard::Location::Standard,
-            modifiers: keyboard::Modifiers::empty(),
-            text: None,
-            repeat: false,
-        }
-    }));
-}
 
 #[test]
 fn group_selection_survives_release_pointer_exit_and_rebuild() {
@@ -189,12 +163,12 @@ fn group_selection_survives_release_pointer_exit_and_rebuild() {
                     h.at(0);
                     h.frame();
                     if keyboard {
-                        key(&mut h, keyboard::key::Named::Tab, false);
-                        key(&mut h, keyboard::key::Named::Tab, true);
-                        key(&mut h, keyboard::key::Named::ArrowRight, false);
-                        key(&mut h, keyboard::key::Named::ArrowRight, true);
-                        key(&mut h, keyboard::key::Named::Space, false);
-                        key(&mut h, keyboard::key::Named::Space, true);
+                        h.event(key(keyboard::key::Named::Tab).press());
+                        h.event(key(keyboard::key::Named::Tab).release());
+                        h.event(key(keyboard::key::Named::ArrowRight).press());
+                        h.event(key(keyboard::key::Named::ArrowRight).release());
+                        h.event(key(keyboard::key::Named::Space).press());
+                        h.event(key(keyboard::key::Named::Space).release());
                     } else {
                         h.click("Second");
                     }

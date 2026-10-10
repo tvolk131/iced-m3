@@ -8,12 +8,7 @@ enum Message {
     Action,
 }
 fn ui(content: impl Into<Element<'static, Message>>, dark: bool) -> Harness<'static, Message> {
-    Harness::with_backend(
-        content,
-        Size::new(440., 280.),
-        theme(dark),
-        &std::env::var("ICED_TEST_BACKEND").unwrap_or_else(|_| "tiny-skia".into()),
-    )
+    Harness::configured(content, Size::new(440., 280.), theme(dark))
 }
 fn host(content: impl Into<Element<'static, Message>>) -> Element<'static, Message> {
     widget::stack![

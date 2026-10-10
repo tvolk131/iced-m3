@@ -1,4 +1,4 @@
-use super::harness::Harness;
+use super::{harness::Harness, input::key};
 use crate::{Element, Theme, button, button_group, focus};
 use iced::{Length, Rectangle, Size, advanced::widget::Operation, widget};
 
@@ -556,33 +556,6 @@ fn empty_single_and_narrow_groups_have_finite_nonnegative_geometry() {
     }
 }
 
-fn key(named: iced::keyboard::key::Named, release: bool) -> iced::Event {
-    use iced::keyboard::{
-        self,
-        key::{NativeCode, Physical},
-    };
-    let key = keyboard::Key::Named(named);
-    if release {
-        iced::Event::Keyboard(keyboard::Event::KeyReleased {
-            key: key.clone(),
-            modified_key: key,
-            physical_key: Physical::Unidentified(NativeCode::Unidentified),
-            modifiers: keyboard::Modifiers::empty(),
-            location: keyboard::Location::Standard,
-        })
-    } else {
-        iced::Event::Keyboard(keyboard::Event::KeyPressed {
-            key: key.clone(),
-            modified_key: key,
-            physical_key: Physical::Unidentified(NativeCode::Unidentified),
-            modifiers: keyboard::Modifiers::empty(),
-            location: keyboard::Location::Standard,
-            text: None,
-            repeat: false,
-        })
-    }
-}
-
 #[test]
 fn group_keyboard_press_expands_and_rebuild_retains_active_focus() {
     use iced::keyboard::key::Named;
@@ -590,14 +563,14 @@ fn group_keyboard_press_expands_and_rebuild_retains_active_focus() {
     ui.frame();
     let original = bounds(&mut ui);
     for k in [Named::Tab, Named::ArrowRight] {
-        ui.event(key(k, false));
-        ui.event(key(k, true));
+        ui.event(key(k).press());
+        ui.event(key(k).release());
     }
-    ui.event(key(Named::Space, false));
+    ui.event(key(Named::Space).press());
     ui.at(140);
     assert!(bounds(&mut ui)[1].width > original[1].width);
     ui.rebuild(group());
-    ui.event(key(Named::Space, true));
+    ui.event(key(Named::Space).release());
     ui.at(1500);
     assert_eq!(ui.messages, [2]);
     assert_eq!(bounds(&mut ui), original);

@@ -10,9 +10,6 @@ enum Message {
     ConfirmDate(DateSelection),
     Input(String),
 }
-fn backend() -> String {
-    std::env::var("ICED_TEST_BACKEND").unwrap_or_else(|_| "tiny-skia".into())
-}
 fn host(e: impl Into<Element<'static, Message>>) -> Element<'static, Message> {
     crate::focus::scope(widget::container(e).padding(24))
 }
@@ -21,7 +18,7 @@ fn ui(
     size: Size,
     theme: Theme,
 ) -> Harness<'static, Message> {
-    let mut ui = Harness::with_backend(host(e), size, theme, &backend());
+    let mut ui = Harness::configured(host(e), size, theme);
     // Native text inputs derive their enabled style during the first event.
     ui.at(0);
     ui

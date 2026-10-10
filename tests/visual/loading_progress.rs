@@ -32,12 +32,7 @@ fn ui(
     size: Size,
     dark: bool,
 ) -> Harness<'static, Message> {
-    Harness::with_backend(
-        host(content),
-        size,
-        theme(dark),
-        &std::env::var("ICED_TEST_BACKEND").unwrap_or_else(|_| "tiny-skia".into()),
-    )
+    Harness::configured(host(content), size, theme(dark))
 }
 fn progress(
     circular: bool,

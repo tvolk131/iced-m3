@@ -1,5 +1,5 @@
 //! Real iced event dispatch: keyboard editing, focus and builder contracts.
-use super::harness::Harness;
+use super::{harness::Harness, input::key};
 use crate::{Element, Theme, button, focus, text_field, toolbar};
 use iced::{
     Event, Length, Size,
@@ -18,41 +18,11 @@ enum Message {
 fn ui(content: impl Into<Element<'static, Message>>) -> Harness<'static, Message> {
     Harness::new(focus::scope(content), Size::new(640., 240.), Theme::light())
 }
-fn key(key: keyboard::Key, released: bool) -> Event {
-    let physical_key =
-        keyboard::key::Physical::Unidentified(keyboard::key::NativeCode::Unidentified);
-    let modifiers = keyboard::Modifiers::empty();
-    let location = keyboard::Location::Standard;
-    if released {
-        Event::Keyboard(keyboard::Event::KeyReleased {
-            modified_key: key.clone(),
-            key,
-            physical_key,
-            modifiers,
-            location,
-        })
-    } else {
-        let text = match &key {
-            keyboard::Key::Character(s) => Some(s.clone()),
-            _ => None,
-        };
-        Event::Keyboard(keyboard::Event::KeyPressed {
-            modified_key: key.clone(),
-            key,
-            physical_key,
-            modifiers,
-            location,
-            text,
-            repeat: false,
-        })
-    }
-}
 fn press(ui: &mut Harness<'_, Message>, named: Named) {
-    ui.event(key(keyboard::Key::Named(named), false));
-    ui.event(key(keyboard::Key::Named(named), true));
+    ui.tap_key(key(named));
 }
 fn type_x(ui: &mut Harness<'_, Message>) {
-    ui.event(key(keyboard::Key::Character("x".into()), false));
+    ui.event(key(keyboard::Key::Character("x".into())).text("x").press());
 }
 
 #[test]

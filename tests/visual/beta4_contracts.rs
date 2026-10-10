@@ -1,5 +1,5 @@
 //! User-interaction contracts for the next desktop beta.
-use super::harness::Harness;
+use super::{harness::Harness, input::key};
 use crate::{Element, Theme, Time, TimePart, button, focus};
 use iced::{
     Event, Size,
@@ -21,31 +21,6 @@ enum Message {
     Part(TimePart),
     Period(bool),
     Input(String),
-}
-fn key(h: &mut Harness<'_, Message>, name: Named, shift: bool) {
-    let modifiers = if shift {
-        keyboard::Modifiers::SHIFT
-    } else {
-        keyboard::Modifiers::empty()
-    };
-    let physical_key =
-        keyboard::key::Physical::Unidentified(keyboard::key::NativeCode::Unidentified);
-    h.event(Event::Keyboard(keyboard::Event::KeyPressed {
-        key: keyboard::Key::Named(name),
-        modified_key: keyboard::Key::Named(name),
-        physical_key,
-        location: keyboard::Location::Standard,
-        modifiers,
-        text: None,
-        repeat: false,
-    }));
-    h.event(Event::Keyboard(keyboard::Event::KeyReleased {
-        key: keyboard::Key::Named(name),
-        modified_key: keyboard::Key::Named(name),
-        physical_key,
-        location: keyboard::Location::Standard,
-        modifiers,
-    }));
 }
 fn ui(e: impl Into<Element<'static, Message>>) -> Harness<'static, Message> {
     Harness::configured(
@@ -76,7 +51,7 @@ fn plain() -> Element<'static, Message> {
 fn plain_tooltip_keyboard_focus_delay_escape_and_exit() {
     let mut h = ui(plain());
     h.frame();
-    key(&mut h, Named::Tab, false);
+    h.tap_key(key(Named::Tab));
     h.at(0);
     h.at(499);
     assert!(!visible(&mut h, "Keyboard hint"));
@@ -88,19 +63,19 @@ fn plain_tooltip_keyboard_focus_delay_escape_and_exit() {
     h.leave();
     h.at(600); // Pointer leaving must not hide a keyboard hint.
     assert!(visible(&mut h, "Keyboard hint"));
-    key(&mut h, Named::Escape, false);
+    h.tap_key(key(Named::Escape));
     h.at(1500);
     assert!(!visible(&mut h, "Keyboard hint"));
-    key(&mut h, Named::Tab, false);
+    h.tap_key(key(Named::Tab));
     h.at(1501);
-    key(&mut h, Named::Tab, true);
+    h.tap_key(key(Named::Tab).modifiers(keyboard::Modifiers::SHIFT));
     h.at(1502);
     h.at(2002);
     assert!(visible(&mut h, "Keyboard hint"));
-    key(&mut h, Named::Tab, false);
+    h.tap_key(key(Named::Tab));
     h.at(2003);
     assert!(!visible(&mut h, "Keyboard hint"));
-    key(&mut h, Named::Enter, false);
+    h.tap_key(key(Named::Enter));
     assert_eq!(h.messages, [Message::After]);
 }
 fn rich(actions: bool) -> Element<'static, Message> {
@@ -123,9 +98,9 @@ fn rich(actions: bool) -> Element<'static, Message> {
 }
 fn open_rich(h: &mut Harness<'_, Message>) {
     h.frame();
-    key(h, Named::Tab, false);
-    key(h, Named::Tab, false);
-    key(h, Named::Enter, false);
+    h.tap_key(key(Named::Tab));
+    h.tap_key(key(Named::Tab));
+    h.tap_key(key(Named::Enter));
     h.at(0);
     assert!(visible(h, "Rich hint"));
 }
@@ -133,39 +108,39 @@ fn open_rich(h: &mut Harness<'_, Message>) {
 fn rich_tooltip_tab_exits_to_following_page_control() {
     let mut h = ui(rich(true));
     open_rich(&mut h);
-    key(&mut h, Named::Tab, false); // First -> Second
-    key(&mut h, Named::Tab, false); // Second -> After
-    key(&mut h, Named::Enter, false);
+    h.tap_key(key(Named::Tab)); // First -> Second
+    h.tap_key(key(Named::Tab)); // Second -> After
+    h.tap_key(key(Named::Enter));
     assert_eq!(h.messages, [Message::After]);
 }
 #[test]
 fn rich_tooltip_shift_tab_returns_to_trigger_then_previous_control() {
     let mut h = ui(rich(true));
     open_rich(&mut h);
-    key(&mut h, Named::Tab, true); // First -> trigger
+    h.tap_key(key(Named::Tab).modifiers(keyboard::Modifiers::SHIFT)); // First -> trigger
     h.at(1);
     assert!(!visible(&mut h, "Rich hint"));
-    key(&mut h, Named::Tab, true);
-    key(&mut h, Named::Enter, false);
+    h.tap_key(key(Named::Tab).modifiers(keyboard::Modifiers::SHIFT));
+    h.tap_key(key(Named::Enter));
     assert_eq!(h.messages, [Message::Before]);
 }
 #[test]
 fn rich_tooltip_without_actions_does_not_swallow_tab() {
     let mut h = ui(rich(false));
     open_rich(&mut h);
-    key(&mut h, Named::Tab, false);
-    key(&mut h, Named::Enter, false);
+    h.tap_key(key(Named::Tab));
+    h.tap_key(key(Named::Enter));
     assert_eq!(h.messages, [Message::After]);
 }
 #[test]
 fn rich_tooltip_escape_restores_invoker_and_menu_tab_stays_contained() {
     let mut h = ui(rich(true));
     open_rich(&mut h);
-    key(&mut h, Named::Escape, false);
-    key(&mut h, Named::Enter, false);
+    h.tap_key(key(Named::Escape));
+    h.tap_key(key(Named::Enter));
     h.at(1);
     assert!(visible(&mut h, "Rich hint"));
-    key(&mut h, Named::Enter, false);
+    h.tap_key(key(Named::Enter));
     assert_eq!(h.messages, [Message::First]);
     let mut h = ui(widget::column![
         crate::menu(
@@ -178,12 +153,12 @@ fn rich_tooltip_escape_restores_invoker_and_menu_tab_stays_contained() {
         button("After").on_press(Message::After)
     ]);
     h.frame();
-    key(&mut h, Named::Tab, false);
-    key(&mut h, Named::Enter, false);
+    h.tap_key(key(Named::Tab));
+    h.tap_key(key(Named::Enter));
     h.at(0);
-    key(&mut h, Named::Tab, false);
-    key(&mut h, Named::Tab, false);
-    key(&mut h, Named::Enter, false);
+    h.tap_key(key(Named::Tab));
+    h.tap_key(key(Named::Tab));
+    h.tap_key(key(Named::Enter));
     assert_eq!(h.messages, [Message::First]);
 }
 type Calls = Rc<RefCell<Vec<Message>>>;
@@ -216,16 +191,16 @@ fn select_callbacks_are_deferred_until_actual_selection() {
             "building/rendering must not invoke callbacks"
         );
         if keyboard {
-            key(&mut h, Named::Tab, false);
-            key(&mut h, Named::ArrowDown, false);
+            h.tap_key(key(Named::Tab));
+            h.tap_key(key(Named::ArrowDown));
         } else {
             h.click("Viewer");
         }
         h.at(101);
         assert!(calls.borrow().is_empty());
         if keyboard {
-            key(&mut h, Named::ArrowDown, false);
-            key(&mut h, Named::Enter, false);
+            h.tap_key(key(Named::ArrowDown));
+            h.tap_key(key(Named::Enter));
         } else {
             h.click("Locked");
             assert!(calls.borrow().is_empty());
@@ -266,8 +241,8 @@ fn time_picker_callbacks_are_deferred_and_submission_prefers_confirm() {
                     "building picker must not invoke callbacks"
                 );
                 if enter {
-                    key(&mut h, Named::Tab, false);
-                    key(&mut h, Named::Enter, false);
+                    h.tap_key(key(Named::Tab));
+                    h.tap_key(key(Named::Enter));
                 } else {
                     h.click(if confirm { "OK" } else { "Apply" });
                 }
@@ -289,8 +264,8 @@ fn invalid_time_drafts_cannot_submit_and_period_part_callbacks_wait() {
     h.frame();
     assert!(calls.borrow().is_empty());
     h.click("OK");
-    key(&mut h, Named::Tab, false);
-    key(&mut h, Named::Enter, false);
+    h.tap_key(key(Named::Tab));
+    h.tap_key(key(Named::Enter));
     assert!(calls.borrow().is_empty());
     h.click("PM");
     assert_eq!(*calls.borrow(), [Message::Period(true)]);
@@ -310,7 +285,7 @@ fn invalid_time_drafts_cannot_submit_and_period_part_callbacks_wait() {
 fn keyboard_tooltip_closes_on_window_unfocus() {
     let mut h = ui(plain());
     h.frame();
-    key(&mut h, Named::Tab, false);
+    h.tap_key(key(Named::Tab));
     h.at(0);
     h.at(500);
     assert!(visible(&mut h, "Keyboard hint"));
@@ -339,8 +314,8 @@ fn callback_rebuilds_and_disabled_controls_do_not_invoke_handlers() {
     h.rebuild(focus::scope(widget::container(make(true)).padding(24)));
     h.frame();
     h.click("Viewer");
-    key(&mut h, Named::Tab, false);
-    key(&mut h, Named::Enter, false);
+    h.tap_key(key(Named::Tab));
+    h.tap_key(key(Named::Enter));
     assert!(calls.borrow().is_empty());
     assert!(h.messages.is_empty());
     h.rebuild(focus::scope(widget::container(make(false)).padding(24)));
@@ -370,13 +345,13 @@ fn rich_tooltip_pointer_open_tab_entry_and_action_dismissal() {
     h.frame();
     h.click("Explain");
     h.at(0);
-    key(&mut h, Named::Tab, false); // Pointer opening does not preselect an action.
-    key(&mut h, Named::Enter, false);
+    h.tap_key(key(Named::Tab)); // Pointer opening does not preselect an action.
+    h.tap_key(key(Named::Enter));
     assert_eq!(h.messages, [Message::First]);
     h.at(1);
     assert!(!visible(&mut h, "Rich hint"));
-    key(&mut h, Named::Tab, false);
-    key(&mut h, Named::Enter, false);
+    h.tap_key(key(Named::Tab));
+    h.tap_key(key(Named::Enter));
     assert_eq!(h.messages, [Message::First, Message::After]);
 }
 
@@ -389,10 +364,10 @@ fn disabled_plain_hint_does_not_disable_its_trigger() {
     .disabled(true)
     .delay(Duration::ZERO));
     h.frame();
-    key(&mut h, Named::Tab, false);
+    h.tap_key(key(Named::Tab));
     h.at(0);
     h.at(500);
     assert!(!visible(&mut h, "Disabled hint"));
-    key(&mut h, Named::Space, false);
+    h.tap_key(key(Named::Space));
     assert_eq!(h.messages, [Message::Trigger]);
 }
