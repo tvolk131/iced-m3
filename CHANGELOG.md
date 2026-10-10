@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+## 0.1.0-beta.5 — 2026-10-09
+
+This beta reduces shadow and ripple rendering costs and makes determinate wavy
+progress travel by default. Use `.wave_speed(0.)` to retain stationary waves.
+Public method signatures, iced 0.14 and the Rust 1.88 minimum are unchanged.
+
 - Fix expensive hover elevation on large cards and buttons by crossfading cached
   endpoint shadows and tiling small corner/edge templates. Wide, shallow surfaces
   also avoid full-width blur work. Public APIs and animation timing are unchanged.
@@ -200,7 +206,7 @@ This release does not claim complete Material 3 conformance or a stable 1.0 API.
 ## Compatibility
 
 - **During beta:** public APIs may change between prereleases. Pin
-  `iced-m3 = "=0.1.0-beta.4"` and upgrade deliberately; subsequent release notes
+  `iced-m3 = "=0.1.0-beta.5"` and upgrade deliberately; subsequent release notes
   will identify breaking changes and migration steps.
 - **After beta:** compatible fixes stay within a `0.x` minor series. Breaking
   public API changes advance the minor version while the crate remains below

@@ -1,5 +1,32 @@
 # Validation report
 
+## Rendering performance and wave defaults — 2026-10-09
+
+Local default-feature and software-only all-target suites passed, including
+269 library tests (48 ignored diagnostics/reference suites). All 51 canonical
+component/gallery reference suites passed on Rust 1.92.0 after reviewing updated
+shadows and ripple compositing. Metal passed the ripple oracle, integer/fractional
+shadow comparisons and seven loading/progress behavior checks. Formatting,
+strict Clippy and the Rust 1.88 all-target check passed.
+
+New regressions first reproduced unbounded shadow rasters, ripple fade cache
+invalidation and stationary default waves. They now require bounded shadow
+raster dimensions, endpoint/fade reuse, actual press/release message delivery,
+unchanged-value wave travel, phase continuity, pause/resume and idle scheduling.
+Pixel oracles compare against the previous full-outline shadow and clipped-circle
+ripple across themes, scales and shapes. Timing benchmarks remain opt-in
+and do not set machine-dependent CI thresholds.
+
+The generated component documentation passed 140 doctests. The staged archive
+passed media verification, extracted-package checks and independent consumer
+checks with both feature configurations. Release CI and merged-candidate
+preparation repeat the package checks for the versioned source.
+
+See [performance measurements and remaining costs](PERFORMANCE.md) and
+[wave defaults and reference profiles](LOADING_PROGRESS.md). These checks do not
+establish a whole-application frame-rate guarantee or new native Windows/Linux
+interaction certification.
+
 ## Tooltip and callback contracts — 2026-09-29
 
 Twelve focused tests cover plain-tooltip focus/delay/dismissal, rich-tooltip
