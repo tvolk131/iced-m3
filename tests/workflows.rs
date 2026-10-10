@@ -1,4 +1,8 @@
-use iced::advanced::{Layout, Renderer as _, Shell, layout, renderer::Headless, widget::Tree};
+#[path = "support/pointer.rs"]
+mod pointer;
+#[path = "support/widget.rs"]
+mod widget_harness;
+use iced::advanced::Layout;
 use iced::{Event, Length, Point, Rectangle, Size, keyboard, mouse, widget, window};
 use iced_m3::{
     Element, MenuItem, Placement, RadioOption, SelectOption, Theme, button, context_menu,
@@ -6,7 +10,9 @@ use iced_m3::{
     menu, radio, radio_group, select, snackbar, text_field, tooltip,
 };
 use iced_test::{Simulator, simulator};
+use pointer::{press, redraw, release};
 use std::time::{Duration, Instant};
+use widget_harness::Harness;
 
 #[derive(Clone, Debug, PartialEq)]
 enum Message {
@@ -15,15 +21,6 @@ enum Message {
     Dismiss,
     Select(u8),
     Input(String),
-}
-fn press() -> Event {
-    Event::Mouse(mouse::Event::ButtonPressed(mouse::Button::Left))
-}
-fn release() -> Event {
-    Event::Mouse(mouse::Event::ButtonReleased(mouse::Button::Left))
-}
-fn redraw(now: Instant) -> Event {
-    Event::Window(window::Event::RedrawRequested(now))
 }
 fn moved(point: Point) -> Event {
     Event::Mouse(mouse::Event::CursorMoved { position: point })
@@ -43,6 +40,10 @@ fn full(content: impl Into<Element<'static, Message>>) -> Element<'static, Messa
         .width(Length::Fill)
         .height(Length::Fill)
         .into()
+}
+
+fn ui(element: impl Into<Element<'static, Message>>) -> Harness<Message> {
+    Harness::new(element, Size::new(600.0, 400.0), 1.0)
 }
 
 #[test]
@@ -180,96 +181,24 @@ fn radio_group_reports_single_selection_and_ignores_current_and_disabled_options
     assert_eq!(ui.into_messages().collect::<Vec<_>>(), [Message::Select(2)]);
 }
 
-struct Harness {
-    element: Element<'static, Message>,
-    tree: Tree,
-    node: layout::Node,
-    renderer: iced::Renderer,
-}
-impl Harness {
-    fn new(element: impl Into<Element<'static, Message>>) -> Self {
-        let renderer = iced::futures::executor::block_on(<iced::Renderer as Headless>::new(
-            iced::Font::DEFAULT,
-            16.0.into(),
-            Some("tiny-skia"),
-        ))
-        .unwrap();
-        let mut element = element.into();
-        let mut tree = Tree::new(&element);
-        let node = element.as_widget_mut().layout(
-            &mut tree,
-            &renderer,
-            &layout::Limits::new(Size::ZERO, Size::new(600.0, 400.0)),
-        );
-        Self {
-            element,
-            tree,
-            node,
-            renderer,
-        }
-    }
-    fn rebuild(&mut self, element: impl Into<Element<'static, Message>>) {
-        self.element = element.into();
-        self.tree.diff(&self.element);
-        self.node = self.element.as_widget_mut().layout(
-            &mut self.tree,
-            &self.renderer,
-            &layout::Limits::new(Size::ZERO, Size::new(600.0, 400.0)),
-        );
-    }
-    fn event(
-        &mut self,
-        event: Event,
-        point: Option<Point>,
-    ) -> (Vec<Message>, window::RedrawRequest) {
-        let mut messages = Vec::new();
-        let mut shell = Shell::new(&mut messages);
-        self.element.as_widget_mut().update(
-            &mut self.tree,
-            &event,
-            Layout::new(&self.node),
-            point.map_or(mouse::Cursor::Unavailable, mouse::Cursor::Available),
-            &self.renderer,
-            &mut iced::advanced::clipboard::Null,
-            &mut shell,
-            &Rectangle::with_size(Size::new(600.0, 400.0)),
-        );
-        let redraw = shell.redraw_request();
-        (messages, redraw)
-    }
+impl Harness<Message> {
     fn popup_bounds(&mut self) -> Option<Rectangle> {
         let mut overlay = self.element.as_widget_mut().overlay(
             &mut self.tree,
             Layout::new(&self.node),
             &self.renderer,
-            &Rectangle::with_size(Size::new(600.0, 400.0)),
+            &Rectangle::with_size(self.size),
             iced::Vector::ZERO,
         )?;
-        let node = overlay
-            .as_overlay_mut()
-            .layout(&self.renderer, Size::new(600.0, 400.0));
+        let node = overlay.as_overlay_mut().layout(&self.renderer, self.size);
         Some(node.bounds())
     }
-    fn frame(&mut self) -> Vec<u8> {
-        let viewport = Rectangle::with_size(Size::new(600.0, 400.0));
-        self.renderer.reset(viewport);
-        self.element.as_widget().draw(
-            &self.tree,
-            &mut self.renderer,
-            &Theme::light(),
-            &Default::default(),
-            Layout::new(&self.node),
-            mouse::Cursor::Unavailable,
-            &viewport,
-        );
-        self.renderer
-            .screenshot(Size::new(600, 400), 1.0, Theme::light().colors.surface)
-    }
 }
+
 #[test]
 fn open_menu_survives_rebuild_and_disabling_cancels_it() {
     let point = Some(Point::new(40.0, 20.0));
-    let mut ui = Harness::new(actions());
+    let mut ui = ui(actions());
     ui.event(press(), point);
     ui.event(release(), point);
     assert!(ui.popup_bounds().is_some());
@@ -288,7 +217,7 @@ fn open_menu_survives_rebuild_and_disabling_cancels_it() {
 fn tooltip_waits_then_stops_redrawing_and_never_intercepts_the_action() {
     let point = Some(Point::new(30.0, 20.0));
     let now = Instant::now();
-    let mut ui = Harness::new(tooltip(
+    let mut ui = ui(tooltip(
         button("Pin").on_press(Message::Action),
         "Pin this workspace",
     ));
@@ -340,7 +269,7 @@ fn notice(id: u64) -> Element<'static, Message> {
 #[test]
 fn snackbar_timeout_is_once_only_and_rebuild_preserves_or_restarts_by_id() {
     let now = Instant::now();
-    let mut ui = Harness::new(notice(1));
+    let mut ui = ui(notice(1));
     ui.event(redraw(now), None);
     ui.rebuild(notice(1));
     assert!(
@@ -372,7 +301,7 @@ fn snackbar_timeout_is_once_only_and_rebuild_preserves_or_restarts_by_id() {
 }
 #[test]
 fn snackbar_pauses_while_hovered_or_window_is_inactive() {
-    let mut ui = Harness::new(notice(1));
+    let mut ui = ui(notice(1));
     let now = Instant::now();
     let point = Some(Point::new(300.0, 360.0));
     ui.event(moved(Point::new(300.0, 360.0)), point);
@@ -448,18 +377,18 @@ fn radio_selection_animates_and_disabled_controls_cancel_pending_presses() {
             .on_select(Message::Select)
             .disabled(disabled)
     };
-    let mut ui = Harness::new(make(None, false));
-    let blank = ui.frame();
+    let mut ui = ui(make(None, false));
+    let blank = ui.frame(0.0);
     let now = Instant::now();
     ui.rebuild(make(Some(1), false));
     ui.event(redraw(now), None);
     ui.event(redraw(now + Duration::from_millis(60)), None);
-    let during = ui.frame();
+    let during = ui.frame(0.0);
     assert_eq!(
         ui.event(redraw(now + Duration::from_secs(1)), None).1,
         window::RedrawRequest::Wait
     );
-    let selected = ui.frame();
+    let selected = ui.frame(0.0);
     assert!(blank != during && during != selected && selected != blank);
     let point = Some(Point::new(24.0, 24.0));
     ui.rebuild(make(None, false));
@@ -636,7 +565,7 @@ fn a_tooltip_in_scrolled_content_stays_near_its_visible_trigger() {
 
 #[test]
 fn a_new_snackbar_keeps_the_window_deactivation_pause() {
-    let mut ui = Harness::new(notice(1));
+    let mut ui = ui(notice(1));
     ui.event(Event::Window(window::Event::Unfocused), None);
     ui.rebuild(notice(2));
     let now = Instant::now();

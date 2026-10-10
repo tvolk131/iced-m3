@@ -1,10 +1,10 @@
-use super::{harness::Harness, theme};
+use super::{harness::Harness, input::key, theme};
 use crate::{
     Element, NavigationItem, Theme, TypeScale, button, focus, navigation_bar, navigation_rail,
     typography,
 };
 use iced::{
-    Event, Length, Size,
+    Length, Size,
     keyboard::{self, key::Named},
     widget,
 };
@@ -17,44 +17,14 @@ enum Message {
     Input(String),
 }
 fn ui(content: impl Into<Element<'static, Message>>, size: Size) -> Harness<'static, Message> {
-    let backend = std::env::var("ICED_TEST_BACKEND").unwrap_or_else(|_| "tiny-skia".into());
-    Harness::with_backend(content, size, theme(false), &backend)
-}
-fn key(k: Named, release: bool, shift: bool) -> Event {
-    let key = keyboard::Key::Named(k);
-    let modifiers = if shift {
-        keyboard::Modifiers::SHIFT
-    } else {
-        keyboard::Modifiers::empty()
-    };
-    let physical_key =
-        keyboard::key::Physical::Unidentified(keyboard::key::NativeCode::Unidentified);
-    if release {
-        Event::Keyboard(keyboard::Event::KeyReleased {
-            key: key.clone(),
-            modified_key: key,
-            physical_key,
-            location: keyboard::Location::Standard,
-            modifiers,
-        })
-    } else {
-        Event::Keyboard(keyboard::Event::KeyPressed {
-            key: key.clone(),
-            modified_key: key,
-            physical_key,
-            location: keyboard::Location::Standard,
-            modifiers,
-            text: None,
-            repeat: false,
-        })
-    }
+    Harness::configured(content, size, theme(false))
 }
 fn press(ui: &mut Harness<'_, Message>, k: Named) {
-    ui.event(key(k, false, false));
+    ui.event(key(k).press());
 }
 fn activate(ui: &mut Harness<'_, Message>) {
     press(ui, Named::Space);
-    ui.event(key(Named::Space, true, false));
+    ui.event(key(Named::Space).release());
 }
 fn items() -> Vec<NavigationItem<'static, u8, Message>> {
     (0..12)
@@ -85,7 +55,11 @@ fn group_has_one_tab_stop_and_remembers_arrow_focus() {
     activate(&mut ui);
     press(&mut ui, Named::Tab);
     activate(&mut ui);
-    ui.event(key(Named::Tab, false, true));
+    ui.event(
+        key(Named::Tab)
+            .modifiers(keyboard::Modifiers::SHIFT)
+            .press(),
+    );
     activate(&mut ui);
     assert_eq!(
         ui.messages,
@@ -530,7 +504,7 @@ fn visual_references_desktop_variants_and_motion() {
             ui.at(1000 + t);
             reference::check(&format!("{case}/03-held-{t:03}ms"), &ui.frame());
         }
-        ui.event(key(Named::Space, true, false));
+        ui.event(key(Named::Space).release());
         ui.at(1600);
         reference::check(&format!("{case}/04-closed"), &ui.frame());
         let mut ui = Harness::new(rail_shell(false), Size::new(600.0, 340.0), theme(dark));

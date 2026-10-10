@@ -1,10 +1,10 @@
-use super::{harness::Harness, reference, theme, themed_name};
+use super::{harness::Harness, input::key, reference, theme, themed_name};
 use crate::{
     AppBarVariant, Element, NavigationItem, NavigationLayout, TypeScale, app_bar, button, checkbox,
     focus, navigation_bar, navigation_rail, typography,
 };
 use iced::{
-    Event, Length, Size,
+    Length, Size,
     keyboard::{self, key::Named},
     widget,
 };
@@ -21,43 +21,14 @@ fn make_ui(
     size: Size,
     dark: bool,
 ) -> Harness<'static, Message> {
-    let backend = std::env::var("ICED_TEST_BACKEND").unwrap_or_else(|_| "tiny-skia".into());
-    Harness::with_backend(element, size, theme(dark), &backend)
-}
-fn key(key: Named, release: bool, shift: bool) -> Event {
-    let modifiers = if shift {
-        keyboard::Modifiers::SHIFT
-    } else {
-        keyboard::Modifiers::empty()
-    };
-    let physical_key =
-        keyboard::key::Physical::Unidentified(keyboard::key::NativeCode::Unidentified);
-    if release {
-        Event::Keyboard(keyboard::Event::KeyReleased {
-            key: keyboard::Key::Named(key),
-            modified_key: keyboard::Key::Named(key),
-            physical_key,
-            location: keyboard::Location::Standard,
-            modifiers,
-        })
-    } else {
-        Event::Keyboard(keyboard::Event::KeyPressed {
-            key: keyboard::Key::Named(key),
-            modified_key: keyboard::Key::Named(key),
-            physical_key,
-            location: keyboard::Location::Standard,
-            modifiers,
-            text: None,
-            repeat: false,
-        })
-    }
+    Harness::configured(element, size, theme(dark))
 }
 fn press(ui: &mut Harness<'_, Message>, k: Named) {
-    ui.event(key(k, false, false));
+    ui.event(key(k).press());
 }
 fn activate(ui: &mut Harness<'_, Message>) {
     press(ui, Named::Space);
-    ui.event(key(Named::Space, true, false));
+    ui.event(key(Named::Space).release());
 }
 fn controls() -> Element<'static, Message> {
     focus::scope(
@@ -81,7 +52,11 @@ fn tab_skips_disabled_wraps_and_shift_reverses() {
     activate(&mut ui);
     press(&mut ui, Named::Tab);
     activate(&mut ui);
-    ui.event(key(Named::Tab, false, true));
+    ui.event(
+        key(Named::Tab)
+            .modifiers(keyboard::Modifiers::SHIFT)
+            .press(),
+    );
     activate(&mut ui);
     assert_eq!(
         ui.messages,
@@ -100,7 +75,7 @@ fn tab_during_held_space_cancels_activation() {
     press(&mut ui, Named::Tab);
     press(&mut ui, Named::Space);
     press(&mut ui, Named::Tab);
-    ui.event(key(Named::Space, true, false));
+    ui.event(key(Named::Space).release());
     assert!(ui.messages.is_empty());
     activate(&mut ui);
     assert_eq!(ui.messages, [Message::Check(true)]);

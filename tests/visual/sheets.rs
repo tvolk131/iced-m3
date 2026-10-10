@@ -1,4 +1,4 @@
-use super::{harness::Harness, reference, theme, themed_name};
+use super::{harness::Harness, input::key, reference, theme, themed_name};
 use crate::{
     Element, FabColor, FabSize, MenuItem, Theme, TypeScale, bottom_sheet, button, extended_fab,
     fab, menu, sheet, side_sheet, text_field, typography,
@@ -14,21 +14,8 @@ enum Message {
     BackgroundInput(String),
 }
 
-fn key(key: keyboard::Key, text: Option<&str>) -> Event {
-    Event::Keyboard(keyboard::Event::KeyPressed {
-        modified_key: key.clone(),
-        key,
-        physical_key: keyboard::key::Physical::Unidentified(
-            keyboard::key::NativeCode::Unidentified,
-        ),
-        location: keyboard::Location::Standard,
-        modifiers: keyboard::Modifiers::empty(),
-        text: text.map(Into::into),
-        repeat: false,
-    })
-}
 fn escape() -> Event {
-    key(keyboard::Key::Named(keyboard::key::Named::Escape), None)
+    key(keyboard::key::Named::Escape).press()
 }
 fn content(long: bool) -> Element<'static, Message> {
     let mut body = widget::column![
@@ -236,13 +223,13 @@ fn modal_sheet_preserves_native_typing_and_blocks_the_background_field() {
         ui.rebuild(fixture(kind, true, false, true));
         ui.at(400);
         ui.at(800);
-        ui.event(key(keyboard::Key::Character("a".into()), Some("a")));
+        ui.event(key(keyboard::Key::Character("a".into())).text("a").press());
         assert!(ui.messages.is_empty());
         let action = ui.find("Sheet action");
         ui.move_to((action.center_x(), action.y + action.height + 44.0));
         ui.down();
         ui.up();
-        ui.event(key(keyboard::Key::Character("é".into()), Some("é")));
+        ui.event(key(keyboard::Key::Character("é".into())).text("é").press());
         assert_eq!(ui.messages, [Message::Input("é".into())]);
     }
 }

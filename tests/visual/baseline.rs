@@ -20,12 +20,7 @@ fn ui(
     size: Size,
     theme: Theme,
 ) -> Harness<'static, Message> {
-    let mut ui = Harness::with_backend(
-        content,
-        size,
-        theme,
-        &std::env::var("ICED_TEST_BACKEND").unwrap_or_else(|_| "tiny-skia".into()),
-    );
+    let mut ui = Harness::configured(content, size, theme);
     ui.at(0);
     ui.frame();
     ui

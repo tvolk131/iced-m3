@@ -13,6 +13,7 @@ mod dialog_regressions;
 mod doc_media;
 mod expressive;
 mod fidelity;
+mod input;
 mod interaction_contracts;
 mod loading_progress;
 mod modal_activity;

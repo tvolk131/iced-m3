@@ -90,13 +90,7 @@ fn fixture(host: &str, open: bool, paused: bool) -> Element<'static, Message> {
 }
 
 fn ui(host: &str, open: bool, paused: bool, theme: Theme) -> Harness<'static, Message> {
-    let backend = std::env::var("ICED_TEST_BACKEND").unwrap_or_else(|_| "tiny-skia".into());
-    let mut ui = Harness::with_backend(
-        fixture(host, open, paused),
-        Size::new(800., 600.),
-        theme,
-        &backend,
-    );
+    let mut ui = Harness::configured(fixture(host, open, paused), Size::new(800., 600.), theme);
     ui.frame();
     ui.at(0);
     ui

@@ -1,4 +1,4 @@
-use super::{harness::Harness, reference, theme, themed_name};
+use super::{harness::Harness, input::key, reference, theme, themed_name};
 use crate::{
     Element, Theme, TypeScale, assist_chip, button, filter_chip, input_chip, list, list_item,
     range_slider, search_bar, suggestion_chip, typography,
@@ -23,24 +23,10 @@ fn make_ui<'a>(
     size: Size,
     theme: Theme,
 ) -> Harness<'a, Message> {
-    let backend = std::env::var("ICED_TEST_BACKEND").unwrap_or_else(|_| "tiny-skia".into());
-    Harness::with_backend(element, size, theme, &backend)
-}
-fn key(key: keyboard::Key, text: Option<&str>) -> Event {
-    Event::Keyboard(keyboard::Event::KeyPressed {
-        modified_key: key.clone(),
-        key,
-        physical_key: keyboard::key::Physical::Unidentified(
-            keyboard::key::NativeCode::Unidentified,
-        ),
-        location: keyboard::Location::Standard,
-        modifiers: keyboard::Modifiers::empty(),
-        text: text.map(Into::into),
-        repeat: false,
-    })
+    Harness::configured(element, size, theme)
 }
 fn escape() -> Event {
-    key(keyboard::Key::Named(keyboard::key::Named::Escape), None)
+    key(keyboard::key::Named::Escape).press()
 }
 fn unfocus(ui: &mut Harness<'_, Message>) {
     ui.operate(&mut iced::advanced::widget::operation::focusable::unfocus::<()>());
@@ -105,12 +91,12 @@ fn search_open_focus_query_clear_submit_and_result_are_controlled() {
     ui.rebuild(fixture(true, "", true));
     ui.at(0);
     ui.at(300);
-    ui.event(key(keyboard::Key::Character("d".into()), Some("d")));
+    ui.event(key(keyboard::Key::Character("d".into())).text("d").press());
     assert_eq!(ui.messages, [Message::Input("d".into())]);
     ui.messages.clear();
     ui.rebuild(fixture(true, "d", true));
     ui.at(300);
-    ui.event(key(keyboard::Key::Named(keyboard::key::Named::Enter), None));
+    ui.event(key(keyboard::key::Named::Enter).press());
     assert_eq!(ui.messages, [Message::Submit]);
     ui.messages.clear();
     ui.move_to((408.0, 44.0));

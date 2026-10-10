@@ -1,10 +1,6 @@
-use super::{harness::Harness, reference, theme};
+use super::{harness::Harness, input::key, reference, theme};
 use crate::{Date, DateSelection, Element, TypeScale, button, dialog, focus, typography};
-use iced::{
-    Event, Length, Size,
-    keyboard::{self, key::Named},
-    widget,
-};
+use iced::{Event, Length, Size, keyboard::key::Named, widget};
 
 #[derive(Clone, Debug, PartialEq)]
 enum Message {
@@ -17,48 +13,14 @@ enum Message {
     Month(Date),
 }
 fn ui(content: impl Into<Element<'static, Message>>, size: Size) -> Harness<'static, Message> {
-    Harness::with_backend(
-        content,
-        size,
-        theme(false),
-        &std::env::var("ICED_TEST_BACKEND").unwrap_or_else(|_| "tiny-skia".into()),
-    )
-}
-fn key(name: Named, release: bool, shift: bool) -> Event {
-    let key = keyboard::Key::Named(name);
-    let physical_key =
-        keyboard::key::Physical::Unidentified(keyboard::key::NativeCode::Unidentified);
-    let modifiers = if shift {
-        keyboard::Modifiers::SHIFT
-    } else {
-        keyboard::Modifiers::empty()
-    };
-    if release {
-        Event::Keyboard(keyboard::Event::KeyReleased {
-            key: key.clone(),
-            modified_key: key,
-            physical_key,
-            location: keyboard::Location::Standard,
-            modifiers,
-        })
-    } else {
-        Event::Keyboard(keyboard::Event::KeyPressed {
-            key: key.clone(),
-            modified_key: key,
-            physical_key,
-            location: keyboard::Location::Standard,
-            modifiers,
-            text: None,
-            repeat: false,
-        })
-    }
+    Harness::configured(content, size, theme(false))
 }
 fn press(ui: &mut Harness<'_, Message>, name: Named) {
-    ui.event(key(name, false, false));
+    ui.event(key(name).press());
 }
 fn activate(ui: &mut Harness<'_, Message>) {
     press(ui, Named::Enter);
-    ui.event(key(Named::Enter, true, false));
+    ui.event(key(Named::Enter).release());
 }
 fn stack(depth: usize) -> Element<'static, Message> {
     focus::scope(dialog::stack(

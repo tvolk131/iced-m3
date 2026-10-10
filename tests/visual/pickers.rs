@@ -20,8 +20,7 @@ fn make_ui(
     size: Size,
     dark: bool,
 ) -> Harness<'static, Message> {
-    let backend = std::env::var("ICED_TEST_BACKEND").unwrap_or_else(|_| "tiny-skia".into());
-    Harness::with_backend(element, size, theme(dark), &backend)
+    Harness::configured(element, size, theme(dark))
 }
 fn calendar(selection: DateSelection, years: bool) -> Element<'static, Message> {
     date_picker(date(1), selection)
