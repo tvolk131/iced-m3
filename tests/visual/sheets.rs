@@ -276,10 +276,19 @@ fn sheet_motion_honors_zero_duration_and_window_deactivation() {
     ui.rebuild(fixture("side", true, false, true));
     ui.at(400);
     ui.at(450);
+    let opening = ui.frame();
     ui.event(Event::Window(window::Event::Unfocused));
-    assert_eq!(ui.at(600), window::RedrawRequest::Wait);
-    ui.event(Event::Window(window::Event::Focused));
+    assert_eq!(ui.at(600), window::RedrawRequest::NextFrame);
+    assert!(
+        opening != ui.frame(),
+        "keyboard unfocus must not freeze motion"
+    );
     ui.at(900);
+    let settled = ui.frame();
+    assert_eq!(ui.at(916), window::RedrawRequest::Wait);
+    ui.event(Event::Window(window::Event::Focused));
+    ui.at(916);
+    assert!(settled == ui.frame());
     ui.click("Sheet action");
     assert_eq!(ui.messages, [Message::Action]);
 }

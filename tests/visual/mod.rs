@@ -15,6 +15,7 @@ mod expressive;
 mod fidelity;
 mod input;
 mod interaction_contracts;
+mod interruption_contracts;
 mod loading_progress;
 mod modal_activity;
 mod pickers;

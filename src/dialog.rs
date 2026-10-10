@@ -240,10 +240,11 @@ impl<Message: Clone> Widget<Message, Theme, Renderer> for Modal<'_, Message> {
         let open = self.open;
         if open != state.was_open {
             state.outside_pressed = false;
-            state.cancel_background = open;
+            // Keep cancellation latched across multiple rebuilds before an event.
+            state.cancel_background |= open;
             state.focus_pending = open;
             state.resume_background = !open;
-            state.cancel_dialog = !open;
+            state.cancel_dialog |= !open;
             state.was_open = open;
         }
     }
@@ -305,6 +306,25 @@ impl<Message: Clone> Widget<Message, Theme, Renderer> for Modal<'_, Message> {
         if let Some(focused) = crate::activity::window_focus(event) {
             state.inactive = !focused;
         }
+        if state.cancel_background {
+            state.cancel_background = false;
+            // Cancel an in-flight pointer gesture when a dialog opens programmatically.
+            // Discard actions from cancellation; subsequent redraws finish
+            // visual feedback while input and interaction timers stay suspended.
+            let mut messages = Vec::new();
+            crate::activity::interaction(|| {
+                self.background.as_widget_mut().update(
+                    &mut tree.children[0],
+                    &Event::Window(iced::window::Event::Unfocused),
+                    layout,
+                    mouse::Cursor::Unavailable,
+                    renderer,
+                    clipboard,
+                    &mut Shell::new(&mut messages),
+                    viewport,
+                );
+            });
+        }
         if !state.presence.visible(self.open) {
             if state.resume_background && !crate::activity::is_covered() {
                 state.resume_background = false;
@@ -336,26 +356,6 @@ impl<Message: Clone> Widget<Message, Theme, Renderer> for Modal<'_, Message> {
                 viewport,
             );
         } else {
-            let state = tree.state.downcast_mut::<State>();
-            if state.cancel_background {
-                state.cancel_background = false;
-                // Cancel an in-flight pointer gesture when a dialog opens programmatically.
-                // Discard actions from cancellation; subsequent redraws finish
-                // visual feedback while input and interaction timers stay suspended.
-                let mut messages = Vec::new();
-                crate::activity::interaction(|| {
-                    self.background.as_widget_mut().update(
-                        &mut tree.children[0],
-                        &Event::Window(iced::window::Event::Unfocused),
-                        layout,
-                        mouse::Cursor::Unavailable,
-                        renderer,
-                        clipboard,
-                        &mut Shell::new(&mut messages),
-                        viewport,
-                    );
-                });
-            }
             update_covered(
                 &mut self.background,
                 &mut tree.children[0],
@@ -552,23 +552,23 @@ impl<Message: Clone> Overlay<Message, Theme, Renderer> for DialogOverlay<'_, '_,
             exit: motion.dialog_exit,
             above: false,
         });
+        if self.state.cancel_dialog {
+            self.state.cancel_dialog = false;
+            let mut ignored = Vec::new();
+            crate::activity::interaction(|| {
+                self.dialog.content.as_widget_mut().update(
+                    self.tree,
+                    &Event::Window(iced::window::Event::Unfocused),
+                    content,
+                    mouse::Cursor::Unavailable,
+                    renderer,
+                    clipboard,
+                    &mut Shell::new(&mut ignored),
+                    &layout.bounds(),
+                );
+            });
+        }
         if !self.open {
-            if self.state.cancel_dialog {
-                self.state.cancel_dialog = false;
-                let mut ignored = Vec::new();
-                crate::activity::interaction(|| {
-                    self.dialog.content.as_widget_mut().update(
-                        self.tree,
-                        &Event::Window(iced::window::Event::Unfocused),
-                        content,
-                        mouse::Cursor::Unavailable,
-                        renderer,
-                        clipboard,
-                        &mut Shell::new(&mut ignored),
-                        &layout.bounds(),
-                    );
-                });
-            }
             update_covered(
                 &mut self.dialog.content,
                 self.tree,

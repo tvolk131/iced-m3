@@ -85,10 +85,16 @@ impl<Message: Clone> Widget<Message, Theme, Renderer> for Stack<'_, Message> {
             if layer.was_open != *open {
                 layer.was_open = *open;
                 layer.focus_pending = *open;
-                layer.cancel_dialog = !open;
+                layer.cancel_dialog |= !open;
+                layer.cancel_background |= *open;
                 layer.outside_pressed = false;
                 if *open {
                     state.bookmarks[i] = None;
+                    // A briefly opened upper layer still interrupts gestures
+                    // beneath it, even if it closes before the next event.
+                    for below in &mut state.layers[..i] {
+                        below.cancel_dialog = true;
+                    }
                 }
             }
         }
@@ -123,13 +129,15 @@ impl<Message: Clone> Widget<Message, Theme, Renderer> for Stack<'_, Message> {
         if let Some(focused) = crate::activity::window_focus(event) {
             state.inactive = !focused;
         }
+        let mut opened = false;
         for (i, (_, open)) in self.dialogs.iter().enumerate() {
             let p = &mut state.layers[i].presence;
             let m = p.motion.get();
             p.update_surface(*open, event, m.dialog_enter, m.dialog_exit, true, shell);
+            opened |= std::mem::take(&mut state.layers[i].cancel_background);
         }
         let covered = self.top(state).is_some();
-        if covered && !state.covered {
+        if !state.covered && (covered || opened) {
             state.background =
                 crate::focus::remember(&mut self.background, &mut tree.children[0], l, r);
             suspend(
@@ -140,6 +148,8 @@ impl<Message: Clone> Widget<Message, Theme, Renderer> for Stack<'_, Message> {
                 cb,
                 viewport,
             );
+            // Even an open/close between events cancels the background gesture.
+            state.resume_background = !covered;
         } else if !covered && state.covered {
             state.resume_background = true;
             state.active = None;
@@ -311,6 +321,7 @@ impl<Message: Clone> Overlay<Message, Theme, Renderer> for StackOverlay<'_, '_, 
                     state.bookmarks[old] = Some(bookmark);
                 }
                 suspend(content, tree, l.child(old).child(0), r, cb, &l.bounds());
+                state.layers[old].cancel_dialog = false;
             }
             // Layers can be mounted already covered, without ever being active.
             // Suspend them too before allowing redraw-only feedback updates.
@@ -328,6 +339,7 @@ impl<Message: Clone> Overlay<Message, Theme, Renderer> for StackOverlay<'_, '_, 
                     cb,
                     &l.bounds(),
                 );
+                state.layers[i].cancel_dialog = false;
             }
             state.resume_layer = Some(self.top);
             state.active = Some(self.top);
@@ -358,7 +370,7 @@ impl<Message: Clone> Overlay<Message, Theme, Renderer> for StackOverlay<'_, '_, 
             shell.request_redraw();
         }
         let top = self.top;
-        if !self.host.dialogs[top].1 && state.layers[top].cancel_dialog {
+        if state.layers[top].cancel_dialog {
             state.layers[top].cancel_dialog = false;
             suspend(
                 &mut self.host.dialogs[top].0.content,

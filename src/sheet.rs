@@ -571,13 +571,12 @@ impl<'s, Message: Clone + 's> Widget<Message, Theme, Renderer> for Host<'s, Mess
                 motion.sheet_exit
             },
         );
-        if !state.inactive {
-            if state.progress.tick(now) || changed {
-                shell.request_redraw();
-            }
-            if state.progress.value != before {
-                shell.invalidate_layout();
-            }
+        // Keyboard focus controls input suspension, not the visual clock.
+        if state.progress.tick(now) || changed {
+            shell.request_redraw();
+        }
+        if state.progress.value != before {
+            shell.invalidate_layout();
         }
         // Cancellation flags survive even an entire open/close between redraws.
         // This prevents a covered background press from activating on release.
