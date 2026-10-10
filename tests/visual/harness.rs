@@ -1,4 +1,8 @@
-use super::{Theme, reference::Image, with_time};
+use super::{
+    Theme,
+    reference::{self, Image},
+    with_time,
+};
 use iced::advanced::{renderer::Headless, widget::Operation};
 use iced::{Event, Point, Renderer, Size, mouse, window};
 use iced_test::{
@@ -8,7 +12,8 @@ use iced_test::{
 use std::time::{Duration, Instant};
 
 /// Uses iced's actual UI runtime, including nested overlays and layout invalidation.
-/// Capturing pixels never sends an event or reads the wall clock.
+/// Rendering pixels never sends an event or reads the wall clock.
+/// `capture_at` explicitly advances time before comparing a reference.
 pub struct Harness<'a, Message> {
     ui: Option<UserInterface<'a, Message, Theme, Renderer>>,
     renderer: Renderer,
@@ -143,6 +148,15 @@ impl<'a, Message> Harness<'a, Message> {
     }
     pub fn frame(&mut self) -> Image {
         self.frame_at_scale(2.0)
+    }
+    /// Compare the current frame without advancing time or dispatching an event.
+    pub fn capture(&mut self, name: &str) {
+        reference::check(name, &self.frame());
+    }
+    /// Send one redraw at this absolute test timestamp, then compare the frame.
+    pub fn capture_at(&mut self, milliseconds: u64, name: &str) {
+        self.at(milliseconds);
+        self.capture(name);
     }
     /// Render at a documentation/export scale without resampling existing pixels.
     pub fn frame_at_scale(&mut self, scale: f32) -> Image {

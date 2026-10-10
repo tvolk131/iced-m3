@@ -1,4 +1,4 @@
-use super::{harness::Harness, input::key, reference, theme};
+use super::{harness::Harness, input::key, theme};
 use crate::{Element, TextFieldVariant, Time, TimePart, TypeScale, focus, typography};
 use iced::{Size, keyboard::key::Named, widget, window};
 
@@ -347,8 +347,7 @@ fn visual_references_desktop_variants() {
                     Size::new(width, 160.0),
                     dark,
                 );
-                ui.at(0);
-                reference::check(&format!("variants-field-{v}-{mode}/{name}"), &ui.frame());
+                ui.capture_at(0, &format!("variants-field-{v}-{mode}/{name}"));
             }
             let mut ui = ui(
                 field(variant, "", false, false),
@@ -362,39 +361,26 @@ fn visual_references_desktop_variants() {
             ui.rebuild(host(field(variant, "125.00", false, false)));
             select_text(&mut ui);
             for ms in [0, 75, 150, 300] {
-                ui.at(ms);
-                reference::check(
-                    &format!("variants-field-{v}-{mode}/focus-{ms:03}"),
-                    &ui.frame(),
-                );
+                ui.capture_at(ms, &format!("variants-field-{v}-{mode}/focus-{ms:03}"));
             }
             ui.move_to((308.0, 52.0));
             ui.down();
             for ms in [300, 375, 450, 650] {
-                ui.at(ms);
-                reference::check(
+                ui.capture_at(
+                    ms,
                     &format!("variants-field-{v}-{mode}/action-held-{ms:03}"),
-                    &ui.frame(),
                 );
             }
             ui.up();
-            ui.at(950);
-            reference::check(
-                &format!("variants-field-{v}-{mode}/action-released"),
-                &ui.frame(),
-            );
+            ui.capture_at(950, &format!("variants-field-{v}-{mode}/action-released"));
             let mut ui = self::ui(select(variant, false), Size::new(360.0, 380.0), dark);
-            ui.at(0);
-            reference::check(&format!("variants-select-{v}-{mode}/default"), &ui.frame());
+            ui.capture_at(0, &format!("variants-select-{v}-{mode}/default"));
             press(&mut ui, Named::Tab);
-            ui.at(300);
-            reference::check(&format!("variants-select-{v}-{mode}/focused"), &ui.frame());
+            ui.capture_at(300, &format!("variants-select-{v}-{mode}/focused"));
             press(&mut ui, Named::ArrowDown);
-            ui.at(600);
-            reference::check(&format!("variants-select-{v}-{mode}/open"), &ui.frame());
+            ui.capture_at(600, &format!("variants-select-{v}-{mode}/open"));
             let mut ui = self::ui(select(variant, true), Size::new(360.0, 180.0), dark);
-            ui.at(0);
-            reference::check(&format!("variants-select-{v}-{mode}/disabled"), &ui.frame());
+            ui.capture_at(0, &format!("variants-select-{v}-{mode}/disabled"));
             let mut ui = self::ui(
                 crate::select("Role", [crate::SelectOption::new(0, "Viewer")], None)
                     .on_select(Message::Select)
@@ -403,11 +389,7 @@ fn visual_references_desktop_variants() {
                 Size::new(360.0, 180.0),
                 dark,
             );
-            ui.at(0);
-            reference::check(
-                &format!("variants-select-{v}-{mode}/empty-error"),
-                &ui.frame(),
-            );
+            ui.capture_at(0, &format!("variants-select-{v}-{mode}/empty-error"));
         }
         for format24 in [false, true] {
             for (name, h, m) in [("valid", "12", "05"), ("invalid", "", "75")] {
@@ -416,26 +398,22 @@ fn visual_references_desktop_variants() {
                     Size::new(400.0, 340.0),
                     dark,
                 );
-                ui.at(0);
-                reference::check(
+                ui.capture_at(
+                    0,
                     &format!(
                         "variants-time-{mode}/{name}-{}",
                         if format24 { "24h" } else { "12h" }
                     ),
-                    &ui.frame(),
                 );
                 press(&mut ui, Named::Tab);
                 select_text(&mut ui);
                 ui.at(300);
                 // Do not capture an empty field's blinking caret in invalid cases.
                 if !h.is_empty() {
-                    reference::check(
-                        &format!(
-                            "variants-time-{mode}/{name}-focused-{}",
-                            if format24 { "24h" } else { "12h" }
-                        ),
-                        &ui.frame(),
-                    );
+                    ui.capture(&format!(
+                        "variants-time-{mode}/{name}-focused-{}",
+                        if format24 { "24h" } else { "12h" }
+                    ));
                 }
             }
         }
@@ -462,11 +440,7 @@ fn visual_references_desktop_variants() {
                 .dragged(dragged)
                 .width(280);
                 let mut ui = ui(card, Size::new(330.0, 180.0), dark);
-                ui.at(0);
-                reference::check(
-                    &format!("variants-card-{mode}/{variant:?}-{name}"),
-                    &ui.frame(),
-                );
+                ui.capture_at(0, &format!("variants-card-{mode}/{variant:?}-{name}"));
             }
         }
         for lowered in [false, true] {
@@ -477,14 +451,11 @@ fn visual_references_desktop_variants() {
                 Size::new(130.0, 120.0),
                 dark,
             );
-            ui.at(0);
-            reference::check(&format!("variants-fab-{mode}/{lowered}-rest"), &ui.frame());
+            ui.capture_at(0, &format!("variants-fab-{mode}/{lowered}-rest"));
             ui.move_to((44.0, 44.0));
-            ui.at(200);
-            reference::check(&format!("variants-fab-{mode}/{lowered}-hover"), &ui.frame());
+            ui.capture_at(200, &format!("variants-fab-{mode}/{lowered}-hover"));
             ui.down();
-            ui.at(350);
-            reference::check(&format!("variants-fab-{mode}/{lowered}-held"), &ui.frame());
+            ui.capture_at(350, &format!("variants-fab-{mode}/{lowered}-held"));
         }
         for lowered in [false, true] {
             let mut ui = ui(
@@ -495,32 +466,19 @@ fn visual_references_desktop_variants() {
                 Size::new(130.0, 120.0),
                 dark,
             );
-            ui.at(0);
-            reference::check(
-                &format!("variants-fab-{mode}/surface-{lowered}-rest"),
-                &ui.frame(),
-            );
+            ui.capture_at(0, &format!("variants-fab-{mode}/surface-{lowered}-rest"));
             ui.move_to((44.0, 44.0));
-            ui.at(200);
-            reference::check(
-                &format!("variants-fab-{mode}/surface-{lowered}-hover"),
-                &ui.frame(),
-            );
+            ui.capture_at(200, &format!("variants-fab-{mode}/surface-{lowered}-hover"));
         }
         let mut ui = ui(
             crate::linear_progress(0.25).buffer(0.6),
             Size::new(360.0, 80.0),
             dark,
         );
-        ui.at(0);
-        reference::check(&format!("variants-buffer-{mode}/rest"), &ui.frame());
+        ui.capture_at(0, &format!("variants-buffer-{mode}/rest"));
         ui.rebuild(host(crate::linear_progress(0.7).buffer(0.9)));
         for ms in [0, 75, 150, 300, 500] {
-            ui.at(ms);
-            reference::check(
-                &format!("variants-buffer-{mode}/transition-{ms:03}"),
-                &ui.frame(),
-            );
+            ui.capture_at(ms, &format!("variants-buffer-{mode}/transition-{ms:03}"));
         }
         for circular in [false, true] {
             let mut ui = self::ui(progress(circular, false), Size::new(360.0, 100.0), dark);
@@ -529,11 +487,7 @@ fn visual_references_desktop_variants() {
             for ms in [
                 0, 300, 700, 1000, 1250, 1333, 1750, 1900, 2000, 2400, 3800, 5800, 7800,
             ] {
-                ui.at(ms);
-                reference::check(
-                    &format!("variants-color-{circular}-{mode}/{ms:04}"),
-                    &ui.frame(),
-                );
+                ui.capture_at(ms, &format!("variants-color-{circular}-{mode}/{ms:04}"));
             }
         }
     }

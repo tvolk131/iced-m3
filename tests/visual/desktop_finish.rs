@@ -1,4 +1,4 @@
-use super::{harness::Harness, input::key, reference, theme, themed_name};
+use super::{harness::Harness, input::key, theme, themed_name};
 use crate::{
     CarouselVariant, Element, MenuItem, Theme, TypeScale, button, carousel, dialog, lazy_carousel,
     menu, search_bar, staged, typography,
@@ -567,13 +567,10 @@ fn disabled_button_labels_remain_distinct_from_the_fill_on_raised_surfaces() {
 fn visual_references_desktop_finish() {
     for dark in [false, true] {
         let capture = |view: &mut Harness<'_, Message>, case: &str, step: &str| {
-            reference::check(
-                &format!(
-                    "{}/{step}",
-                    themed_name(&format!("desktop-finish-{case}"), dark)
-                ),
-                &view.frame(),
-            );
+            view.capture(&format!(
+                "{}/{step}",
+                themed_name(&format!("desktop-finish-{case}"), dark)
+            ));
         };
         let mut disabled = Harness::new(disabled_buttons(), Size::new(420., 440.), theme(dark));
         disabled.at(0);

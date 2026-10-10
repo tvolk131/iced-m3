@@ -1,7 +1,5 @@
 //! State comparisons against the pinned baseline recipes in docs/FIDELITY.md.
-use super::{
-    Message, capture, harness::Harness, icon, padded, reference::Image, theme, themed_name,
-};
+use super::{Message, harness::Harness, icon, padded, reference::Image, theme, themed_name};
 use crate::{
     ButtonVariant, Element, SurfaceVariant, TextFieldVariant, Theme, TypeScale, button, card,
     checkbox, focus, radio, surface, switch, text_field, typography,
@@ -357,13 +355,10 @@ fn visual_references_fidelity_fields() {
                     Size::new(320.0, 112.0),
                     theme(dark),
                 );
-                ui.at(0);
-                capture(&mut ui, &case, "00-rest");
+                ui.capture_at(0, &format!("{case}/00-rest"));
                 ui.move_to((200.0, 40.0));
-                ui.at(75);
-                capture(&mut ui, &case, "01-hover-075ms");
-                ui.at(150);
-                capture(&mut ui, &case, "02-hover-150ms");
+                ui.capture_at(75, &format!("{case}/01-hover-075ms"));
+                ui.capture_at(150, &format!("{case}/02-hover-150ms"));
                 ui.down();
                 ui.up();
                 // iced's native caret uses wall time, outside our motion clock.
@@ -373,14 +368,11 @@ fn visual_references_fidelity_fields() {
                         widget::Id::new("fidelity-field"),
                     ),
                 );
-                ui.at(350);
-                capture(&mut ui, &case, "03-focused-hover");
+                ui.capture_at(350, &format!("{case}/03-focused-hover"));
                 ui.leave();
-                ui.at(550);
-                capture(&mut ui, &case, "04-focused");
+                ui.capture_at(550, &format!("{case}/04-focused"));
                 ui.rebuild(field(variant, error, true));
-                ui.at(750);
-                capture(&mut ui, &case, "05-disabled");
+                ui.capture_at(750, &format!("{case}/05-disabled"));
             }
         }
     }
@@ -413,25 +405,20 @@ fn visual_references_fidelity_buttons_and_focus() {
     for dark in [false, true] {
         let case = themed_name("fidelity-buttons", dark);
         let mut ui = Harness::new(actions(), Size::new(400.0, 340.0), theme(dark));
-        ui.at(0);
-        capture(&mut ui, &case, "00-rest-and-disabled");
+        ui.capture_at(0, &format!("{case}/00-rest-and-disabled"));
         for (index, label) in ["Filled", "Tonal", "Elevated", "Outlined", "Text"]
             .into_iter()
             .enumerate()
         {
             tab(&mut ui);
-            ui.at(index as u64);
-            capture(&mut ui, &case, &format!("01-focus-{index}-{label}"));
+            ui.capture_at(index as u64, &format!("{case}/01-focus-{index}-{label}"));
         }
         ui.move_to((70.0, 40.0));
-        ui.at(200);
-        capture(&mut ui, &case, "02-hover");
+        ui.capture_at(200, &format!("{case}/02-hover"));
         ui.down();
-        ui.at(650);
-        capture(&mut ui, &case, "03-held");
+        ui.capture_at(650, &format!("{case}/03-held"));
         ui.up();
-        ui.at(900);
-        capture(&mut ui, &case, "04-release");
+        ui.capture_at(900, &format!("{case}/04-release"));
         for kind in ["checkbox", "radio", "switch", "switch-icons"] {
             for selected in [false, true] {
                 let control: Element<'static, Message> = match kind {
@@ -456,17 +443,18 @@ fn visual_references_fidelity_buttons_and_focus() {
                 ui.at(0);
                 ui.frame();
                 tab(&mut ui);
-                ui.at(200);
-                capture(
-                    &mut ui,
-                    &themed_name(
-                        &format!(
-                            "fidelity-{kind}-{}",
-                            if selected { "selected" } else { "unselected" }
-                        ),
-                        dark,
+                ui.capture_at(
+                    200,
+                    &format!(
+                        "{}/00-keyboard-focus",
+                        themed_name(
+                            &format!(
+                                "fidelity-{kind}-{}",
+                                if selected { "selected" } else { "unselected" }
+                            ),
+                            dark,
+                        )
                     ),
-                    "00-keyboard-focus",
                 );
             }
         }
@@ -530,18 +518,16 @@ fn visual_references_fidelity_cards_and_chips() {
             theme(dark),
         );
         let case = themed_name("fidelity-cards-chips", dark);
-        ui.at(0);
-        capture(&mut ui, &case, "00-rest");
+        ui.capture_at(0, &format!("{case}/00-rest"));
         ui.click("Filled");
-        ui.at(500);
-        capture(&mut ui, &case, "01-hover-card");
+        ui.capture_at(500, &format!("{case}/01-hover-card"));
         ui.leave();
         ui.at(700);
         for i in 0..4 {
             tab(&mut ui);
             ui.at(701 + i);
         }
-        capture(&mut ui, &case, "02-focused-chip");
+        ui.capture(&format!("{case}/02-focused-chip"));
     }
 }
 

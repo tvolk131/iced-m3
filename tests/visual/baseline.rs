@@ -1,4 +1,4 @@
-use super::{harness::Harness, reference, theme};
+use super::{harness::Harness, theme};
 use crate::{Element, Theme, TypeScale, typography};
 use iced::{
     Event, Length, Size,
@@ -339,36 +339,29 @@ fn visual_references_baseline_completion() {
         checkbox.at(200);
         checkbox.rebuild(check(true, false));
         for ms in [0, 25, 50, 100, 175, 350] {
-            checkbox.at(200 + ms);
-            reference::check(
+            checkbox.capture_at(
+                200 + ms,
                 &format!("baseline-checkbox/{mode}/select-{ms:03}ms"),
-                &checkbox.frame(),
             );
         }
         checkbox.rebuild(check(false, true));
         for ms in [0, 75, 175, 350] {
-            checkbox.at(600 + ms);
-            reference::check(
+            checkbox.capture_at(
+                600 + ms,
                 &format!("baseline-checkbox/{mode}/mixed-{ms:03}ms"),
-                &checkbox.frame(),
             );
         }
         checkbox.rebuild(check(false, false));
         for ms in [0, 25, 50, 100, 150] {
-            checkbox.at(1000 + ms);
-            reference::check(
+            checkbox.capture_at(
+                1000 + ms,
                 &format!("baseline-checkbox/{mode}/clear-{ms:03}ms"),
-                &checkbox.frame(),
             );
         }
         let mut chips = ui(chips(false), Size::new(320.0, 170.0), theme(dark));
         chips.rebuild(self::chips(true));
         for ms in [0, 25, 75, 150, 200] {
-            chips.at(ms);
-            reference::check(
-                &format!("baseline-chips/{mode}/select-{ms:03}ms"),
-                &chips.frame(),
-            );
+            chips.capture_at(ms, &format!("baseline-chips/{mode}/select-{ms:03}ms"));
         }
         for (name, width, pair, long) in [
             ("close", 360.0, (48.0, 52.0), false),
@@ -380,11 +373,7 @@ fn visual_references_baseline_completion() {
             let mut range = ui(range(pair, long), Size::new(width, 140.0), theme(dark));
             tab(&mut range);
             for ms in [0, 50, 100] {
-                range.at(ms);
-                reference::check(
-                    &format!("baseline-range-{name}/{mode}/focus-{ms:03}ms"),
-                    &range.frame(),
-                );
+                range.capture_at(ms, &format!("baseline-range-{name}/{mode}/focus-{ms:03}ms"));
             }
         }
         for circular in [false, true] {
@@ -399,29 +388,20 @@ fn visual_references_baseline_completion() {
             for ms in [
                 0, 100, 200, 333, 500, 1000, 1550, 1650, 1750, 2050, 3000, 4000,
             ] {
-                progress.at(450 + ms);
-                reference::check(
+                progress.capture_at(
+                    450 + ms,
                     &format!("baseline-progress-{name}/{mode}/handoff-{ms:04}ms"),
-                    &progress.frame(),
                 );
             }
         }
         let mut modal = ui(modal(false), Size::new(520.0, 380.0), theme(dark));
         modal.rebuild(self::modal(true));
         for ms in [0, 25, 50, 100, 150, 250, 500] {
-            modal.at(ms);
-            reference::check(
-                &format!("baseline-dialog/{mode}/open-{ms:03}ms"),
-                &modal.frame(),
-            );
+            modal.capture_at(ms, &format!("baseline-dialog/{mode}/open-{ms:03}ms"));
         }
         modal.rebuild(self::modal(false));
         for ms in [0, 50, 100, 149, 150] {
-            modal.at(600 + ms);
-            reference::check(
-                &format!("baseline-dialog/{mode}/close-{ms:03}ms"),
-                &modal.frame(),
-            );
+            modal.capture_at(600 + ms, &format!("baseline-dialog/{mode}/close-{ms:03}ms"));
         }
         let make_menu = || {
             host(crate::menu(
@@ -436,19 +416,11 @@ fn visual_references_baseline_completion() {
         let mut menu = ui(make_menu(), Size::new(360.0, 320.0), theme(dark));
         menu.click("Commands");
         for ms in [0, 25, 50, 100, 250, 500] {
-            menu.at(ms);
-            reference::check(
-                &format!("baseline-menu/{mode}/open-{ms:03}ms"),
-                &menu.frame(),
-            );
+            menu.capture_at(ms, &format!("baseline-menu/{mode}/open-{ms:03}ms"));
         }
         menu.click("Duplicate");
         for ms in [0, 50, 100, 149, 150] {
-            menu.at(600 + ms);
-            reference::check(
-                &format!("baseline-menu/{mode}/close-{ms:03}ms"),
-                &menu.frame(),
-            );
+            menu.capture_at(600 + ms, &format!("baseline-menu/{mode}/close-{ms:03}ms"));
         }
     }
 }

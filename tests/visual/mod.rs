@@ -106,9 +106,6 @@ fn themed_name(name: &str, dark: bool) -> String {
 fn padded(content: impl Into<Element<'static, Message>>) -> Element<'static, Message> {
     widget::container(content).padding(16).into()
 }
-fn capture(ui: &mut Harness<'_, Message>, case: &str, label: &str) {
-    reference::check(&format!("{case}/{label}"), &ui.frame());
-}
 mod icon;
 fn icon() -> Element<'static, Message> {
     icon::Icon.into()
@@ -151,13 +148,10 @@ fn visual_references_selection_animations() {
                     Size::new(280.0, 80.0),
                     theme(dark),
                 );
-                ui.at(0);
-                capture(&mut ui, &case, "00-idle");
+                ui.capture_at(0, &format!("{case}/00-idle"));
                 ui.move_to((40.0, 40.0));
-                ui.at(75);
-                capture(&mut ui, &case, "01-hover-75ms");
-                ui.at(150);
-                capture(&mut ui, &case, "02-hover-settled");
+                ui.capture_at(75, &format!("{case}/01-hover-75ms"));
+                ui.capture_at(150, &format!("{case}/02-hover-settled"));
                 ui.down();
                 let press_times: &[u64] = if kind == "switch" {
                     &[0, 50, 100, 150]
@@ -165,14 +159,13 @@ fn visual_references_selection_animations() {
                     &[0, 50, 100, 150, 250, 350, 450]
                 };
                 for &elapsed in press_times {
-                    ui.at(150 + elapsed);
-                    capture(&mut ui, &case, &format!("03-press-{elapsed:03}ms"));
+                    ui.capture_at(150 + elapsed, &format!("{case}/03-press-{elapsed:03}ms"));
                 }
                 let held = ui.frame();
                 assert_eq!(ui.at(650), window::RedrawRequest::Wait);
                 assert!(held == ui.frame(), "held state stays visually stable");
                 assert!(ui.messages.is_empty(), "holding must not toggle");
-                capture(&mut ui, &case, "04-held-500ms");
+                ui.capture(&format!("{case}/04-held-500ms"));
                 ui.up();
                 let next = if kind == "radio" { true } else { !initial };
                 assert_eq!(
@@ -181,12 +174,10 @@ fn visual_references_selection_animations() {
                 );
                 ui.rebuild(control(kind, next, false));
                 for elapsed in [0, 50, 100, 200, 350] {
-                    ui.at(650 + elapsed);
-                    capture(&mut ui, &case, &format!("05-release-{elapsed:03}ms"));
+                    ui.capture_at(650 + elapsed, &format!("{case}/05-release-{elapsed:03}ms"));
                 }
                 ui.leave();
-                ui.at(1200);
-                capture(&mut ui, &case, "06-settled");
+                ui.capture_at(1200, &format!("{case}/06-settled"));
                 let settled = ui.frame();
                 assert_eq!(ui.at(3000), window::RedrawRequest::Wait);
                 assert!(settled == ui.frame());
@@ -194,8 +185,7 @@ fn visual_references_selection_animations() {
                 ui.move_to((40.0, 40.0));
                 ui.down();
                 ui.rebuild(control(kind, next, true));
-                ui.at(3200);
-                capture(&mut ui, &case, "07-disabled-during-press");
+                ui.capture_at(3200, &format!("{case}/07-disabled-during-press"));
                 ui.messages.clear();
                 ui.up();
                 assert!(ui.messages.is_empty());
@@ -214,8 +204,10 @@ fn visual_references_selection_animations() {
                     quick.up();
                     quick.rebuild(control(kind, next, false));
                     for elapsed in [0, 100, 225, 300, 375] {
-                        quick.at(150 + elapsed);
-                        capture(&mut quick, &case, &format!("08-quick-tap-{elapsed:03}ms"));
+                        quick.capture_at(
+                            150 + elapsed,
+                            &format!("{case}/08-quick-tap-{elapsed:03}ms"),
+                        );
                     }
                 }
             }
@@ -469,24 +461,19 @@ fn visual_references_actions() {
                 )
             };
             let mut ui = Harness::new(make(false), Size::new(240.0, 80.0), theme(dark));
-            ui.at(0);
-            capture(&mut ui, &case, "00-idle");
+            ui.capture_at(0, &format!("{case}/00-idle"));
             ui.move_to((60.0, 36.0));
-            ui.at(75);
-            capture(&mut ui, &case, "01-hover-75ms");
-            ui.at(150);
-            capture(&mut ui, &case, "02-hover");
+            ui.capture_at(75, &format!("{case}/01-hover-75ms"));
+            ui.capture_at(150, &format!("{case}/02-hover"));
             ui.down();
-            capture(&mut ui, &case, "03-held");
+            ui.capture(&format!("{case}/03-held"));
             ui.at(300);
             ui.up();
             for time in [0, 75, 150] {
-                ui.at(300 + time);
-                capture(&mut ui, &case, &format!("04-release-{time:03}ms"));
+                ui.capture_at(300 + time, &format!("{case}/04-release-{time:03}ms"));
             }
             ui.rebuild(make(true));
-            ui.at(600);
-            capture(&mut ui, &case, "05-disabled");
+            ui.capture_at(600, &format!("{case}/05-disabled"));
         }
         let mut rows = widget::Column::new().spacing(12);
         for selected in [false, true] {
@@ -516,16 +503,16 @@ fn visual_references_actions() {
             .spacing(12),
         );
         let mut ui = Harness::new(padded(rows), Size::new(480.0, 220.0), theme(dark));
-        ui.at(0);
-        capture(
-            &mut ui,
-            &themed_name("icon-buttons-chips", dark),
-            "00-variants",
+        ui.capture_at(
+            0,
+            &format!("{}/00-variants", themed_name("icon-buttons-chips", dark)),
         );
         ui.move_to((36.0, 36.0));
         ui.down();
-        ui.at(75);
-        capture(&mut ui, &themed_name("icon-buttons-chips", dark), "01-held");
+        ui.capture_at(
+            75,
+            &format!("{}/01-held", themed_name("icon-buttons-chips", dark)),
+        );
     }
 }
 
@@ -557,14 +544,12 @@ fn visual_references_tabs_and_fields() {
                 )
             };
             let mut ui = Harness::new(make(1), Size::new(360.0, 110.0), theme(dark));
-            ui.at(0);
-            capture(&mut ui, &case, "00-first");
+            ui.capture_at(0, &format!("{case}/00-first"));
             ui.click("Updates");
             ui.rebuild(make(2));
             ui.leave();
             for time in [0, 50, 100, 200] {
-                ui.at(time);
-                capture(&mut ui, &case, &format!("01-slide-{time:03}ms"));
+                ui.capture_at(time, &format!("{case}/01-slide-{time:03}ms"));
             }
             assert_eq!(ui.at(1000), window::RedrawRequest::Wait);
         }
@@ -577,19 +562,16 @@ fn visual_references_tabs_and_fields() {
             )
         };
         let mut ui = Harness::new(make(""), Size::new(320.0, 120.0), theme(dark));
-        ui.at(0);
-        capture(&mut ui, &case, "00-empty");
+        ui.capture_at(0, &format!("{case}/00-empty"));
         // Programmatic value changes exercise label movement without relying on
         // the native text editor's independent wall-clock caret blink.
         ui.rebuild(make("Studio"));
         for time in [0, 50, 100, 200] {
-            ui.at(time);
-            capture(&mut ui, &case, &format!("01-float-{time:03}ms"));
+            ui.capture_at(time, &format!("{case}/01-float-{time:03}ms"));
         }
         ui.rebuild(make(""));
         for time in [200, 250, 300, 400] {
-            ui.at(time);
-            capture(&mut ui, &case, &format!("02-return-{:03}ms", time - 200));
+            ui.capture_at(time, &format!("{case}/02-return-{:03}ms", time - 200));
         }
         let mut ui = Harness::new(
             padded(
@@ -608,8 +590,10 @@ fn visual_references_tabs_and_fields() {
             Size::new(320.0, 430.0),
             theme(dark),
         );
-        ui.at(0);
-        capture(&mut ui, &themed_name("text-fields", dark), "00-states");
+        ui.capture_at(
+            0,
+            &format!("{}/00-states", themed_name("text-fields", dark)),
+        );
     }
 }
 
@@ -638,8 +622,7 @@ fn visual_references_foundations() {
             types = types.push(typography(name, role));
         }
         let mut ui = Harness::<Message>::new(padded(types), Size::new(500.0, 650.0), theme(dark));
-        ui.at(0);
-        capture(&mut ui, &themed_name("typography", dark), "00-scale");
+        ui.capture_at(0, &format!("{}/00-scale", themed_name("typography", dark)));
         let mut cards = widget::Column::new().spacing(20);
         for (name, variant) in [
             ("Filled surface", SurfaceVariant::Filled),
@@ -672,11 +655,12 @@ fn visual_references_foundations() {
                 .on_toggle(Message::Toggle),
         );
         let mut ui = Harness::new(padded(cards), Size::new(420.0, 540.0), theme(dark));
-        ui.at(0);
-        capture(
-            &mut ui,
-            &themed_name("surfaces-badges-divider", dark),
-            "00-variants",
+        ui.capture_at(
+            0,
+            &format!(
+                "{}/00-variants",
+                themed_name("surfaces-badges-divider", dark)
+            ),
         );
     }
 }
@@ -726,15 +710,12 @@ fn visual_references_structured_content() {
         };
         let case = themed_name("rail-app-bar-lists", dark);
         let mut ui = Harness::new(make(1), Size::new(520.0, 410.0), theme(dark));
-        ui.at(0);
-        capture(&mut ui, &case, "00-default");
+        ui.capture_at(0, &format!("{case}/00-default"));
         ui.click("Activity");
         ui.rebuild(make(2));
-        ui.at(150);
-        capture(&mut ui, &case, "01-selected-hover");
+        ui.capture_at(150, &format!("{case}/01-selected-hover"));
         ui.click("Actions");
-        ui.at(700);
-        capture(&mut ui, &case, "02-trailing-menu");
+        ui.capture_at(700, &format!("{case}/02-trailing-menu"));
     }
 }
 
@@ -760,8 +741,10 @@ fn visual_references_overlays() {
             theme(dark),
         );
         ui.click("Actions");
-        ui.at(500);
-        capture(&mut ui, &themed_name("menus", dark), "00-bottom-edge");
+        ui.capture_at(
+            500,
+            &format!("{}/00-bottom-edge", themed_name("menus", dark)),
+        );
         let mut ui = Harness::new(
             padded(crate::context_menu(
                 surface(typography("Right-click here", TypeScale::BodyLarge)),
@@ -777,8 +760,10 @@ fn visual_references_overlays() {
         ui.event(Event::Mouse(mouse::Event::ButtonReleased(
             mouse::Button::Right,
         )));
-        ui.at(500);
-        capture(&mut ui, &themed_name("context-menu", dark), "00-open");
+        ui.capture_at(
+            500,
+            &format!("{}/00-open", themed_name("context-menu", dark)),
+        );
         let dialog = crate::dialog::dialog(
             widget::column![
                 typography("Review preferences", TypeScale::HeadlineSmall),
@@ -806,11 +791,15 @@ fn visual_references_overlays() {
             Size::new(390.0, 460.0),
             theme(dark),
         );
-        ui.at(0);
-        capture(&mut ui, &themed_name("dialog", dark), "00-over-snackbar");
+        ui.capture_at(
+            0,
+            &format!("{}/00-over-snackbar", themed_name("dialog", dark)),
+        );
         ui.click("Access");
-        ui.at(500);
-        capture(&mut ui, &themed_name("select", dark), "00-inside-dialog");
+        ui.capture_at(
+            500,
+            &format!("{}/00-inside-dialog", themed_name("select", dark)),
+        );
         let mut ui = Harness::new(
             widget::container(tooltip(
                 button("Pin").on_press(Message::Action),
@@ -824,22 +813,28 @@ fn visual_references_overlays() {
         ui.at(0);
         let point = ui.find("Pin").center();
         ui.move_to(point);
-        ui.at(499);
-        capture(&mut ui, &themed_name("tooltip", dark), "00-before-delay");
-        ui.at(500);
-        capture(&mut ui, &themed_name("tooltip", dark), "01-visible-500ms");
-        ui.at(650);
-        capture(&mut ui, &themed_name("tooltip", dark), "01-visible-650ms");
+        ui.capture_at(
+            499,
+            &format!("{}/00-before-delay", themed_name("tooltip", dark)),
+        );
+        ui.capture_at(
+            500,
+            &format!("{}/01-visible-500ms", themed_name("tooltip", dark)),
+        );
+        ui.capture_at(
+            650,
+            &format!("{}/01-visible-650ms", themed_name("tooltip", dark)),
+        );
         ui.down();
-        ui.at(750);
-        capture(
-            &mut ui,
-            &themed_name("tooltip", dark),
-            "02-dismissed-on-press",
+        ui.capture_at(
+            750,
+            &format!("{}/02-dismissed-on-press", themed_name("tooltip", dark)),
         );
         let mut ui = Harness::new(notice(true), Size::new(600.0, 400.0), theme(dark));
-        ui.at(0);
-        capture(&mut ui, &themed_name("snackbar", dark), "00-over-text");
+        ui.capture_at(
+            0,
+            &format!("{}/00-over-text", themed_name("snackbar", dark)),
+        );
         let mut ui = Harness::new(
             snackbar::host(
                 widget::space().width(Length::Fill).height(Length::Fill),
@@ -852,12 +847,18 @@ fn visual_references_overlays() {
             Size::new(320.0, 160.0),
             theme(dark),
         );
-        ui.at(0);
-        capture(&mut ui, &themed_name("snackbar", dark), "01-narrow-action");
-        ui.at(3999);
-        capture(&mut ui, &themed_name("snackbar", dark), "02-before-timeout");
-        ui.at(4000);
-        capture(&mut ui, &themed_name("snackbar", dark), "03-expired");
+        ui.capture_at(
+            0,
+            &format!("{}/01-narrow-action", themed_name("snackbar", dark)),
+        );
+        ui.capture_at(
+            3999,
+            &format!("{}/02-before-timeout", themed_name("snackbar", dark)),
+        );
+        ui.capture_at(
+            4000,
+            &format!("{}/03-expired", themed_name("snackbar", dark)),
+        );
         assert_eq!(ui.messages, [Message::Dismiss]);
     }
 }

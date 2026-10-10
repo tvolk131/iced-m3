@@ -1,4 +1,4 @@
-use super::{harness::Harness, input::key, reference, theme, themed_name};
+use super::{harness::Harness, input::key, theme, themed_name};
 use crate::{
     Element, FabColor, FabSize, MenuItem, Theme, TypeScale, bottom_sheet, button, extended_fab,
     fab, menu, sheet, side_sheet, text_field, typography,
@@ -502,26 +502,21 @@ fn visual_references_sheets() {
                 theme(dark),
             );
             ui.frame();
-            ui.at(0);
-            reference::check(&format!("{case}/00-closed"), &ui.frame());
+            ui.capture_at(0, &format!("{case}/00-closed"));
             ui.rebuild(fixture(kind, true, false, true));
             for ms in [0, 50, 100, 150, 225, 300, 500] {
-                ui.at(ms);
-                reference::check(&format!("{case}/01-open-{ms:03}ms"), &ui.frame());
+                ui.capture_at(ms, &format!("{case}/01-open-{ms:03}ms"));
             }
             ui.rebuild(fixture(kind, false, false, true));
             for ms in [0, 50, 100, 150, 200] {
-                ui.at(500 + ms);
-                reference::check(&format!("{case}/02-close-{ms:03}ms"), &ui.frame());
+                ui.capture_at(500 + ms, &format!("{case}/02-close-{ms:03}ms"));
             }
             ui.rebuild(fixture(kind, true, false, true));
             ui.at(700);
-            ui.at(775);
-            reference::check(&format!("{case}/03-interrupted-opening"), &ui.frame());
+            ui.capture_at(775, &format!("{case}/03-interrupted-opening"));
             ui.rebuild(fixture(kind, false, false, true));
             ui.at(775);
-            ui.at(825);
-            reference::check(&format!("{case}/04-reversed"), &ui.frame());
+            ui.capture_at(825, &format!("{case}/04-reversed"));
             for width in [320.0, 390.0] {
                 let mut narrow = Harness::new(
                     fixture(kind, true, true, true),
@@ -530,8 +525,7 @@ fn visual_references_sheets() {
                 );
                 narrow.frame();
                 narrow.at(0);
-                narrow.at(400);
-                reference::check(&format!("{case}/05-narrow-{width}"), &narrow.frame());
+                narrow.capture_at(400, &format!("{case}/05-narrow-{width}"));
             }
         }
     }
@@ -560,23 +554,17 @@ fn visual_references_fabs() {
                     theme(dark),
                 );
                 ui.frame();
-                ui.at(0);
-                reference::check(&format!("{case}/00-idle"), &ui.frame());
+                ui.capture_at(0, &format!("{case}/00-idle"));
                 ui.move_to((44.0, 44.0));
-                ui.at(75);
-                reference::check(&format!("{case}/01-hover-75ms"), &ui.frame());
-                ui.at(150);
-                reference::check(&format!("{case}/02-hover"), &ui.frame());
+                ui.capture_at(75, &format!("{case}/01-hover-75ms"));
+                ui.capture_at(150, &format!("{case}/02-hover"));
                 ui.down();
-                ui.at(650);
-                reference::check(&format!("{case}/03-held"), &ui.frame());
+                ui.capture_at(650, &format!("{case}/03-held"));
                 ui.up();
-                ui.at(725);
-                reference::check(&format!("{case}/04-release-75ms"), &ui.frame());
-                ui.at(800);
-                reference::check(&format!("{case}/05-released"), &ui.frame());
+                ui.capture_at(725, &format!("{case}/04-release-75ms"));
+                ui.capture_at(800, &format!("{case}/05-released"));
                 ui.rebuild(fab_fixture(size, color, extended, true));
-                reference::check(&format!("{case}/06-disabled"), &ui.frame());
+                ui.capture(&format!("{case}/06-disabled"));
             }
         }
     }

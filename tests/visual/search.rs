@@ -1,4 +1,4 @@
-use super::{harness::Harness, input::key, reference, theme, themed_name};
+use super::{harness::Harness, input::key, theme, themed_name};
 use crate::{
     Element, Theme, TypeScale, assist_chip, button, filter_chip, input_chip, list, list_item,
     range_slider, search_bar, suggestion_chip, typography,
@@ -427,9 +427,6 @@ fn invalid_range_is_inert_and_extreme_domains_stay_finite() {
         matches!(ui.messages.as_slice(),[Message::Range((a,b))] if a.is_finite() && b.is_finite() && a <= b)
     );
 }
-fn capture(ui: &mut Harness<'_, Message>, case: &str, frame: &str) {
-    reference::check(&format!("{case}/{frame}"), &ui.frame());
-}
 #[test]
 #[ignore = "reference suite; run with --ignored"]
 fn visual_references_search() {
@@ -440,22 +437,18 @@ fn visual_references_search() {
         ] {
             let case = themed_name(&format!("search-{name}"), dark);
             let mut ui = make_ui(fixture(false, "", true), size, theme(dark));
-            ui.at(0);
-            capture(&mut ui, &case, "00-closed");
+            ui.capture_at(0, &format!("{case}/00-closed"));
             ui.rebuild(fixture(true, "", true));
             ui.at(0);
             unfocus(&mut ui);
             for time in [0, 50, 100, 200, 300] {
-                ui.at(time);
-                capture(&mut ui, &case, &format!("01-expand-{time:03}ms"));
+                ui.capture_at(time, &format!("{case}/01-expand-{time:03}ms"));
             }
             ui.rebuild(fixture(true, "Design", true));
-            ui.at(300);
-            capture(&mut ui, &case, "02-query");
+            ui.capture_at(300, &format!("{case}/02-query"));
             ui.rebuild(fixture(false, "Design", true));
             for time in [300, 350, 425, 500, 550] {
-                ui.at(time);
-                capture(&mut ui, &case, &format!("03-collapse-{:03}ms", time - 300));
+                ui.capture_at(time, &format!("{case}/03-collapse-{:03}ms", time - 300));
             }
             assert_eq!(ui.at(1000), window::RedrawRequest::Wait);
         }
@@ -467,31 +460,25 @@ fn visual_references_chip_variants() {
     for dark in [false, true] {
         let case = themed_name("chip-variants", dark);
         let mut ui = make_ui(chips(false, false), Size::new(320.0, 240.0), theme(dark));
-        ui.at(0);
-        capture(&mut ui, &case, "00-default");
+        ui.capture_at(0, &format!("{case}/00-default"));
         let point = ui.find("Shared").center();
         ui.move_to(point);
         for time in [0, 75, 150] {
-            ui.at(time);
-            capture(&mut ui, &case, &format!("01-hover-{time:03}ms"));
+            ui.capture_at(time, &format!("{case}/01-hover-{time:03}ms"));
         }
         ui.down();
-        ui.at(200);
-        capture(&mut ui, &case, "02-held");
+        ui.capture_at(200, &format!("{case}/02-held"));
         ui.up();
         ui.rebuild(chips(true, false));
         for time in [200, 250, 300, 400] {
-            ui.at(time);
-            capture(&mut ui, &case, &format!("03-selected-{:03}ms", time - 200));
+            ui.capture_at(time, &format!("{case}/03-selected-{:03}ms", time - 200));
         }
         let label = ui.find("Team: Studio");
         ui.move_to((label.x + label.width + 24.0, label.center_y()));
         ui.down();
-        ui.at(450);
-        capture(&mut ui, &case, "04-remove-held");
+        ui.capture_at(450, &format!("{case}/04-remove-held"));
         ui.rebuild(chips(true, true));
-        ui.at(500);
-        capture(&mut ui, &case, "05-disabled");
+        ui.capture_at(500, &format!("{case}/05-disabled"));
     }
 }
 #[test]
@@ -509,28 +496,22 @@ fn visual_references_range_slider() {
                 Size::new(280.0, 110.0),
                 theme(dark),
             );
-            ui.at(0);
-            capture(&mut ui, &case, "00-default");
+            ui.capture_at(0, &format!("{case}/00-default"));
             ui.move_to((40.0 + values.0 * 2.0, 68.0));
-            ui.at(150);
-            capture(&mut ui, &case, "01-hover");
+            ui.capture_at(150, &format!("{case}/01-hover"));
             ui.down();
             for time in [150, 200, 250, 300] {
-                ui.at(time);
-                capture(&mut ui, &case, &format!("02-held-{:03}ms", time - 150));
+                ui.capture_at(time, &format!("{case}/02-held-{:03}ms", time - 150));
             }
             ui.move_to((60.0, 68.0));
             ui.rebuild(range((10.0, values.1), true, 10.0));
-            ui.at(350);
-            capture(&mut ui, &case, "03-drag");
+            ui.capture_at(350, &format!("{case}/03-drag"));
             ui.up();
             for time in [350, 425, 500] {
-                ui.at(time);
-                capture(&mut ui, &case, &format!("04-release-{:03}ms", time - 350));
+                ui.capture_at(time, &format!("{case}/04-release-{:03}ms", time - 350));
             }
             ui.rebuild(range(values, false, 10.0));
-            ui.at(600);
-            capture(&mut ui, &case, "05-disabled");
+            ui.capture_at(600, &format!("{case}/05-disabled"));
             ui.leave();
             assert_eq!(ui.at(1000), window::RedrawRequest::Wait);
         }

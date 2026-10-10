@@ -488,15 +488,12 @@ fn visual_references_value_controls() {
                 Size::new(320.0, 120.0),
                 theme(dark),
             );
-            ui.at(0);
-            capture(&mut ui, &case, "00-idle");
+            ui.capture_at(0, &format!("{case}/00-idle"));
             ui.move_to((160.0, 72.0));
-            ui.at(150);
-            capture(&mut ui, &case, "01-hover");
+            ui.capture_at(150, &format!("{case}/01-hover"));
             ui.down();
             for ms in [0, 75, 150] {
-                ui.at(150 + ms);
-                capture(&mut ui, &case, &format!("02-press-{ms:03}ms"));
+                ui.capture_at(150 + ms, &format!("{case}/02-press-{ms:03}ms"));
             }
             let held = ui.frame();
             assert_eq!(ui.at(1000), window::RedrawRequest::Wait);
@@ -504,22 +501,20 @@ fn visual_references_value_controls() {
             ui.move_to((232.0, 72.0));
             assert_eq!(ui.messages, [Message::Value(80.0)]);
             ui.rebuild(slider_view(80.0, discrete, false));
-            ui.at(1050);
-            capture(&mut ui, &case, "03-held-mid-drag");
+            ui.capture_at(1050, &format!("{case}/03-held-mid-drag"));
             ui.up();
-            ui.at(1125);
-            capture(&mut ui, &case, "04-release-75ms");
+            ui.capture_at(1125, &format!("{case}/04-release-75ms"));
             ui.leave();
-            ui.at(1500);
-            capture(&mut ui, &case, "05-settled");
+            ui.capture_at(1500, &format!("{case}/05-settled"));
             for value in [0, 100] {
                 ui.rebuild(slider_view(value as f32, discrete, false));
-                ui.at(1600 + value as u64);
-                capture(&mut ui, &case, &format!("06-endpoint-{value:03}"));
+                ui.capture_at(
+                    1600 + value as u64,
+                    &format!("{case}/06-endpoint-{value:03}"),
+                );
             }
             ui.rebuild(slider_view(50.0, discrete, true));
-            ui.at(2000);
-            capture(&mut ui, &case, "07-disabled");
+            ui.capture_at(2000, &format!("{case}/07-disabled"));
         }
         for multiple in [false, true] {
             let case = themed_name(
@@ -540,15 +535,12 @@ fn visual_references_value_controls() {
                 Size::new(340.0, 90.0),
                 theme(dark),
             );
-            ui.at(0);
-            capture(&mut ui, &case, "00-idle");
+            ui.capture_at(0, &format!("{case}/00-idle"));
             let p = ui.find("JPEG").center();
             ui.move_to(p);
-            ui.at(150);
-            capture(&mut ui, &case, "01-hover");
+            ui.capture_at(150, &format!("{case}/01-hover"));
             ui.down();
-            ui.at(300);
-            capture(&mut ui, &case, "02-held");
+            ui.capture_at(300, &format!("{case}/02-held"));
             ui.up();
             let next = if multiple {
                 SegmentSelection::Multiple(vec![0, 1])
@@ -558,16 +550,13 @@ fn visual_references_value_controls() {
             assert_eq!(ui.messages, [Message::Segments(next.clone())]);
             ui.rebuild(segments(next.clone(), false));
             for ms in [0, 75, 200] {
-                ui.at(300 + ms);
-                capture(&mut ui, &case, &format!("03-selection-{ms:03}ms"));
+                ui.capture_at(300 + ms, &format!("{case}/03-selection-{ms:03}ms"));
             }
             ui.leave();
-            ui.at(800);
-            capture(&mut ui, &case, "04-settled");
+            ui.capture_at(800, &format!("{case}/04-settled"));
             assert_eq!(ui.at(1000), window::RedrawRequest::Wait);
             ui.rebuild(segments(next, true));
-            ui.at(1200);
-            capture(&mut ui, &case, "05-disabled");
+            ui.capture_at(1200, &format!("{case}/05-disabled"));
         }
     }
 }
@@ -590,18 +579,15 @@ fn visual_references_progress() {
                 Size::new(320.0, 90.0),
                 theme(dark),
             );
-            ui.at(0);
-            capture(&mut ui, &case, "00-empty");
+            ui.capture_at(0, &format!("{case}/00-empty"));
             ui.rebuild(progress_view(circular, 0.75, false, false));
             for ms in [0, 50, 100, 200] {
-                ui.at(ms);
-                capture(&mut ui, &case, &format!("01-determinate-{ms:03}ms"));
+                ui.capture_at(ms, &format!("{case}/01-determinate-{ms:03}ms"));
             }
             assert_eq!(ui.at(2000), window::RedrawRequest::Wait);
             ui.rebuild(progress_view(circular, 1.0, false, false));
             ui.at(2100);
-            ui.at(4000);
-            capture(&mut ui, &case, "02-complete");
+            ui.capture_at(4000, &format!("{case}/02-complete"));
             ui.rebuild(progress_view(circular, 0.0, true, false));
             let times: &[u64] = if circular {
                 &[0, 167, 333, 667, 1000, 1333, 1667, 2000, 2666]
@@ -612,12 +598,11 @@ fn visual_references_progress() {
                 ]
             };
             for &ms in times {
-                ui.at(4100 + ms);
-                capture(&mut ui, &case, &format!("03-indeterminate-{ms:04}ms"));
+                ui.capture_at(4100 + ms, &format!("{case}/03-indeterminate-{ms:04}ms"));
             }
             ui.rebuild(progress_view(circular, 0.0, true, true));
             assert_eq!(ui.at(7000), window::RedrawRequest::Wait);
-            capture(&mut ui, &case, "04-paused");
+            ui.capture(&format!("{case}/04-paused"));
         }
     }
 }

@@ -1,4 +1,4 @@
-use super::{Harness, reference};
+use super::Harness;
 use crate::{Element, MotionScheme, Theme, switch};
 use iced::{Color, Size, keyboard, widget, window};
 
@@ -253,24 +253,19 @@ fn visual_references_switch_spring_motion() {
                     );
                     let mut ui =
                         Harness::new(control(initial, icons, false), Size::new(100., 80.), theme);
-                    reference::check(&format!("{name}/00-idle"), &ui.frame());
+                    ui.capture(&format!("{name}/00-idle"));
                     ui.at(0);
                     ui.move_to((50., 40.));
                     ui.down();
-                    reference::check(&format!("{name}/01-pressed"), &ui.frame());
-                    ui.at(500);
-                    reference::check(&format!("{name}/02-held"), &ui.frame());
+                    ui.capture(&format!("{name}/01-pressed"));
+                    ui.capture_at(500, &format!("{name}/02-held"));
                     assert!(ui.messages.is_empty());
                     ui.up();
                     assert_eq!(ui.messages, [!initial]);
                     ui.rebuild(control(!initial, icons, false));
                     ui.at(500);
                     for ms in [540, 600, 640, 740, 1500] {
-                        ui.at(ms);
-                        reference::check(
-                            &format!("{name}/03-release-{:04}", ms - 500),
-                            &ui.frame(),
-                        );
+                        ui.capture_at(ms, &format!("{name}/03-release-{:04}", ms - 500));
                     }
                     ui.leave();
                     ui.at(2500);

@@ -1,4 +1,4 @@
-use super::{harness::Harness, input::key, reference, theme, themed_name};
+use super::{harness::Harness, input::key, theme, themed_name};
 use crate::{Date, DateSelection, Element, MenuItem, TypeScale, button, focus, menu, typography};
 use iced::{
     Length, Point, Size,
@@ -520,13 +520,11 @@ fn visual_references_motion_polish() {
         ui.down();
         let case = themed_name("polish-button-ripple", dark);
         for t in [0, 50, 100, 225, 350, 450, 600] {
-            ui.at(150 + t);
-            reference::check(&format!("{case}/01-held-{t:03}ms"), &ui.frame());
+            ui.capture_at(150 + t, &format!("{case}/01-held-{t:03}ms"));
         }
         ui.up();
         for t in [0, 50, 100, 150, 300] {
-            ui.at(750 + t);
-            reference::check(&format!("{case}/02-release-{t:03}ms"), &ui.frame());
+            ui.capture_at(750 + t, &format!("{case}/02-release-{t:03}ms"));
         }
         let mut ui = Harness::new(actions(), Size::new(540.0, 460.0), theme(dark));
         ui.at(0);
@@ -534,15 +532,13 @@ fn visual_references_motion_polish() {
         ui.click("Commands");
         let case = themed_name("polish-menu", dark);
         for t in [0, 50, 100, 200, 350, 500] {
-            ui.at(t);
-            reference::check(&format!("{case}/01-open-{t:03}ms"), &ui.frame());
+            ui.capture_at(t, &format!("{case}/01-open-{t:03}ms"));
         }
         type_key(&mut ui, "b");
-        reference::check(&format!("{case}/02-typeahead"), &ui.frame());
+        ui.capture(&format!("{case}/02-typeahead"));
         press(&mut ui, Named::Escape);
         for t in [0, 50, 100, 150, 250] {
-            ui.at(500 + t);
-            reference::check(&format!("{case}/03-close-{t:03}ms"), &ui.frame());
+            ui.capture_at(500 + t, &format!("{case}/03-close-{t:03}ms"));
         }
         for full in [false, true] {
             let mut ui = Harness::new(dialog(false, full), Size::new(600.0, 500.0), theme(dark));
@@ -558,13 +554,11 @@ fn visual_references_motion_polish() {
                 dark,
             );
             for t in [0, 50, 100, 200, 300] {
-                ui.at(t);
-                reference::check(&format!("{case}/01-open-{t:03}ms"), &ui.frame());
+                ui.capture_at(t, &format!("{case}/01-open-{t:03}ms"));
             }
             ui.rebuild(dialog(false, full));
             for t in [0, 50, 100, 200, 300] {
-                ui.at(300 + t);
-                reference::check(&format!("{case}/02-close-{t:03}ms"), &ui.frame());
+                ui.capture_at(300 + t, &format!("{case}/02-close-{t:03}ms"));
             }
         }
         let mut ui = Harness::new(notice(false, 1), Size::new(600.0, 300.0), theme(dark));
@@ -573,13 +567,11 @@ fn visual_references_motion_polish() {
         ui.rebuild(notice(true, 1));
         let case = themed_name("polish-snackbar", dark);
         for t in [0, 50, 100, 150, 250] {
-            ui.at(t);
-            reference::check(&format!("{case}/01-open-{t:03}ms"), &ui.frame());
+            ui.capture_at(t, &format!("{case}/01-open-{t:03}ms"));
         }
         ui.rebuild(notice(false, 1));
         for t in [0, 50, 100, 200, 300] {
-            ui.at(250 + t);
-            reference::check(&format!("{case}/02-close-{t:03}ms"), &ui.frame());
+            ui.capture_at(250 + t, &format!("{case}/02-close-{t:03}ms"));
         }
         let hint = widget::container(crate::tooltip(
             button("Hover for help").on_press(Message::Action(1)),
@@ -593,13 +585,11 @@ fn visual_references_motion_polish() {
         ui.move_to(p);
         let case = themed_name("polish-tooltip", dark);
         for t in [500, 550, 600, 650, 800] {
-            ui.at(t);
-            reference::check(&format!("{case}/01-open-{:03}ms", t - 500), &ui.frame());
+            ui.capture_at(t, &format!("{case}/01-open-{:03}ms", t - 500));
         }
         ui.leave();
         for t in [0, 25, 50, 100, 200] {
-            ui.at(800 + t);
-            reference::check(&format!("{case}/02-close-{t:03}ms"), &ui.frame());
+            ui.capture_at(800 + t, &format!("{case}/02-close-{t:03}ms"));
         }
     }
 }

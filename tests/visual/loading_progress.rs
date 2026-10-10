@@ -1,4 +1,4 @@
-use super::{Message, harness::Harness, reference, theme};
+use super::{Message, harness::Harness, theme};
 use crate::{
     Element, Theme, TypeScale, circular_progress, linear_progress, loading_indicator, typography,
 };
@@ -478,11 +478,7 @@ fn visual_references_loading_progress() {
             0, 100, 325, 649, 650, 975, 1300, 1800, 1950, 2600, 3000, 3250, 3900, 4550, 5200, 5999,
             6000,
         ] {
-            view.at(ms);
-            reference::check(
-                &format!("loading-progress/{mode}/motion-{ms:04}"),
-                &view.frame(),
-            );
+            view.capture_at(ms, &format!("loading-progress/{mode}/motion-{ms:04}"));
         }
         for value in [0., 0.05, 0.1, 0.5, 0.9, 0.95, 1.] {
             let mut view = Harness::new(
@@ -490,10 +486,9 @@ fn visual_references_loading_progress() {
                 Size::new(400., 520.),
                 theme(dark),
             );
-            view.at(0);
-            reference::check(
+            view.capture_at(
+                0,
                 &format!("loading-progress/{mode}/value-{:03}", (value * 100.) as u8),
-                &view.frame(),
             );
         }
         for circular in [false, true] {
@@ -504,10 +499,9 @@ fn visual_references_loading_progress() {
             ui.at(450);
             ui.rebuild(view(false));
             for ms in [0, 125, 250, 500, 750, 1350, 1800, 2500] {
-                ui.at(450 + ms);
-                reference::check(
+                ui.capture_at(
+                    450 + ms,
                     &format!("loading-progress-handoff/{mode}/circular-{circular}-{ms:04}"),
-                    &ui.frame(),
                 );
             }
         }
@@ -533,11 +527,7 @@ fn visual_references_loading_progress() {
             Size::new(320., 190.),
             theme(dark),
         );
-        view.at(0);
-        reference::check(
-            &format!("loading-progress/{mode}/custom-wave"),
-            &view.frame(),
-        );
+        view.capture_at(0, &format!("loading-progress/{mode}/custom-wave"));
     }
 }
 
