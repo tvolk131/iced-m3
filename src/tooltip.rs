@@ -2,11 +2,11 @@
 pub use crate::anchored::Placement;
 use crate::{Element, Theme, TypeScale, anchored::Anchored, typography};
 use iced::advanced::{
-    Clipboard, Layout, Shell, Widget, layout, overlay, renderer,
-    widget::{Operation, Tree, tree},
+    Clipboard, Layout, Shell, Widget, overlay, renderer,
+    widget::{Tree, tree},
 };
 use iced::time::{Duration, Instant};
-use iced::{Border, Event, Rectangle, Renderer, Size, Vector, keyboard, mouse, widget, window};
+use iced::{Border, Event, Rectangle, Renderer, Vector, keyboard, mouse, widget, window};
 
 /// A passive hint shown after hover or focus remains for the configured delay.
 /// Escape or a pointer press dismisses it until the corresponding hover/focus
@@ -71,6 +71,8 @@ struct State {
     presence: crate::presence::Presence,
 }
 impl<Message: Clone> Widget<Message, Theme, Renderer> for Tooltip<'_, Message> {
+    crate::widget_delegate::delegate!(Message, content, [size, layout, operate, mouse_interaction]);
+
     fn tag(&self) -> tree::Tag {
         tree::Tag::of::<State>()
     }
@@ -86,30 +88,6 @@ impl<Message: Clone> Widget<Message, Theme, Renderer> for Tooltip<'_, Message> {
         if self.disabled {
             *tree.state.downcast_mut::<State>() = State::default();
         }
-    }
-    fn size(&self) -> Size<iced::Length> {
-        self.content.as_widget().size()
-    }
-    fn layout(
-        &mut self,
-        tree: &mut Tree,
-        renderer: &Renderer,
-        limits: &layout::Limits,
-    ) -> layout::Node {
-        self.content
-            .as_widget_mut()
-            .layout(&mut tree.children[0], renderer, limits)
-    }
-    fn operate(
-        &mut self,
-        tree: &mut Tree,
-        layout: Layout<'_>,
-        renderer: &Renderer,
-        operation: &mut dyn Operation,
-    ) {
-        self.content
-            .as_widget_mut()
-            .operate(&mut tree.children[0], layout, renderer, operation);
     }
     fn update(
         &mut self,
@@ -229,22 +207,6 @@ impl<Message: Clone> Widget<Message, Theme, Renderer> for Tooltip<'_, Message> {
             cursor,
             viewport,
         );
-    }
-    fn mouse_interaction(
-        &self,
-        tree: &Tree,
-        layout: Layout<'_>,
-        cursor: mouse::Cursor,
-        viewport: &Rectangle,
-        renderer: &Renderer,
-    ) -> mouse::Interaction {
-        self.content.as_widget().mouse_interaction(
-            &tree.children[0],
-            layout,
-            cursor,
-            viewport,
-            renderer,
-        )
     }
     fn overlay<'b>(
         &'b mut self,

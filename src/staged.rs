@@ -5,7 +5,7 @@ use iced::advanced::{
     Clipboard, Layout, Shell, Widget, layout, overlay, renderer,
     widget::{Operation, Tree, tree},
 };
-use iced::{Event, Length, Rectangle, Renderer, Size, Vector, mouse, window};
+use iced::{Event, Rectangle, Renderer, Size, Vector, mouse, window};
 use std::{cell::Cell, rc::Rc, time::Duration};
 
 #[derive(Clone, Copy, PartialEq)]
@@ -135,6 +135,8 @@ struct State {
     base: f32,
 }
 impl<Message> Widget<Message, Theme, Renderer> for Staged<'_, Message> {
+    crate::widget_delegate::delegate!(Message, content, [children, diff, size]);
+
     fn tag(&self) -> tree::Tag {
         tree::Tag::of::<State>()
     }
@@ -144,15 +146,6 @@ impl<Message> Widget<Message, Theme, Renderer> for Staged<'_, Message> {
             seen: false,
             base: 1.,
         })
-    }
-    fn children(&self) -> Vec<Tree> {
-        vec![Tree::new(&self.content)]
-    }
-    fn diff(&self, t: &mut Tree) {
-        t.diff_children(std::slice::from_ref(&self.content));
-    }
-    fn size(&self) -> Size<Length> {
-        self.content.as_widget().size()
     }
     fn layout(&mut self, t: &mut Tree, r: &Renderer, l: &layout::Limits) -> layout::Node {
         let extra = if self.full_header.as_ref().is_some_and(|full| full.get()) {

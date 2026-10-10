@@ -2,10 +2,10 @@
 use crate::{Element, Theme};
 use iced::advanced::svg::{Handle, Renderer as _, Svg};
 use iced::advanced::{
-    Clipboard, Layout, Shell, Widget, layout, overlay, renderer,
-    widget::{Operation, Tree, tree},
+    Layout, Widget, renderer,
+    widget::{Tree, tree},
 };
-use iced::{Color, Event, Length, Rectangle, Renderer, Size, Vector, mouse};
+use iced::{Color, Rectangle, Renderer, mouse};
 use std::cell::RefCell;
 
 /// One Material box-shadow layer. `blur` is CSS blur radius, not Gaussian sigma.
@@ -440,45 +440,26 @@ struct Elevated<'a, Message> {
     radius: iced::border::Radius,
 }
 impl<Message> Widget<Message, Theme, Renderer> for Elevated<'_, Message> {
+    crate::widget_delegate::delegate!(
+        Message,
+        content,
+        [
+            children,
+            diff,
+            size,
+            layout,
+            operate,
+            update,
+            mouse_interaction,
+            overlay
+        ]
+    );
+
     fn tag(&self) -> tree::Tag {
         tree::Tag::of::<Cache>()
     }
     fn state(&self) -> tree::State {
         tree::State::new(Cache::default())
-    }
-    fn children(&self) -> Vec<Tree> {
-        vec![Tree::new(&self.content)]
-    }
-    fn diff(&self, t: &mut Tree) {
-        t.diff_children(std::slice::from_ref(&self.content));
-    }
-    fn size(&self) -> Size<Length> {
-        self.content.as_widget().size()
-    }
-    fn layout(&mut self, t: &mut Tree, r: &Renderer, l: &layout::Limits) -> layout::Node {
-        self.content
-            .as_widget_mut()
-            .layout(&mut t.children[0], r, l)
-    }
-    fn operate(&mut self, t: &mut Tree, l: Layout<'_>, r: &Renderer, o: &mut dyn Operation) {
-        self.content
-            .as_widget_mut()
-            .operate(&mut t.children[0], l, r, o);
-    }
-    fn update(
-        &mut self,
-        t: &mut Tree,
-        e: &Event,
-        l: Layout<'_>,
-        c: mouse::Cursor,
-        r: &Renderer,
-        cb: &mut dyn Clipboard,
-        s: &mut Shell<'_, Message>,
-        v: &Rectangle,
-    ) {
-        self.content
-            .as_widget_mut()
-            .update(&mut t.children[0], e, l, c, r, cb, s, v);
     }
     fn draw(
         &self,
@@ -502,30 +483,6 @@ impl<Message> Widget<Message, Theme, Renderer> for Elevated<'_, Message> {
         self.content
             .as_widget()
             .draw(&t.children[0], r, th, s, l, c, v);
-    }
-    fn mouse_interaction(
-        &self,
-        t: &Tree,
-        l: Layout<'_>,
-        c: mouse::Cursor,
-        v: &Rectangle,
-        r: &Renderer,
-    ) -> mouse::Interaction {
-        self.content
-            .as_widget()
-            .mouse_interaction(&t.children[0], l, c, v, r)
-    }
-    fn overlay<'b>(
-        &'b mut self,
-        t: &'b mut Tree,
-        l: Layout<'b>,
-        r: &Renderer,
-        v: &Rectangle,
-        tr: Vector,
-    ) -> Option<overlay::Element<'b, Message, Theme, Renderer>> {
-        self.content
-            .as_widget_mut()
-            .overlay(&mut t.children[0], l, r, v, tr)
     }
 }
 

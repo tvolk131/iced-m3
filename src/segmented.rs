@@ -1,10 +1,7 @@
 //! Connected outlined buttons with application-owned single or multiple selection.
 use crate::{Button, ButtonVariant, Element, Theme, TypeScale, theme::alpha, tokens, typography};
-use iced::advanced::{
-    Clipboard, Layout, Shell, Widget, layout, renderer,
-    widget::{Operation, Tree},
-};
-use iced::{Border, Color, Event, Length, Rectangle, Renderer, Size, mouse, widget};
+use iced::advanced::{Layout, Widget, layout, renderer, widget::Tree};
+use iced::{Border, Color, Length, Rectangle, Renderer, Size, mouse, widget};
 
 /// Single-selection clicks keep one value selected; multiple selection may be empty.
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -173,58 +170,20 @@ struct Outline<'a, Message> {
     disabled: Vec<bool>,
 }
 impl<Message: Clone> Widget<Message, Theme, Renderer> for Outline<'_, Message> {
-    fn children(&self) -> Vec<Tree> {
-        vec![Tree::new(&self.content)]
-    }
-    fn diff(&self, tree: &mut Tree) {
-        tree.diff_children(std::slice::from_ref(&self.content));
-    }
-    fn size(&self) -> Size<Length> {
-        self.content.as_widget().size()
-    }
-    fn layout(
-        &mut self,
-        tree: &mut Tree,
-        renderer: &Renderer,
-        limits: &layout::Limits,
-    ) -> layout::Node {
-        self.content
-            .as_widget_mut()
-            .layout(&mut tree.children[0], renderer, limits)
-    }
-    fn operate(
-        &mut self,
-        tree: &mut Tree,
-        layout: Layout<'_>,
-        renderer: &Renderer,
-        operation: &mut dyn Operation,
-    ) {
-        self.content
-            .as_widget_mut()
-            .operate(&mut tree.children[0], layout, renderer, operation);
-    }
-    fn update(
-        &mut self,
-        tree: &mut Tree,
-        event: &Event,
-        layout: Layout<'_>,
-        cursor: mouse::Cursor,
-        renderer: &Renderer,
-        clipboard: &mut dyn Clipboard,
-        shell: &mut Shell<'_, Message>,
-        viewport: &Rectangle,
-    ) {
-        self.content.as_widget_mut().update(
-            &mut tree.children[0],
-            event,
+    crate::widget_delegate::delegate!(
+        Message,
+        content,
+        [
+            children,
+            diff,
+            size,
             layout,
-            cursor,
-            renderer,
-            clipboard,
-            shell,
-            viewport,
-        );
-    }
+            operate,
+            update,
+            mouse_interaction
+        ]
+    );
+
     fn draw(
         &self,
         tree: &Tree,
@@ -293,22 +252,6 @@ impl<Message: Clone> Widget<Message, Theme, Renderer> for Outline<'_, Message> {
                 );
             }
         });
-    }
-    fn mouse_interaction(
-        &self,
-        tree: &Tree,
-        layout: Layout<'_>,
-        cursor: mouse::Cursor,
-        viewport: &Rectangle,
-        renderer: &Renderer,
-    ) -> mouse::Interaction {
-        self.content.as_widget().mouse_interaction(
-            &tree.children[0],
-            layout,
-            cursor,
-            viewport,
-            renderer,
-        )
     }
 }
 struct Check;
