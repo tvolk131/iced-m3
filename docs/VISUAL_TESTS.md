@@ -133,6 +133,9 @@ match independently constructed resting widgets, with no further redraw work.
 Dialog/sheet sequences include multiple open/close rebuilds before the next
 event, nested coverage, pointer/key release and window unfocus. These caught
 lost dialog cancellation flags and a remaining focus-gated sheet clock.
+Tooltip checks also require cancellation to be followed by resumption when a
+dialog becomes active again, without resuming an unfocused window or replaying
+the cancelled action. Nested cancellation must preserve the keyboard target.
 The checks use actual iced dispatch and rendered pixels without new goldens.
 Run `cargo test --lib interruption_contracts`; use `ICED_TEST_BACKEND=wgpu`
 with the default features for the same assertions on an available GPU.

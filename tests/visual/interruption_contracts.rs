@@ -470,8 +470,122 @@ fn nested_dialog_open_close_between_redraws_cancels_the_lower_dialog_press() {
             view.messages.is_empty(),
             "covered lower dialog press replayed, keyboard={keyboard}"
         );
-        view.click("Lower action");
+        if keyboard {
+            view.tap_key(key(Named::Space));
+        } else {
+            view.click("Lower action");
+        }
         assert_eq!(view.messages, [1]);
+    }
+}
+
+fn hint_dialog(kind: &str, open: bool) -> Element<'static, u8> {
+    let background = widget::space().width(Length::Fill).height(Length::Fill);
+    let panel = crate::dialog(crate::tooltip(
+        crate::button("Hint target").on_press(1),
+        "Available hint",
+    ))
+    .width(320.);
+    match kind {
+        "dialog" => crate::dialog::modal(background, panel, open),
+        "stack" => crate::dialog::stack(background, [(panel, open)]),
+        "nested" => crate::dialog::stack(
+            background,
+            [
+                (panel, true),
+                (crate::dialog(widget::text("Cover")).width(240.), open),
+            ],
+        ),
+        _ => unreachable!(),
+    }
+}
+
+fn hint_visible(view: &mut Harness<'_, u8>) -> bool {
+    use iced::advanced::widget::{Operation, operation::Outcome};
+    let mut op = iced_test::Selector::find("Available hint");
+    view.operate(&mut iced::advanced::widget::operation::black_box(&mut op));
+    matches!(op.finish(), Outcome::Some(Some(_)))
+}
+
+#[test]
+fn dialog_cancellation_resumes_tooltips_without_replaying_the_held_action() {
+    let mut suspended = Vec::new();
+    for kind in ["dialog", "stack", "nested"] {
+        for sequence in ["unused", "interrupted", "settled"] {
+            let initial = kind != "nested" && sequence != "unused";
+            let mut view = ui(
+                hint_dialog(kind, initial),
+                Size::new(520., 420.),
+                Theme::light(),
+            );
+            if sequence != "unused" {
+                let target = view.find("Hint target").center();
+                view.move_to(target);
+                view.down();
+            }
+            if kind == "nested" || sequence == "unused" {
+                view.rebuild(hint_dialog(kind, true));
+                view.rebuild(hint_dialog(kind, false));
+            } else {
+                view.rebuild(hint_dialog(kind, false));
+            }
+            if sequence != "interrupted" {
+                view.at(0);
+                view.at(2000);
+                view.frame();
+            }
+            view.rebuild(hint_dialog(kind, kind != "nested"));
+            view.up();
+            assert!(
+                view.messages.is_empty(),
+                "{kind}/{sequence}: cancelled action replayed"
+            );
+            view.at(3000);
+            view.leave();
+            let target = view.find("Hint target").center();
+            view.move_to(target);
+            view.at(3500);
+            if !hint_visible(&mut view) {
+                suspended.push(format!("{kind}/{sequence}"));
+            }
+            view.click("Hint target");
+            assert_eq!(view.messages, [1]);
+        }
+    }
+    assert!(
+        suspended.is_empty(),
+        "tooltips remain suspended: {suspended:?}"
+    );
+}
+
+#[test]
+fn reopening_a_dialog_does_not_resume_tooltips_while_the_window_is_unfocused() {
+    for kind in ["dialog", "stack"] {
+        let mut view = ui(
+            hint_dialog(kind, true),
+            Size::new(520., 420.),
+            Theme::light(),
+        );
+        view.event(Event::Window(window::Event::Unfocused));
+        view.rebuild(hint_dialog(kind, false));
+        view.rebuild(hint_dialog(kind, true));
+        view.at(0);
+        let target = view.find("Hint target").center();
+        view.move_to(target);
+        view.at(1000);
+        assert!(
+            !hint_visible(&mut view),
+            "{kind}: real window inactivity must be respected"
+        );
+        view.event(Event::Window(window::Event::Focused));
+        view.leave();
+        view.move_to(target);
+        view.at(1500);
+        assert!(
+            hint_visible(&mut view),
+            "{kind}: real window focus must resume hints"
+        );
+        assert!(view.messages.is_empty());
     }
 }
 

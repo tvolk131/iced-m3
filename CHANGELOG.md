@@ -4,6 +4,8 @@
 
 - Cancel held pointer and keyboard actions when dialogs close/reopen or briefly
   cover another control between events, including retained dialog stacks.
+  Resume child interaction timers on reopening so tooltips remain available,
+  while respecting real window inactivity and restoring covered keyboard focus.
 - Keep side- and bottom-sheet transitions advancing when the window loses
   keyboard focus; input suspension remains separate from animation timing.
 - Add rendered interruption contracts for floating labels, selection controls,

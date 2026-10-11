@@ -345,7 +345,33 @@ impl<Message: Clone> Overlay<Message, Theme, Renderer> for StackOverlay<'_, '_, 
             state.active = Some(self.top);
             shell.request_redraw();
         }
-        if state.resume_layer == Some(self.top) && !state.inactive && !crate::activity::is_covered()
+        let top = self.top;
+        if state.layers[top].cancel_dialog {
+            state.layers[top].cancel_dialog = false;
+            if !state.layers[top].focus_pending && state.bookmarks[top].is_none() {
+                state.bookmarks[top] = crate::focus::remember(
+                    &mut self.host.dialogs[top].0.content,
+                    &mut self.tree.children[top + 1],
+                    l.child(top).child(0),
+                    r,
+                );
+            }
+            suspend(
+                &mut self.host.dialogs[top].0.content,
+                &mut self.tree.children[top + 1],
+                l.child(top).child(0),
+                r,
+                cb,
+                &l.bounds(),
+            );
+            // Deliver Focused after cancellation, including when the top layer
+            // did not change during a close/reopen between events.
+            state.resume_layer = Some(top);
+        }
+        if state.resume_layer == Some(self.top)
+            && self.host.dialogs[self.top].1
+            && !state.inactive
+            && !crate::activity::is_covered()
         {
             state.resume_layer = None;
             let content = &mut self.host.dialogs[self.top].0.content;
@@ -368,18 +394,6 @@ impl<Message: Clone> Overlay<Message, Theme, Renderer> for StackOverlay<'_, '_, 
                 state.layers[self.top].focus_pending = false;
             }
             shell.request_redraw();
-        }
-        let top = self.top;
-        if state.layers[top].cancel_dialog {
-            state.layers[top].cancel_dialog = false;
-            suspend(
-                &mut self.host.dialogs[top].0.content,
-                &mut self.tree.children[top + 1],
-                l.child(top).child(0),
-                r,
-                cb,
-                &l.bounds(),
-            );
         }
         for i in 0..top {
             if state.layers[i].presence.visible(self.host.dialogs[i].1) {

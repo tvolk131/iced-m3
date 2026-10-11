@@ -215,6 +215,7 @@ struct State {
     presence: crate::presence::Presence,
     shadow: crate::elevation::Cache,
     cancel_dialog: bool,
+    resume_dialog: bool,
 }
 
 impl<Message: Clone> Widget<Message, Theme, Renderer> for Modal<'_, Message> {
@@ -554,6 +555,7 @@ impl<Message: Clone> Overlay<Message, Theme, Renderer> for DialogOverlay<'_, '_,
         });
         if self.state.cancel_dialog {
             self.state.cancel_dialog = false;
+            self.state.resume_dialog = true;
             let mut ignored = Vec::new();
             crate::activity::interaction(|| {
                 self.dialog.content.as_widget_mut().update(
@@ -584,6 +586,25 @@ impl<Message: Clone> Overlay<Message, Theme, Renderer> for DialogOverlay<'_, '_,
                 shell.capture_event();
             }
             return;
+        }
+        if self.state.resume_dialog && !self.state.inactive && !crate::activity::is_covered() {
+            self.state.resume_dialog = false;
+            // Cancellation also suspends timers in children such as tooltips.
+            // Resume them before input, without replaying the cancelled gesture.
+            let mut ignored = Vec::new();
+            crate::activity::interaction(|| {
+                self.dialog.content.as_widget_mut().update(
+                    self.tree,
+                    &Event::Window(iced::window::Event::Focused),
+                    content,
+                    mouse::Cursor::Unavailable,
+                    renderer,
+                    clipboard,
+                    &mut Shell::new(&mut ignored),
+                    &layout.bounds(),
+                );
+            });
+            shell.request_redraw();
         }
         if self.state.focus_pending {
             self.state.focus_pending = false;
