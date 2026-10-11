@@ -2,6 +2,16 @@
 
 ## Unreleased
 
+- Cancel held pointer and keyboard actions when dialogs close/reopen or briefly
+  cover another control between events, including retained dialog stacks.
+  Resume child interaction timers on reopening so tooltips remain available,
+  while respecting real window inactivity and restoring covered keyboard focus.
+- Keep side- and bottom-sheet transitions advancing when the window loses
+  keyboard focus; input suspension remains separate from animation timing.
+- Add rendered interruption contracts for floating labels, selection controls,
+  dialogs, sheets and FAB reveals, including reversal, retained rebuilds,
+  mid-transition reduced motion, exact endpoints and idle redraw scheduling.
+
 ## 0.1.0-beta.5 — 2026-10-09
 
 This beta reduces shadow and ripple rendering costs and makes determinate wavy

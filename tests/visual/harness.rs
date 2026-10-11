@@ -79,6 +79,11 @@ impl<'a, Message> Harness<'a, Message> {
         self.size = size;
         self.ui = Some(self.ui.take().unwrap().relayout(size, &mut self.renderer));
     }
+    /// A theme change is observed by widgets on the next draw, as in iced.
+    /// This does not advance virtual time or dispatch an input event.
+    pub fn set_theme(&mut self, theme: Theme) {
+        self.theme = theme;
+    }
     pub fn event(&mut self, event: Event) -> window::RedrawRequest {
         let now = self.origin + Duration::from_millis(self.elapsed);
         let (state, _) = with_time(now, || {

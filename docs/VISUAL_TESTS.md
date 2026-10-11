@@ -124,6 +124,22 @@ Its 128 reference frames cover both schemes, themes, initial states and optional
 icons. These checks fail if a draw-time clamp hides the spatial overshoot even
 when the spring solver itself remains correct.
 
+`tests/visual/interruption_contracts.rs` extends these checks across baseline,
+Standard and Expressive motion. It measures floating-label ink and checks
+reversal velocity, redraw cadence and retained rebuilds; exercises checkbox
+mixed-state handoffs and selection cancellation; and changes reduced motion
+during field, control, overlay and FAB-reveal transitions. Final frames must
+match independently constructed resting widgets, with no further redraw work.
+Dialog/sheet sequences include multiple open/close rebuilds before the next
+event, nested coverage, pointer/key release and window unfocus. These caught
+lost dialog cancellation flags and a remaining focus-gated sheet clock.
+Tooltip checks also require cancellation to be followed by resumption when a
+dialog becomes active again, without resuming an unfocused window or replaying
+the cancelled action. Nested cancellation must preserve the keyboard target.
+The checks use actual iced dispatch and rendered pixels without new goldens.
+Run `cargo test --lib interruption_contracts`; use `ICED_TEST_BACKEND=wgpu`
+with the default features for the same assertions on an available GPU.
+
 For new motion or changes to existing motion, use this checklist:
 
 - Define the expected response from design/reference evidence, independently of
@@ -139,10 +155,11 @@ For new motion or changes to existing motion, use this checklist:
 - Add a small light/dark filmstrip around the important transition times and
   review it in motion. Golden updates alone are not evidence of correctness.
 
-Prioritize remaining property checks by independent implementation: selection
-geometry and floating labels; overlay/reveal clipping and compositing; then
-sliders and continuous cycles. Many already have targeted regressions below, but
-this is not yet a uniform contract suite for every component or motion scheme.
+The interruption suite covers the first selection/label and overlay/reveal
+sequences. Further property coverage can extend slider gestures, continuous
+cycles and combinations such as nested scrolling during a reveal. Targeted
+regressions below remain in place; this is not yet a uniform contract suite for
+every component or motion scheme.
 
 ### Reference families
 
