@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Snackbar dismissal timers now continue while the application window is
+  unfocused. Use `.pause_on_window_blur(true)` to retain the previous behavior.
+  Hovering in the active window and modal coverage still pause the countdown;
+  changing the blur policy preserves the remaining duration.
 - Cancel held pointer and keyboard actions when dialogs close/reopen or briefly
   cover another control between events, including retained dialog stacks.
   Resume child interaction timers on reopening so tooltips remain available,

@@ -256,11 +256,15 @@ fn open_tooltip_is_passive_in_the_real_overlay_runtime() {
     assert_eq!(ui.into_messages().collect::<Vec<_>>(), [Message::Action]);
 }
 fn notice(id: u64) -> Element<'static, Message> {
+    notice_with_blur_policy(id, false)
+}
+fn notice_with_blur_policy(id: u64, pause: bool) -> Element<'static, Message> {
     snackbar::host(
         full(button("Background").on_press(Message::Background)),
         Some(
             snackbar("Saved")
                 .id(id)
+                .pause_on_window_blur(pause)
                 .on_dismiss(Message::Dismiss)
                 .action("Undo", Message::Action),
         ),
@@ -300,8 +304,8 @@ fn snackbar_timeout_is_once_only_and_rebuild_preserves_or_restarts_by_id() {
     );
 }
 #[test]
-fn snackbar_pauses_while_hovered_or_window_is_inactive() {
-    let mut ui = ui(notice(1));
+fn snackbar_pauses_while_hovered_or_opted_into_window_inactivity() {
+    let mut ui = ui(notice_with_blur_policy(1, true));
     let now = Instant::now();
     let point = Some(Point::new(300.0, 360.0));
     ui.event(moved(Point::new(300.0, 360.0)), point);
@@ -565,9 +569,9 @@ fn a_tooltip_in_scrolled_content_stays_near_its_visible_trigger() {
 
 #[test]
 fn a_new_snackbar_keeps_the_window_deactivation_pause() {
-    let mut ui = ui(notice(1));
+    let mut ui = ui(notice_with_blur_policy(1, true));
     ui.event(Event::Window(window::Event::Unfocused), None);
-    ui.rebuild(notice(2));
+    ui.rebuild(notice_with_blur_policy(2, true));
     let now = Instant::now();
     ui.event(redraw(now), None);
     assert_eq!(

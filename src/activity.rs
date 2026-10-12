@@ -36,8 +36,14 @@ pub(crate) fn interaction<T>(f: impl FnOnce() -> T) -> T {
 pub(crate) fn is_covered() -> bool {
     matches!(CONTEXT.get(), Context::Covered { .. })
 }
-/// Modal hosts use this distinction to preserve native input suspension.
-/// Other widgets keep treating synthetic Unfocused as interaction suspension.
+/// Modal cancellation/coverage may discard child messages. Timeout-driven
+/// widgets must wait for a normal update before consuming a dismissal, even
+/// during the synthetic focus event that resumes their interaction state.
+pub(crate) fn is_modal_dispatch() -> bool {
+    !matches!(CONTEXT.get(), Context::Normal)
+}
+/// Track real window focus without mistaking modal cancellation for blur.
+/// Native input widgets still treat synthetic Unfocused as interaction suspension.
 pub(crate) fn window_focus(event: &Event) -> Option<bool> {
     match CONTEXT.get() {
         Context::Covered { focused } => Some(focused),

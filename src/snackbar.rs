@@ -14,9 +14,12 @@ pub struct Snackbar<Message> {
     action: Option<(String, Message)>,
     dismiss: Option<Message>,
     duration: Option<Duration>,
+    pause_on_window_blur: bool,
     visible: bool,
 }
 /// A concise message. Add `on_dismiss` for automatic timeout; otherwise it persists.
+/// The countdown continues while the window is unfocused by default; use
+/// [`Snackbar::pause_on_window_blur`] to opt into pausing.
 #[cfg_attr(iced_m3_doc_media, doc = include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/docs/generated/snackbar-primary.md")))]
 pub fn snackbar<Message>(text: impl Into<String>) -> Snackbar<Message> {
     Snackbar {
@@ -25,6 +28,7 @@ pub fn snackbar<Message>(text: impl Into<String>) -> Snackbar<Message> {
         action: None,
         dismiss: None,
         duration: Some(Duration::from_secs(4)),
+        pause_on_window_blur: false,
         visible: true,
     }
 }
@@ -52,6 +56,19 @@ impl<Message> Snackbar<Message> {
         self.duration = Some(duration);
         self
     }
+    /// Pause the dismissal countdown while the application window is unfocused.
+    ///
+    /// Defaults to `false`: elapsed time counts even while the window is unfocused.
+    /// With `true`, regaining focus resumes the remaining time without restarting
+    /// the duration. Hovering in the active window and coverage by a modal dialog
+    /// or sheet pause the countdown regardless of this setting. This affects the
+    /// dismissal timer, not entrance/exit animations, and does not detect whether
+    /// the window is minimized or hidden. If event delivery stops, elapsed time
+    /// is accounted for on the next update.
+    pub fn pause_on_window_blur(mut self, pause: bool) -> Self {
+        self.pause_on_window_blur = pause;
+        self
+    }
     pub fn persistent(mut self) -> Self {
         self.duration = None;
         self
@@ -63,6 +80,7 @@ struct Notice<'a, Message> {
     id: u64,
     dismiss: Option<Message>,
     duration: Option<Duration>,
+    pause_on_window_blur: bool,
     visible: bool,
 }
 struct Host<'a, Message> {
@@ -114,6 +132,7 @@ pub fn host<'a, Message: Clone + 'a>(
             text: notice.text,
             id: notice.id,
             duration: notice.duration.filter(|_| notice.dismiss.is_some()),
+            pause_on_window_blur: notice.pause_on_window_blur,
             dismiss: notice.dismiss,
             visible: notice.visible,
         }
@@ -162,7 +181,7 @@ impl<Message: Clone> Widget<Message, Theme, Renderer> for Host<'_, Message> {
         let mut fresh = State::for_notice(self.notice.as_ref());
         let state = tree.state.downcast_mut::<State>();
         fresh.inactive = state.inactive;
-        fresh.paused = state.inactive;
+        fresh.paused = state.paused;
         let changed = state.identity != fresh.identity;
         if changed {
             fresh.presence.progress =
@@ -273,10 +292,8 @@ impl<Message: Clone> Widget<Message, Theme, Renderer> for Host<'_, Message> {
             motion.snackbar_exit,
             shell,
         );
-        match event {
-            Event::Window(window::Event::Unfocused) => state.inactive = true,
-            Event::Window(window::Event::Focused) => state.inactive = false,
-            _ => {}
+        if let Some(focused) = crate::activity::window_focus(event) {
+            state.inactive = !focused;
         }
         let mut over = false;
         if let Some(notice) = &mut self.notice
@@ -296,8 +313,14 @@ impl<Message: Clone> Widget<Message, Theme, Renderer> for Host<'_, Message> {
                 *remaining = remaining.saturating_sub(now.saturating_duration_since(last));
             }
             state.last = Some(now);
-            state.paused = state.inactive
-                || (over && !matches!(event, Event::Mouse(mouse::Event::CursorLeft)));
+            // Modal dispatch and real window blur are independent. Never consume
+            // a dismissal in a scope whose caller may discard child messages.
+            // Ignore stale hover coordinates after Alt-Tab without CursorLeft.
+            state.paused = crate::activity::is_modal_dispatch()
+                || (state.inactive && notice.pause_on_window_blur)
+                || (!state.inactive
+                    && over
+                    && !matches!(event, Event::Mouse(mouse::Event::CursorLeft)));
             if !state.paused && state.remaining.is_some_and(|remaining| remaining.is_zero()) {
                 state.expired = true;
                 if let Some(message) = &notice.dismiss {
