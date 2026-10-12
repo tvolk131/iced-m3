@@ -20,7 +20,7 @@ Run `cargo xtask doc-media build` for the illustrated reference; see
 | Radio buttons/groups | `radio(label, value, selected)`, `radio_group(options, selected)` | Controlled single selection; animated dot and circular hover/press feedback; disabled options |
 | Menus/selects | `menu(label, items)`, `menu_button(content, items)`, `context_menu(content, items)`, `select(label, options, selected)` | Anchored, scrollable popups; disabled/selected items, separators and shortcut hints; Escape/outside dismissal |
 | Tooltips | `tooltip(content, hint)` | Plain text hint after 500ms; fits/flips within the window; does not intercept input |
-| Snackbars | `snackbar(text)`, `snackbar::host(background, notice)` | Bottom feedback with optional action; four-second timeout; pauses on hover, window deactivation and root dialogs |
+| Snackbars | `snackbar(text)`, `snackbar::host(background, notice)` | Bottom feedback with optional action; four-second timeout; pauses on active-window hover and modal coverage; window-blur pause is opt-in |
 | Badges | `badge(count)`, `badge_dot()`, `badged(content, count)` | Count pill including `99+`; pass `None` to `badged` for a positioned dot |
 | Tabs | `tabs(items, selected)` | Primary/secondary; icons, badges, disabled items, animated indicator and optional horizontal scrolling |
 | Lists | `list(items)`, `list_item(headline)` | Supporting text/overline, leading/trailing content, row selection and independently interactive child controls |

@@ -140,6 +140,12 @@ The checks use actual iced dispatch and rendered pixels without new goldens.
 Run `cargo test --lib interruption_contracts`; use `ICED_TEST_BACKEND=wgpu`
 with the default features for the same assertions on an available GPU.
 
+The `snackbar_timing` tests use the same clock and runtime to check unfocused
+expiry, opt-in blur pauses, hover, policy changes and retained/new notices.
+Modal tests cover each host and nesting combination, including closing while
+unfocused and opening at the timeout deadline: cancellation must not silently
+consume a dismissal message. Run `cargo test --lib snackbar_timing`.
+
 For new motion or changes to existing motion, use this checklist:
 
 - Define the expected response from design/reference evidence, independently of

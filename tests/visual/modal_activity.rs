@@ -20,6 +20,15 @@ enum Message {
 }
 
 fn fixture(host: &str, open: bool, paused: bool) -> Element<'static, Message> {
+    fixture_with_blur_policy(host, open, paused, false)
+}
+
+fn fixture_with_blur_policy(
+    host: &str,
+    open: bool,
+    paused: bool,
+    pause_on_blur: bool,
+) -> Element<'static, Message> {
     let indicators = widget::column![
         crate::circular_progress(0.)
             .indeterminate(true)
@@ -43,6 +52,7 @@ fn fixture(host: &str, open: bool, paused: bool) -> Element<'static, Message> {
         background,
         Some(
             crate::snackbar("Pending action")
+                .pause_on_window_blur(pause_on_blur)
                 .duration(std::time::Duration::from_secs(2))
                 .action("Undo", Message::Action)
                 .on_dismiss(Message::Expired),
@@ -184,6 +194,66 @@ fn closing_a_modal_resumes_the_snackbar_timer_without_pointer_movement() {
         [Message::Expired],
         "Expiration is emitted once"
     );
+}
+
+#[test]
+fn snackbar_timing_modal_pause_is_independent_of_window_blur_policy() {
+    for host in HOSTS {
+        for pause_on_blur in [false, true] {
+            let scene = |open| fixture_with_blur_policy(host, open, true, pause_on_blur);
+            let mut ui = Harness::configured(scene(false), Size::new(800., 600.), theme(false));
+            ui.frame();
+            ui.at(0);
+            ui.at(1000);
+            ui.event(Event::Window(window::Event::Unfocused));
+            ui.rebuild(scene(true));
+            ui.at(1000);
+            ui.at(10000);
+            assert!(ui.messages.is_empty(), "Covered timeout: {host}");
+            ui.rebuild(scene(false));
+            ui.at(10000);
+            ui.at(11000);
+            // iced updates the old overlay before the host; process the newly
+            // uncovered stack layer without advancing the clock.
+            ui.at(11000);
+            ui.at(11999);
+            assert!(
+                ui.messages.is_empty(),
+                "Preserve the remaining second: {host}"
+            );
+            ui.at(12000);
+            if pause_on_blur {
+                assert!(ui.messages.is_empty(), "Still unfocused: {host}");
+                ui.event(Event::Window(window::Event::Focused));
+                ui.at(12999);
+                assert!(ui.messages.is_empty());
+                ui.at(13000);
+            }
+            assert_eq!(ui.messages, [Message::Expired], "{host}, {pause_on_blur}");
+        }
+    }
+}
+
+#[test]
+fn snackbar_timing_opening_a_modal_at_the_deadline_defers_dismissal_until_uncovered() {
+    for host in HOSTS {
+        let mut ui = ui(host, false, true, theme(false));
+        ui.rebuild(fixture(host, true, true));
+        ui.at(2000);
+        ui.at(10000);
+        assert!(ui.messages.is_empty(), "No covered dismissal: {host}");
+        ui.rebuild(fixture(host, false, true));
+        ui.at(10000);
+        ui.at(11000);
+        ui.at(11000);
+        assert_eq!(
+            ui.messages,
+            [Message::Expired],
+            "Don't swallow the timeout: {host}"
+        );
+        ui.at(20000);
+        assert_eq!(ui.messages, [Message::Expired]);
+    }
 }
 
 #[test]
