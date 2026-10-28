@@ -10,7 +10,14 @@ for Android and AndroidX graphics-shapes, licensed under Apache License 2.0;
 see assets/loading/NOTICE, assets/loading/LICENSE-APACHE-2.0.txt and
 assets/loading/README.md for the pinned sources and generation process.
 
+The optional bundled Material Symbols SVGs are unmodified Google assets,
+licensed under Apache License 2.0; see crates/material-symbols/assets/LICENSE,
+crates/material-symbols/assets/NOTICE and crates/material-symbols/assets/README.md
+in the repository, or the iced-m3-material-symbols companion crate.
+
 The package license expression describes these jointly distributed materials;
 it does not relicense the Rust code or offer a choice of licenses for the assets.
 Downstream applications can display the bundled asset notices through
 iced_m3::fonts::LICENSE and iced_m3::loading::{LICENSE, NOTICE}.
+With the material-symbols feature, iced_m3::material_symbols::{LICENSE, NOTICE}
+also exposes the icon notices.

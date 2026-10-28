@@ -25,7 +25,7 @@
 //! | Navigation | [app_bar](mod@app_bar), [tabs](mod@tabs), [navigation], [search], [menu](mod@menu) |
 //! | Content | [surface], [variants::card], [list](mod@list), [carousel](mod@carousel), [typography], [divider] |
 //! | Feedback | [dialog](mod@dialog), [sheet], [snackbar](mod@snackbar), [tooltip](mod@tooltip), [badge], [progress], [loading] |
-//! | Foundations | [theme], [tokens], [fonts], [focus], [elevation] |
+//! | Foundations | [theme], [tokens], [fonts], [icon](mod@icon), [focus], [elevation] |
 //! | Expressive previews | [expressive] |
 //!
 //! # Compatibility and scope
@@ -46,6 +46,8 @@
 //!
 //! Rust code is MIT licensed. Preserve the bundled font and loading-asset notices
 //! when redistributing them: [fonts::LICENSE], [loading::LICENSE], [loading::NOTICE].
+//! The optional `material-symbols` feature adds official, bundled SVG icons;
+//! see [guide::icons] for the catalog, defaults and asset notices.
 
 // Compile the consumer-facing README example even though the API homepage has
 // its own introduction. This module adds no production API or runtime code.
@@ -75,6 +77,8 @@ pub mod icon;
 pub use icon::{Icon, icon};
 pub mod list;
 pub mod loading;
+#[cfg(feature = "material-symbols")]
+pub mod material_symbols;
 pub mod menu;
 mod motion;
 pub mod motion_scheme;

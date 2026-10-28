@@ -100,9 +100,96 @@ pub fn check_archive(repo: &Path, archive: &Path) -> Result<String> {
     fresh_dir(&repo.join("target/doc-media"), &destination)?;
     let contents = extract(archive, &destination)?;
     let root = destination.join(contents.stem);
+    install_symbols(archive, &root)?;
     build_docs(&root, &repo.join("target"))?;
     Ok(sha(read(archive)?))
 }
+
+const SYMBOLS_PACKAGE: &str = "iced-m3-material-symbols";
+const SYMBOLS_LOCK_NAME: &str = "name = \"iced-m3-material-symbols\"";
+
+/// Cargo adds a registry source/checksum when packaging the workspace's asset
+/// dependency. Normalize only that sourcing metadata for documentation freshness;
+/// its version and every other locked dependency remain part of the input hash.
+pub fn canonical_lock(lock: &str) -> String {
+    let mut symbols = false;
+    lock.split_inclusive('\n')
+        .filter(|line| {
+            if line.trim() == "[[package]]" {
+                symbols = false;
+            } else if line.trim() == SYMBOLS_LOCK_NAME {
+                symbols = true;
+            }
+            !(symbols && (line.starts_with("source = ") || line.starts_with("checksum = ")))
+        })
+        .collect()
+}
+
+/// Before publication, consume the exact companion archive produced by Cargo's
+/// workspace packaging. Its hash must equal the dependency checksum in iced-m3's
+/// archived lockfile. The patch and adjusted lock exist only in the extracted
+/// test copy, never in an uploaded archive.
+fn install_symbols(archive: &Path, root: &Path) -> Result<u64> {
+    let package = metadata(root, true)?;
+    let dependency = package["dependencies"]
+        .as_array()
+        .context("Missing dependencies")?
+        .iter()
+        .find(|dep| dep["name"] == SYMBOLS_PACKAGE)
+        .context("Missing optional symbols dependency")?;
+    let version = dependency["req"]
+        .as_str()
+        .and_then(|req| req.strip_prefix('='))
+        .context("Symbols dependency must use an exact version")?;
+    let paired = archive.with_file_name(format!("{SYMBOLS_PACKAGE}-{version}.crate"));
+    let bytes = fs::metadata(&paired)?.len();
+    ensure!(bytes <= MAX_PACKAGE_BYTES, "Symbols package exceeds 9.8 MB");
+    let lock_path = root.join("Cargo.lock");
+    let lock = fs::read_to_string(&lock_path)?;
+    let block = lock
+        .split("[[package]]")
+        .find(|block| block.lines().any(|line| line == SYMBOLS_LOCK_NAME))
+        .context("Missing packaged symbols lock entry")?;
+    let expected_checksum = format!("checksum = \"{}\"", sha(read(&paired)?));
+    ensure!(
+        block.lines().any(|line| line == expected_checksum),
+        "Companion archive differs from iced-m3's locked checksum"
+    );
+    let config_dir = root.join(".cargo");
+    let destination = config_dir.join("paired-symbols");
+    fs::create_dir_all(&destination)?;
+    let contents = extract(&paired, &destination)?;
+    for name in [
+        "assets/symbols.bin",
+        "assets/catalog.json",
+        "assets/LICENSE",
+        "assets/NOTICE",
+        "assets/SHA256SUMS",
+        "src/lib.rs",
+        "src/storage.rs",
+        "build.rs",
+        "codegen.rs",
+    ] {
+        ensure!(
+            contents.names.contains(name),
+            "Missing companion package input: {name}"
+        );
+    }
+    crate::material_symbols::verify(&destination.join(&contents.stem))?;
+    let path = destination.join(contents.stem).canonicalize()?;
+    let config = config_dir.join("config.toml");
+    ensure!(!config.exists(), "Unexpected packaged Cargo configuration");
+    fs::write(
+        config,
+        format!(
+            "[patch.crates-io]\n{SYMBOLS_PACKAGE} = {{ path = {} }}\n",
+            serde_json::to_string(&path.to_string_lossy().replace('\\', "/"))?
+        ),
+    )?;
+    fs::write(lock_path, canonical_lock(&lock))?;
+    Ok(bytes)
+}
+
 const REQUIRED: &[&str] = &[
     "src/lib.rs",
     "README.md",
@@ -118,6 +205,9 @@ const REQUIRED: &[&str] = &[
     "assets/loading/README.md",
     "assets/loading/SHA256SUMS",
     "tools/generate_loading_shapes.py",
+    "src/material_symbols.rs",
+    "examples/material_symbols.rs",
+    "docs/ICONS.md",
     "tests/visual/mod.rs",
     "tests/visual/progress-preview.html",
     "assets/loading/reference/soft-burst.svg",
@@ -145,6 +235,7 @@ pub fn check_contents(contents: &Contents, compressed: u64, require_media: bool)
                 "consumers/",
                 ".github/",
                 "xtask/",
+                "crates/",
                 "tests/visual/references/"
             ]
             .iter()
@@ -188,7 +279,7 @@ pub fn check_package(repo: &Path, source: &Path, offline: bool, require_media: b
         )?;
         Ok(())
     };
-    cargo(vec!["package", "--allow-dirty"])?;
+    cargo(vec!["package", "--workspace", "--allow-dirty"])?;
     let archive = target.join(format!("package/{stem}.crate"));
     let temp = tempfile::Builder::new()
         .prefix("consumer-package-")
@@ -198,6 +289,24 @@ pub fn check_package(repo: &Path, source: &Path, offline: bool, require_media: b
     let compressed = fs::metadata(&archive)?.len();
     let illustrated = check_contents(&contents, compressed, require_media)?;
     let packaged = temp.path().join(&stem);
+    let symbols_bytes = install_symbols(&archive, &packaged)?;
+    // Cargo reads the temporary patch from this directory even when checking
+    // the separate consumer's manifest. Only the paired, extracted asset crate
+    // is patched; all third-party dependencies keep their locked registry pins.
+    let cargo = |mut args: Vec<&str>| -> Result<()> {
+        args.push("--locked");
+        if offline {
+            args.push("--offline");
+        }
+        command(
+            &packaged,
+            "cargo",
+            &args,
+            &[("CARGO_TARGET_DIR", &target_str)],
+            false,
+        )?;
+        Ok(())
+    };
     if illustrated {
         validate(&packaged, &packaged.join(GENERATED))?;
     }
@@ -239,8 +348,15 @@ pub fn check_package(repo: &Path, source: &Path, offline: bool, require_media: b
         "--manifest-path",
         &packaged_manifest,
         "--all-targets",
+        "--all-features",
     ])?;
-    cargo(vec!["test", "--manifest-path", &packaged_manifest, "--doc"])?;
+    cargo(vec![
+        "test",
+        "--manifest-path",
+        &packaged_manifest,
+        "--doc",
+        "--all-features",
+    ])?;
     cargo(vec![
         "test",
         "--manifest-path",
@@ -255,13 +371,22 @@ pub fn check_package(repo: &Path, source: &Path, offline: bool, require_media: b
         "--no-default-features",
     ])?;
     cargo(vec![
+        "test",
+        "--manifest-path",
+        &consumer_manifest,
+        "--all-targets",
+        "--no-default-features",
+        "--features",
+        "material-symbols",
+    ])?;
+    cargo(vec![
         "tree",
         "--manifest-path",
         &consumer_manifest,
         "-i",
         package["name"].as_str().unwrap(),
     ])?;
-    let report = serde_json::json!({"archive": archive.strip_prefix(repo)?, "files": contents.names.len(), "uncompressed_bytes": contents.bytes, "compressed_bytes": compressed, "packaged_tests": "passed", "packaged_doctests": "passed", "independent_consumer_default_and_software": "passed", "published": false});
+    let report = serde_json::json!({"archive": archive.strip_prefix(repo)?, "files": contents.names.len(), "uncompressed_bytes": contents.bytes, "compressed_bytes": compressed, "symbols_compressed_bytes": symbols_bytes, "packaged_tests": "passed", "packaged_doctests": "passed", "independent_consumer_default_and_software": "passed", "independent_consumer_material_symbols": "passed", "published": false});
     json(&target.join("beta-package-report.json"), &report)?;
     println!("{}", serde_json::to_string_pretty(&report)?);
     Ok(())
@@ -270,6 +395,23 @@ pub fn check_package(repo: &Path, source: &Path, offline: bool, require_media: b
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn lock_normalization_preserves_versions_and_other_dependency_checksums() {
+        let lock = "[[package]]\nname = \"iced-m3-material-symbols\"\nversion = \"0.1.0-beta.5\"\nsource = \"registry\"\nchecksum = \"assets\"\n\n[[package]]\nname = \"other\"\nversion = \"1.0.0\"\nsource = \"registry\"\nchecksum = \"other\"\n";
+        let normalized = canonical_lock(lock);
+        assert!(normalized.contains("version = \"0.1.0-beta.5\""));
+        assert!(!normalized.contains("checksum = \"assets\""));
+        assert!(normalized.contains("source = \"registry\"\nchecksum = \"other\""));
+        assert_eq!(canonical_lock(&normalized), normalized);
+        assert_ne!(
+            canonical_lock(&lock.replace("beta.5", "beta.6")),
+            normalized
+        );
+        assert_ne!(
+            canonical_lock(&lock.replace("checksum = \"other\"", "checksum = \"changed\"")),
+            normalized
+        );
+    }
     #[test]
     fn required_files_budgets_and_development_exclusions() {
         let mut contents = Contents {

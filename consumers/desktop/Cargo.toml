@@ -12,6 +12,7 @@ resolver = "3"
 [features]
 default = ["wgpu"]
 wgpu = ["iced-m3/wgpu"]
+material-symbols = ["iced-m3/material-symbols"]
 
 [dependencies]
 iced-m3 = { path = "../..", default-features = false }

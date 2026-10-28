@@ -261,6 +261,59 @@ fn cleanup_is_confined_to_owned_children() {
     fresh_dir(&work, &work.join("render")).unwrap();
     assert!(!work.join("render/old").exists());
 }
+
+#[test]
+fn material_symbols_commands_require_explicit_generation_inputs() {
+    let repo = Path::new("/repo");
+    let args = |values: &[&str]| {
+        values
+            .iter()
+            .map(|value| value.to_string())
+            .collect::<Vec<_>>()
+    };
+    assert_eq!(
+        parse(&args(&["material-symbols", "verify"]), repo).unwrap(),
+        Task::Symbols {
+            root: repo.join("crates/material-symbols"),
+            archive: None
+        }
+    );
+    assert_eq!(
+        parse(
+            &args(&[
+                "material-symbols",
+                "generate",
+                "--root",
+                "output",
+                "--archive",
+                "source.tar.gz"
+            ]),
+            repo
+        )
+        .unwrap(),
+        Task::Symbols {
+            root: PathBuf::from("output"),
+            archive: Some(PathBuf::from("source.tar.gz"))
+        }
+    );
+    for values in [
+        vec!["material-symbols", "generate"],
+        vec!["material-symbols", "generate", "--archive"],
+        vec!["material-symbols", "verify", "--archive", "source.tar.gz"],
+        vec!["material-symbols", "verify", "--root"],
+        vec![
+            "material-symbols",
+            "verify",
+            "--root",
+            "one",
+            "--root",
+            "two",
+        ],
+        vec!["material-symbols", "download"],
+    ] {
+        assert!(parse(&args(&values), repo).is_err(), "{values:?}");
+    }
+}
 #[cfg(unix)]
 #[test]
 fn cleanup_and_validation_reject_symlinks() {

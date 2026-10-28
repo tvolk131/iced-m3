@@ -88,6 +88,11 @@ and faster development builds. Native and third-party iced widgets can share the
 view; the [theming guide](https://github.com/tvolk131/iced-m3/blob/master/docs/THEMING.md) explains the supported catalogs and
 `Theme::iced()` adapter.
 
+Enable `features = ["material-symbols"]` for the complete pinned, typed catalog of official
+Google SVG icons, bundled in an optional companion crate for offline use. It reuses the theme-aware `Icon`
+renderer; navigation items can use `.selected_icon(...)` for filled selection
+artwork. See the [icon defaults and navigation example](https://github.com/tvolk131/iced-m3/blob/master/docs/ICONS.md).
+
 ## Try it and learn more
 
 From the source checkout:
@@ -113,5 +118,5 @@ macOS, Windows and Linux; native interaction has been checked on macOS. Native
 screen-reader integration, full localization/RTL and some Material variants remain
 unfinished. See [support and limitations](https://github.com/tvolk131/iced-m3/blob/master/docs/LIMITATIONS.md) before adopting.
 
-Rust code is [MIT licensed](https://github.com/tvolk131/iced-m3/blob/master/LICENSE). Bundled fonts and loading assets have their
+Rust code is [MIT licensed](https://github.com/tvolk131/iced-m3/blob/master/LICENSE). Bundled fonts, loading assets and optional icons have their
 own licenses; [NOTICE](https://github.com/tvolk131/iced-m3/blob/master/NOTICE) identifies them and the notices to retain.

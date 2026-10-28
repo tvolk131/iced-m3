@@ -156,6 +156,12 @@ equal-width tabs, or `.scrollable(true)` for natural widths and horizontal overf
 Programmatic selection does not automatically scroll a tab into view. Rail header
 content scrolls with destinations; footer actions stay at the bottom.
 
+Use `NavigationItem::selected_icon(...)` to override the artwork for a selected
+destination; otherwise the original icon is used in both states. This works in
+bars and every rail layout, including selected disabled items. The optional
+`material-symbols` feature provides official filled/unfilled pairs with typed
+names; see `guide::icons` and `examples/material_symbols.rs` for a complete rail.
+
 Tabs and lists are transparent by default and preserve their enclosing surface.
 For an intentional tab fill, use `.background(color_or_gradient)` or
 `.background_with(|theme| theme.colors.surface)`; the fill stays fixed while

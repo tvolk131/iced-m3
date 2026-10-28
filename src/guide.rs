@@ -16,5 +16,8 @@ pub mod theming {}
 #[doc = include_str!("../docs/EXPRESSIVE.md")]
 pub mod expressive {}
 
+#[doc = include_str!("../docs/ICONS.md")]
+pub mod icons {}
+
 /// Executable component examples, appearances, and motion comparisons.
 pub mod components;

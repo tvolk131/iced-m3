@@ -155,6 +155,12 @@ pub fn stage(repo: &Path, generated: &Path) -> Result<PathBuf> {
         fs::create_dir_all(dest.parent().unwrap())?;
         fs::copy(repo.join(line), dest)?;
     }
+    // Development staging retains the optional workspace member; Cargo excludes
+    // it from iced-m3's archive and packages it as its own crate.
+    copy_tree(
+        &repo.join("crates/material-symbols"),
+        &destination.join("crates/material-symbols"),
+    )?;
     copy_tree(generated, &destination.join(GENERATED))?;
     validate(&destination, &destination.join(GENERATED))?;
     Ok(destination)
@@ -200,7 +206,7 @@ pub fn pipeline(repo: &Path, mode: &str) -> Result<()> {
         command(
             &staged,
             "cargo",
-            &["package", "--locked", "--allow-dirty"],
+            &["package", "--workspace", "--locked", "--allow-dirty"],
             &env,
             false,
         )?;
@@ -210,7 +216,13 @@ pub fn pipeline(repo: &Path, mode: &str) -> Result<()> {
         command(
             &staged,
             "cargo",
-            &["publish", "--dry-run", "--locked", "--allow-dirty"],
+            &[
+                "publish",
+                "--workspace",
+                "--dry-run",
+                "--locked",
+                "--allow-dirty",
+            ],
             &env,
             false,
         )?;

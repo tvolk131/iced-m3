@@ -1,4 +1,7 @@
 //! Passive, monochrome SVG icons that inherit their parent's foreground.
+//!
+//! The optional `material-symbols` feature supplies typed official SVG assets.
+//! See [the icon guide](crate::guide::icons) for variants and offline usage.
 use crate::{Element, Theme};
 use iced::advanced::{Layout, Widget, layout, renderer, svg, widget::Tree};
 use iced::{Color, Length, Rectangle, Renderer, Size, mouse};

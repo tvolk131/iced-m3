@@ -1,12 +1,13 @@
 //! Development-only documentation and release checks. No command uploads.
 mod generate;
+mod material_symbols;
 mod media;
 mod package;
 mod registry;
 #[cfg(test)]
 mod tests;
 mod util;
-use anyhow::{Result, bail};
+use anyhow::{Context, Result, bail};
 use std::path::{Path, PathBuf};
 
 const HELP: &str = "Usage:
@@ -15,6 +16,8 @@ const HELP: &str = "Usage:
   cargo xtask doc-media verify [--root PATH]
   cargo xtask doc-media check-archive --archive PATH
   cargo xtask check-package [--source PATH] [--offline] [--require-doc-media]
+  cargo xtask material-symbols verify [--root PATH]
+  cargo xtask material-symbols generate --archive PATH [--root PATH]
   cargo xtask prepare-release
 
 build renders and checks rustdoc in staging; check additionally renders twice,
@@ -26,6 +29,10 @@ enum Task {
     Media(String),
     Verify(PathBuf),
     Archive(PathBuf),
+    Symbols {
+        root: PathBuf,
+        archive: Option<PathBuf>,
+    },
     Package {
         source: PathBuf,
         offline: bool,
@@ -42,6 +49,37 @@ fn parse(args: &[String], repo: &Path) -> Result<Task> {
         ["doc-media", "verify", "--root", root] => Ok(Task::Verify(PathBuf::from(root))),
         ["doc-media", "check-archive", "--archive", archive] => {
             Ok(Task::Archive(PathBuf::from(archive)))
+        }
+        [
+            "material-symbols",
+            mode @ ("verify" | "generate"),
+            rest @ ..,
+        ] => {
+            let (mut root, mut archive) = (None, None);
+            let mut args = rest.iter();
+            while let Some(arg) = args.next() {
+                match *arg {
+                    "--root" if root.is_none() => {
+                        root = Some(PathBuf::from(
+                            args.next().context("--root requires a path")?,
+                        ))
+                    }
+                    "--archive" if *mode == "generate" && archive.is_none() => {
+                        archive = Some(PathBuf::from(
+                            args.next().context("--archive requires a path")?,
+                        ))
+                    }
+                    _ => bail!("Unknown/duplicate argument {arg}\n{HELP}"),
+                }
+            }
+            anyhow::ensure!(
+                *mode != "generate" || archive.is_some(),
+                "generate requires --archive PATH"
+            );
+            Ok(Task::Symbols {
+                root: root.unwrap_or_else(|| repo.join("crates/material-symbols")),
+                archive,
+            })
         }
         ["check-package", rest @ ..] => {
             let mut source = None;
@@ -82,6 +120,13 @@ fn main() -> Result<()> {
         }
         Task::Archive(archive) => {
             package::check_archive(repo, &archive)?;
+        }
+        Task::Symbols { root, archive } => {
+            if let Some(archive) = archive {
+                material_symbols::generate(&root, &archive)?;
+            } else {
+                material_symbols::verify(&root)?;
+            }
         }
         Task::Package {
             source,

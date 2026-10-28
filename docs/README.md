@@ -8,6 +8,7 @@
 | [Component catalog](COMPONENTS.md) | Available builders, variants and interaction behavior |
 | [Cookbook](COOKBOOK.md) | Composed controls, navigation, dialogs, sheets and feedback |
 | [Theming and native widgets](THEMING.md) | Semantic colors, typography, surfaces and theme adapters |
+| [Icons and Material Symbols](ICONS.md) | Optional official SVGs, typed names, fixed axis defaults and selected navigation artwork |
 | [Expressive actions and motion](EXPRESSIVE.md) | Theme defaults, spring schemes, action recipes and reference pins |
 | [Gallery and sample apps](GALLERY.md) | Run and explore the gallery or independent consumer |
 | [Support and limitations](LIMITATIONS.md) | Platform, accessibility, localization and fidelity boundaries |

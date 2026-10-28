@@ -5,6 +5,7 @@ pub struct NavigationItem<'a, Value, Message> {
     value: Value,
     label: String,
     icon: Element<'a, Message>,
+    selected_icon: Option<Element<'a, Message>>,
     badge: Option<u32>,
     disabled: bool,
 }
@@ -18,9 +19,18 @@ impl<'a, Value, Message> NavigationItem<'a, Value, Message> {
             value,
             label: label.into(),
             icon: icon.into(),
+            selected_icon: None,
             badge: None,
             disabled: false,
         }
+    }
+    /// Use this passive icon when selected, in bars and all rail layouts.
+    /// The icon supplied to [`Self::new`] is used when unselected and remains
+    /// the fallback for selected items without an override. Both icons inherit
+    /// the destination's foreground, including disabled opacity.
+    pub fn selected_icon(mut self, icon: impl Into<Element<'a, Message>>) -> Self {
+        self.selected_icon = Some(icon.into());
+        self
     }
     pub fn badge(mut self, count: u32) -> Self {
         self.badge = Some(count);
@@ -151,7 +161,12 @@ fn destination<'a, Message: Clone + 'a>(
 ) -> Element<'a, Message> {
     let expanded = layout == NavigationLayout::ExpandedRail;
     let enabled = message.is_some();
-    let icon = widget::container(widget::container(item.icon).center_x(24).center_y(24))
+    let artwork = if selected {
+        item.selected_icon.unwrap_or(item.icon)
+    } else {
+        item.icon
+    };
+    let icon = widget::container(widget::container(artwork).center_x(24).center_y(24))
         .center_x(if expanded {
             24.0
         } else if layout == NavigationLayout::Bar {
@@ -269,6 +284,7 @@ impl<'a, Value: PartialEq + 'a, Message: Clone + 'a> From<NavigationBar<'a, Valu
                     value: (),
                     label: item.label,
                     icon: item.icon,
+                    selected_icon: item.selected_icon,
                     badge: item.badge,
                     disabled: item.disabled,
                 },
@@ -322,6 +338,7 @@ impl<'a, Value: PartialEq + 'a, Message: Clone + 'a> From<NavigationRail<'a, Val
                     value: (),
                     label: item.label,
                     icon: item.icon,
+                    selected_icon: item.selected_icon,
                     badge: item.badge,
                     disabled: item.disabled,
                 },
