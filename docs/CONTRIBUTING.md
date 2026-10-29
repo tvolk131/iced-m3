@@ -34,6 +34,16 @@ tooling and consumer boundaries that root-package tests cannot replace.
 [VALIDATION.md](VALIDATION.md) records historical findings and executed native
 checks; [LIMITATIONS.md](LIMITATIONS.md) records current support boundaries.
 
+## Dependency requirements
+
+Use normal Cargo semver requirements for registry dependencies. The committed
+workspace, tooling and consumer lockfiles, together with `--locked` checks, keep
+repository dependency resolution reproducible without constraining downstream
+applications to exact versions. Keep `iced-m3-material-symbols` exact-pinned while
+the beta crates evolve together. Document a concrete compatibility reason for
+any other exact pin, and keep dependency upgrades separate from changes that
+only relax requirements.
+
 ## Performance
 
 Normal tests check bounded shadow work, cache reuse, idle damage and incremental
