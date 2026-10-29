@@ -1,6 +1,6 @@
 [package]
 name = "iced-m3-material-symbols"
-version = "0.1.0-beta.5"
+version = "0.1.0-beta.6"
 edition = "2024"
 rust-version = "1.88"
 description = "Official offline Material Symbols asset bundle for iced-m3"

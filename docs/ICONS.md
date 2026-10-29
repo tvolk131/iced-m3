@@ -4,7 +4,7 @@ Enable the optional `material-symbols` feature to use the complete pinned, typed
 official Google SVGs with iced-m3's existing `Icon` renderer:
 
 ```toml
-iced-m3 = { version = "=0.1.0-beta.5", features = ["material-symbols"] }
+iced-m3 = { version = "=0.1.0-beta.6", features = ["material-symbols"] }
 ```
 
 From the source checkout, run the small navigation example:

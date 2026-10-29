@@ -1,6 +1,6 @@
 [package]
 name = "iced-m3"
-version = "0.1.0-beta.5"
+version = "0.1.0-beta.6"
 edition = "2024"
 rust-version = "1.88"
 description = "Material 3 inspired desktop components for iced"
@@ -8,7 +8,7 @@ license = "MIT AND Apache-2.0 AND OFL-1.1"
 readme = "README.md"
 repository = "https://github.com/tvolk131/iced-m3"
 homepage = "https://github.com/tvolk131/iced-m3"
-documentation = "https://docs.rs/iced-m3/0.1.0-beta.5/iced_m3/"
+documentation = "https://docs.rs/iced-m3/0.1.0-beta.6/iced_m3/"
 keywords = ["iced", "material-design", "gui", "widgets"]
 categories = ["gui"]
 publish = ["crates-io"]
@@ -36,7 +36,7 @@ wgpu = ["iced/wgpu"]
 material-symbols = ["dep:iced-m3-material-symbols"]
 
 [dependencies]
-iced-m3-material-symbols = { version = "=0.1.0-beta.5", path = "crates/material-symbols", optional = true }
+iced-m3-material-symbols = { version = "=0.1.0-beta.6", path = "crates/material-symbols", optional = true }
 iced = { version = "=0.14.0", default-features = false, features = ["advanced", "svg", "tiny-skia", "thread-pool", "x11", "wayland"] }
 material-colors = { version = "=0.4.2", default-features = false, features = ["std"] }
 unicode-segmentation = "=1.13.3"

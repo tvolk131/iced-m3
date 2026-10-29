@@ -1,6 +1,11 @@
 # Release notes
 
-## Unreleased
+## 0.1.0-beta.6 — 2026-10-28
+
+This beta adds an optional offline Material Symbols catalog and separate selected
+navigation icons. It also fixes window-activity handling and interaction
+cancellation across retained dialogs. The iced 0.14 dependency and Rust 1.88
+minimum are unchanged.
 
 - Snackbar dismissal timers now continue while the application window is
   unfocused. Use `.pause_on_window_blur(true)` to retain the previous behavior.
@@ -15,11 +20,13 @@
 - Add rendered interruption contracts for floating labels, selection controls,
   dialogs, sheets and FAB reveals, including reversal, retained rebuilds,
   mid-transition reduced motion, exact endpoints and idle redraw scheduling.
-- Add the optional `material-symbols` feature: all 4,157 typed official icon names in
-  Outlined and Rounded, both fills and optical sizes 20/24/40/48, embedded for offline
+- Add the optional `material-symbols` feature and `iced-m3-material-symbols`
+  companion crate: all 4,157 typed official icon names in Outlined and Rounded,
+  both fills and optical sizes 20/24/40/48, embedded for offline
   use through the theme-aware `Icon` renderer. Store lossless official SVGs in
-  64 KiB compressed chunks with bounded decoding and cached handles. Document
-  fixed weight 400 and grade 0, default optical size 24, licensing, and a small
+  independently compressed chunks of at most 64 KiB uncompressed, with bounded
+  decoding and cached handles. Document fixed weight 400 and grade 0, default
+  optical size 24, licensing, and a small
   navigation rail example.
 - Add `NavigationItem::selected_icon` for separate selected artwork in navigation
   bars and collapsed, expanded and modal rails. Existing items retain their icon
@@ -229,7 +236,7 @@ This release does not claim complete Material 3 conformance or a stable 1.0 API.
 ## Compatibility
 
 - **During beta:** public APIs may change between prereleases. Pin
-  `iced-m3 = "=0.1.0-beta.5"` and upgrade deliberately; subsequent release notes
+  `iced-m3 = "=0.1.0-beta.6"` and upgrade deliberately; subsequent release notes
   will identify breaking changes and migration steps.
 - **After beta:** compatible fixes stay within a `0.x` minor series. Breaking
   public API changes advance the minor version while the crate remains below
