@@ -11,11 +11,11 @@ publish = ["crates-io"]
 include = ["/LICENSE-MIT", "/Cargo.toml", "/README.md", "/build.rs", "/codegen.rs", "/src/**", "/assets/**"]
 
 [build-dependencies]
-serde_json = "=1.0.145"
+serde_json = "1.0.145"
 
 [dependencies]
-flate2 = { version = "=1.1.10", default-features = false, features = ["rust_backend"] }
-iced_core = { version = "=0.14.0", default-features = false }
+flate2 = { version = "1.1.10", default-features = false, features = ["rust_backend"] }
+iced_core = { version = "0.14.0", default-features = false }
 
 [lints.rust]
 unsafe_code = "forbid"

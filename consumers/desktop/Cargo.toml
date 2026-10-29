@@ -16,11 +16,11 @@ material-symbols = ["iced-m3/material-symbols"]
 
 [dependencies]
 iced-m3 = { path = "../..", default-features = false }
-iced = { version = "=0.14.0", default-features = false, features = ["tiny-skia", "thread-pool"] }
+iced = { version = "0.14.0", default-features = false, features = ["tiny-skia", "thread-pool"] }
 
 [dev-dependencies]
-iced_test = "=0.14.0"
-png = "=0.18.1"
+iced_test = "0.14.0"
+png = "0.18.1"
 
 [profile.dev.package."*"]
 opt-level = 2

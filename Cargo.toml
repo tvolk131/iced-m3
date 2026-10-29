@@ -37,17 +37,17 @@ material-symbols = ["dep:iced-m3-material-symbols"]
 
 [dependencies]
 iced-m3-material-symbols = { version = "=0.1.0-beta.6", path = "crates/material-symbols", optional = true }
-iced = { version = "=0.14.0", default-features = false, features = ["advanced", "svg", "tiny-skia", "thread-pool", "x11", "wayland"] }
-material-colors = { version = "=0.4.2", default-features = false, features = ["std"] }
-unicode-segmentation = "=1.13.3"
+iced = { version = "0.14.0", default-features = false, features = ["advanced", "svg", "tiny-skia", "thread-pool", "x11", "wayland"] }
+material-colors = { version = "0.4.2", default-features = false, features = ["std"] }
+unicode-segmentation = "1.13.3"
 
 [dev-dependencies]
-base64 = "=0.22.1"
-serde_json = "=1.0.145"
-iced_test = "=0.14.0"
-iced_tiny_skia = "=0.14.0"
-tiny-skia = { version = "=0.11.4", default-features = false }
-png = "=0.18.1"
+base64 = "0.22.1"
+serde_json = "1.0.145"
+iced_test = "0.14.0"
+iced_tiny_skia = "0.14.0"
+tiny-skia = { version = "0.11.4", default-features = false }
+png = "0.18.1"
 
 [[example]]
 name = "gallery"
