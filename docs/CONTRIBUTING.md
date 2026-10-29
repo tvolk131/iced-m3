@@ -10,12 +10,16 @@ candidate's run in
 
 ```sh
 cargo fmt --all -- --check
-cargo clippy --locked --all-targets -- -D warnings
+cargo clippy --locked --workspace --all-targets --all-features -- -D warnings
 ICED_TEST_BACKEND=tiny-skia cargo test --locked --all-targets
 cargo test --locked --doc
 cargo build --locked --examples
 ICED_TEST_BACKEND=tiny-skia cargo test --locked --all-targets --no-default-features
-RUSTDOCFLAGS="-D warnings" cargo doc --locked --no-deps
+RUSTDOCFLAGS="-D warnings" cargo doc --locked --no-deps --all-features
+# Optional official icon catalog, including the navigation example:
+cargo xtask material-symbols verify
+ICED_TEST_BACKEND=tiny-skia cargo test --locked --workspace --all-targets --no-default-features --features material-symbols
+cargo test --locked --doc --no-default-features --features material-symbols
 ```
 
 These tests use iced_test 0.14 and real headless rendering. The ordinary suite
@@ -84,11 +88,11 @@ rustdoc command above. Generated component snippets require the separate
 
 ```sh
 cargo xtask check-package
-cargo publish --dry-run --locked
+cargo publish --workspace --dry-run --locked
 ```
 
-`check-package` packages and extracts the crate, checks its files/notices, then
-tests it and a separate consuming app. Add `--offline` to use cached dependencies.
+`check-package` packages and extracts both crates, checks their files/notices, then
+tests iced-m3 and a separate consuming app. Add `--offline` to use cached dependencies.
 Neither command uploads. These are source-package development checks; a release
 must use the staging crate containing generated documentation media, following
 [RELEASING.md](RELEASING.md).

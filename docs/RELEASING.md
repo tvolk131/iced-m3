@@ -26,6 +26,25 @@ localization and remaining renderer/fidelity work remain documented limitations.
    including `doc-media` and `packaged-docs-linux`, to pass. Successful checks on
    an earlier PR revision are insufficient.
 
+## Optional Material Symbols companion
+
+The optional `iced-m3-material-symbols` workspace member holds the typed catalog, cached SVG loader and complete
+compressed Google asset bundle. Keep its version and the exact optional dependency
+in iced-m3 consistent. Current stable Cargo packages and dry-runs the workspace
+together, supporting the dependency before its first publication. CI uploads both
+archives. Each archive retains a separate 9.8 MB compressed budget.
+
+Extracted-archive tests verify the companion archive against the checksum in
+iced-m3's packaged lockfile, then use a temporary path patch to consume that exact
+extracted companion. The patch never enters either published archive. Documentation
+freshness normalizes only the companion's added registry source/checksum in the
+packaged lockfile; its version and all other locked dependencies remain hashed.
+
+With explicit release authorization, publish the prepared **companion first**,
+then publish iced-m3 from the prepared staging directory after the registry has
+indexed the companion. Do not use `cargo publish --workspace` from the repository
+root; the main crate must contain its generated documentation media.
+
 ## Prepare the merged candidate
 
 From a clean, up-to-date checkout of that exact `master` commit:
@@ -57,7 +76,8 @@ The API destination for this beta is
 [docs.rs/iced-m3/0.1.0-beta.5](https://docs.rs/iced-m3/0.1.0-beta.5/iced_m3/).
 It becomes available only after publication and a successful docs.rs build.
 The metadata uses `x86_64-unknown-linux-gnu` and disables default features to
-document the same public API without the optional GPU backend. Linux CI checks
+document the public API without the optional GPU backend, and enables
+`material-symbols` to document the optional icon integration. Linux CI checks
 that target/feature combination with rustdoc warnings denied. The metadata also
 enables `iced_m3_doc_media`, which includes the prepared, self-contained media
 fragments. No rendering or downloads are needed by the docs.rs build. Docs.rs runs its

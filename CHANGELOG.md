@@ -15,6 +15,15 @@
 - Add rendered interruption contracts for floating labels, selection controls,
   dialogs, sheets and FAB reveals, including reversal, retained rebuilds,
   mid-transition reduced motion, exact endpoints and idle redraw scheduling.
+- Add the optional `material-symbols` feature: all 4,157 typed official icon names in
+  Outlined and Rounded, both fills and optical sizes 20/24/40/48, embedded for offline
+  use through the theme-aware `Icon` renderer. Store lossless official SVGs in
+  64 KiB compressed chunks with bounded decoding and cached handles. Document
+  fixed weight 400 and grade 0, default optical size 24, licensing, and a small
+  navigation rail example.
+- Add `NavigationItem::selected_icon` for separate selected artwork in navigation
+  bars and collapsed, expanded and modal rails. Existing items retain their icon
+  in both states unless an override is supplied.
 
 ## 0.1.0-beta.5 — 2026-10-09
 

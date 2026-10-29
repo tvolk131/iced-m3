@@ -23,6 +23,7 @@ include = [
 
 [package.metadata.docs.rs]
 no-default-features = true
+features = ["material-symbols"]
 default-target = "x86_64-unknown-linux-gnu"
 targets = []
 rustdoc-args = ["--cfg", "iced_m3_doc_media"]
@@ -31,8 +32,11 @@ rustdoc-args = ["--cfg", "iced_m3_doc_media"]
 default = ["wgpu"]
 # iced's GPU renderer, with the software renderer as a fallback.
 wgpu = ["iced/wgpu"]
+# Complete pinned Material Symbols catalog; no font or network required.
+material-symbols = ["dep:iced-m3-material-symbols"]
 
 [dependencies]
+iced-m3-material-symbols = { version = "=0.1.0-beta.5", path = "crates/material-symbols", optional = true }
 iced = { version = "=0.14.0", default-features = false, features = ["advanced", "svg", "tiny-skia", "thread-pool", "x11", "wayland"] }
 material-colors = { version = "=0.4.2", default-features = false, features = ["std"] }
 unicode-segmentation = "=1.13.3"
@@ -49,6 +53,11 @@ png = "=0.18.1"
 name = "gallery"
 path = "examples/gallery.rs"
 
+[[example]]
+name = "material_symbols"
+path = "examples/material_symbols.rs"
+required-features = ["material-symbols"]
+
 [lints.rust]
 unsafe_code = "forbid"
 unexpected_cfgs = { level = "warn", check-cfg = ['cfg(iced_m3_doc_media)'] }
@@ -61,3 +70,7 @@ type_complexity = "allow"
 # displays. Keep this crate debuggable while optimizing rendering dependencies.
 [profile.dev.package."*"]
 opt-level = 2
+
+[workspace]
+members = ["crates/material-symbols"]
+exclude = ["xtask", "consumers/desktop", "target"]

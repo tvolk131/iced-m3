@@ -125,6 +125,8 @@ appearance as correct.
 Do not commit `docs/generated` or anything under `target`. The full catalog
 package has a 9.8 MB compressed budget, enforced
 by both package validators through `MAX_PACKAGE_BYTES` in `xtask/src/media.rs`.
+The optional Material Symbols companion is packaged separately with the same
+9.8 MB cap; its asset bytes do not count toward iced-m3's illustrated archive.
 Each example also has a primary/comparison media-byte budget. Recheck the archive size when extending
 coverage; the budget is bounded rather than increasing with the registry.
 The package contains

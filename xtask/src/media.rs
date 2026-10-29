@@ -47,6 +47,8 @@ pub fn generator_hash() -> String {
         include_str!("media.rs"),
         include_str!("generate.rs"),
         include_str!("package.rs"),
+        include_str!("material_symbols.rs"),
+        include_str!("../../crates/material-symbols/codegen.rs"),
         include_str!("tests.rs"),
         include_str!("../../.cargo/config.toml")
     ))
@@ -60,7 +62,13 @@ pub fn inputs(root: &Path) -> Result<BTreeMap<String, String>> {
         } else {
             root.join(name)
         };
-        result.insert(name.into(), sha(read(&path)?));
+        let bytes = read(&path)?;
+        let bytes = if name == "Cargo.lock" {
+            crate::package::canonical_lock(&String::from_utf8(bytes)?).into_bytes()
+        } else {
+            bytes
+        };
+        result.insert(name.into(), sha(bytes));
     }
     for dir in ["src", "tests/visual", "assets"] {
         for (name, path) in files(&root.join(dir))? {
@@ -278,8 +286,9 @@ pub fn build_docs(root: &Path, target: &Path) -> Result<()> {
     let settings = &package["metadata"]["docs"]["rs"];
     ensure!(
         settings["rustdoc-args"] == serde_json::json!(["--cfg", "iced_m3_doc_media"])
-            && settings["no-default-features"] == true,
-        "docs.rs metadata must enable previews and disable the GPU backend"
+            && settings["no-default-features"] == true
+            && settings["features"] == serde_json::json!(["material-symbols"]),
+        "docs.rs metadata must enable previews and Material Symbols, and disable the GPU backend"
     );
     let target_string = target.to_string_lossy();
     let env = [
@@ -289,14 +298,28 @@ pub fn build_docs(root: &Path, target: &Path) -> Result<()> {
     command(
         root,
         "cargo",
-        &["doc", "--locked", "--no-deps", "--no-default-features"],
+        &[
+            "doc",
+            "--locked",
+            "--no-deps",
+            "--no-default-features",
+            "--features",
+            "material-symbols",
+        ],
         &env,
         false,
     )?;
     command(
         root,
         "cargo",
-        &["test", "--locked", "--no-default-features", "--doc"],
+        &[
+            "test",
+            "--locked",
+            "--no-default-features",
+            "--features",
+            "material-symbols",
+            "--doc",
+        ],
         &env,
         false,
     )?;

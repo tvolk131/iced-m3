@@ -17,7 +17,10 @@ mod input;
 mod interaction_contracts;
 mod interruption_contracts;
 mod loading_progress;
+#[cfg(feature = "material-symbols")]
+mod material_symbols;
 mod modal_activity;
+mod navigation_icons;
 mod pickers;
 mod polish;
 mod surface_composition;

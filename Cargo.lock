@@ -1067,6 +1067,7 @@ version = "0.1.0-beta.5"
 dependencies = [
  "base64",
  "iced",
+ "iced-m3-material-symbols",
  "iced_test",
  "iced_tiny_skia",
  "material-colors",
@@ -1074,6 +1075,15 @@ dependencies = [
  "serde_json",
  "tiny-skia",
  "unicode-segmentation",
+]
+
+[[package]]
+name = "iced-m3-material-symbols"
+version = "0.1.0-beta.5"
+dependencies = [
+ "flate2",
+ "iced_core",
+ "serde_json",
 ]
 
 [[package]]

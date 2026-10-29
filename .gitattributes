@@ -1,0 +1,5 @@
+/.gitattributes text eol=lf
+/crates/material-symbols/assets/LICENSE text eol=lf
+/crates/material-symbols/assets/catalog.json text eol=lf
+/crates/material-symbols/assets/SHA256SUMS text eol=lf
+/crates/material-symbols/assets/symbols.bin -text

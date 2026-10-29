@@ -181,6 +181,52 @@ fn rail_destinations_are_controlled_and_disabled_items_do_not_emit() {
     ui.click("Disabled").unwrap();
     assert_eq!(ui.into_messages().collect::<Vec<_>>(), [Message::Select(2)]);
 }
+
+#[test]
+fn navigation_selects_icon_overrides_and_preserves_the_original_fallback() {
+    for layout in 0..3 {
+        for selected in [None, Some(1), Some(2), Some(3)] {
+            for disabled in [false, true] {
+                let items = [
+                    NavigationItem::new(1, "First", widget::text("outline"))
+                        .selected_icon(widget::text("filled")),
+                    NavigationItem::new(2, "Fallback", widget::text("original")),
+                    NavigationItem::new(3, "Unavailable", widget::text("disabled outline"))
+                        .selected_icon(widget::text("disabled filled"))
+                        .disabled(true),
+                ];
+                let view: Element<'_, Message> = if layout == 0 {
+                    iced_m3::navigation_bar(items, selected)
+                        .on_select(Message::Select)
+                        .disabled(disabled)
+                        .into()
+                } else {
+                    navigation_rail(items, selected)
+                        .expanded(layout == 2)
+                        .on_select(Message::Select)
+                        .disabled(disabled)
+                        .into()
+                };
+                let mut ui =
+                    Simulator::with_size(Default::default(), Size::new(600.0, 400.0), view);
+                assert_eq!(ui.find("filled").is_ok(), selected == Some(1));
+                assert_eq!(ui.find("outline").is_ok(), selected != Some(1));
+                assert!(ui.find("original").is_ok());
+                assert_eq!(ui.find("disabled filled").is_ok(), selected == Some(3));
+                assert_eq!(ui.find("disabled outline").is_ok(), selected != Some(3));
+                ui.click("First").unwrap();
+                ui.click("Fallback").unwrap();
+                ui.click("Unavailable").unwrap();
+                let expected = if disabled {
+                    vec![]
+                } else {
+                    vec![Message::Select(1), Message::Select(2)]
+                };
+                assert_eq!(ui.into_messages().collect::<Vec<_>>(), expected);
+            }
+        }
+    }
+}
 #[test]
 fn long_rails_scroll_while_footer_actions_stay_reachable() {
     let mut ui = Simulator::with_size(
