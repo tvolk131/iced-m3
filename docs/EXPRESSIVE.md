@@ -152,7 +152,9 @@ overshoot, while dialog opacity stays within its valid range. Ripples and loopin
 progress indicators still use their dedicated timing, so they are not included as
 spring comparisons.
 
-Remaining Expressive work includes theme typography/shape schemes, complete FAB
+Theme-owned typography/shape schemes are available through the
+[theming guide](THEMING.md); Expressive opt-in preserves their overrides.
+Remaining Expressive work includes complete FAB
 and split-button size families, richer toolbar/FAB-menu behavior, current slider
 and navigation variants, and a broader component-by-component fidelity audit.
 The existing general accessibility, locale and renderer boundaries still apply.

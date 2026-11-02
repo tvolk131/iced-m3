@@ -116,12 +116,12 @@ pub struct Menu<'a, Message> {
     disabled: bool,
     context: bool,
     match_width: bool,
-    field_trigger: bool,
+    field_trigger: Option<(f32, f32)>,
     item: bool,
     submenu: bool,
     active: usize,
     labels: Vec<String>,
-    surface: (f32, u8),
+    surface: (crate::ShapeScale, u8),
     plain_surface: bool,
     surface_high: bool,
     linear_focus: bool,
@@ -207,6 +207,13 @@ pub fn menu_button<'a, Message: Clone + 'a>(
     content: impl Into<Element<'a, Message>>,
     items: impl IntoIterator<Item = MenuItem<'a, Message>>,
 ) -> Menu<'a, Message> {
+    menu_button_with_typography(content, items, crate::Typography::default())
+}
+pub(crate) fn menu_button_with_typography<'a, Message: Clone + 'a>(
+    content: impl Into<Element<'a, Message>>,
+    items: impl IntoIterator<Item = MenuItem<'a, Message>>,
+    typography: crate::Typography,
+) -> Menu<'a, Message> {
     let content = widget::row![content.into(), Element::new(DropArrow)]
         .spacing(12)
         .align_y(iced::Alignment::Center);
@@ -215,7 +222,7 @@ pub fn menu_button<'a, Message: Clone + 'a>(
         .variant(ButtonVariant::Outlined)
         .on_press(Trigger::Toggle);
     // The content cannot publish input messages inside Button; map its type to the trigger enum.
-    build(trigger.into(), items, false)
+    build(trigger.into(), items, false, typography)
 }
 /// Right-click a normal interactive region to open its contextual actions.
 /// See the [component showcase](crate::guide::components::menu) for rendered family examples.
@@ -223,12 +230,25 @@ pub fn context_menu<'a, Message: Clone + 'a>(
     content: impl Into<Element<'a, Message>>,
     items: impl IntoIterator<Item = MenuItem<'a, Message>>,
 ) -> Menu<'a, Message> {
-    build(content.into().map(Trigger::Forward), items, true)
+    context_menu_with_typography(content, items, crate::Typography::default())
+}
+pub(crate) fn context_menu_with_typography<'a, Message: Clone + 'a>(
+    content: impl Into<Element<'a, Message>>,
+    items: impl IntoIterator<Item = MenuItem<'a, Message>>,
+    typography: crate::Typography,
+) -> Menu<'a, Message> {
+    build(
+        content.into().map(Trigger::Forward),
+        items,
+        true,
+        typography,
+    )
 }
 fn build<'a, Message: Clone + 'a>(
     trigger: Element<'a, Trigger<Message>>,
     items: impl IntoIterator<Item = MenuItem<'a, Message>>,
     context: bool,
+    typography: crate::Typography,
 ) -> Menu<'a, Message> {
     let items: Vec<_> = items.into_iter().collect();
     let labels = items
@@ -253,15 +273,15 @@ fn build<'a, Message: Clone + 'a>(
         if let Some(leading) = item.leading {
             row = row.push(widget::container(leading).center_x(24).center_y(24));
         }
-        let mut label = widget::column![typography(item.label, TypeScale::BodyLarge)]
+        let mut label = widget::column![typography.text(item.label, TypeScale::BodyLarge)]
             .spacing(2)
             .width(Length::Fill);
         if let Some(supporting) = item.supporting {
-            label = label.push(typography(supporting, TypeScale::BodySmall));
+            label = label.push(typography.text(supporting, TypeScale::BodySmall));
         }
         row = row.push(label);
         if let Some(shortcut) = item.shortcut {
-            row = row.push(typography(shortcut, TypeScale::BodySmall));
+            row = row.push(typography.text(shortcut, TypeScale::BodySmall));
         }
         if item.children.is_some() {
             row = row.push(Element::new(crate::glyph::Glyph::Next));
@@ -293,7 +313,12 @@ fn build<'a, Message: Clone + 'a>(
                 item.action.map(Trigger::Forward)
             });
         let submenu = item.children.is_some();
-        let mut menu = build(trigger.into(), item.children.unwrap_or_default(), false);
+        let mut menu = build(
+            trigger.into(),
+            item.children.unwrap_or_default(),
+            false,
+            typography.clone(),
+        );
         menu.item = true;
         menu.submenu = submenu;
         menu.disabled = item.disabled;
@@ -331,12 +356,12 @@ fn build<'a, Message: Clone + 'a>(
         disabled: false,
         context,
         match_width: false,
-        field_trigger: false,
+        field_trigger: None,
         item: false,
         submenu: false,
         active,
         labels,
-        surface: (4.0, 2),
+        surface: (crate::ShapeScale::ExtraSmall, 2),
         plain_surface: true,
         surface_high: false,
         linear_focus: false,
@@ -345,19 +370,20 @@ fn build<'a, Message: Clone + 'a>(
 }
 pub(crate) fn split_menu<'a, Message: Clone + 'a>(
     items: impl IntoIterator<Item = MenuItem<'a, Message>>,
+    typography: crate::Typography,
 ) -> Menu<'a, Message> {
     let trigger = Button::new(Element::new(crate::glyph::Glyph::Down))
         .padding([8, 12])
-        .corner_radius(iced::border::Radius {
-            top_left: 4.0,
-            bottom_left: 4.0,
-            top_right: 20.0,
-            bottom_right: 20.0,
-        })
+        .corner_roles([
+            crate::ShapeScale::ExtraSmall,
+            crate::ShapeScale::LargeIncreased,
+            crate::ShapeScale::LargeIncreased,
+            crate::ShapeScale::ExtraSmall,
+        ])
         .expressive(true)
         .on_press(Trigger::Toggle)
         .into();
-    build(trigger, items, false)
+    build(trigger, items, false, typography)
 }
 /// An explicitly opened rich hint. Its actions dismiss it; Escape and outside
 /// clicks dismiss it without a message. Passive trigger content is wrapped in a button.
@@ -378,12 +404,12 @@ pub(crate) fn rich_popup<'a, Message: Clone + 'a>(
         disabled: false,
         context: false,
         match_width: false,
-        field_trigger: false,
+        field_trigger: None,
         item: false,
         submenu: false,
         active: 0,
         labels: Vec::new(),
-        surface: (12.0, 2),
+        surface: (crate::ShapeScale::Medium, 2),
         plain_surface: false,
         surface_high: false,
         linear_focus: true,
@@ -391,7 +417,7 @@ pub(crate) fn rich_popup<'a, Message: Clone + 'a>(
     }
 }
 impl<'a, Message> Menu<'a, Message> {
-    pub(crate) fn surface(mut self, radius: f32, elevation: u8, high: bool) -> Self {
+    pub(crate) fn surface(mut self, radius: crate::ShapeScale, elevation: u8, high: bool) -> Self {
         self.surface = (radius, elevation);
         self.surface_high = high;
         self
@@ -750,7 +776,7 @@ impl<Message: Clone> Widget<Message, Theme, Renderer> for Menu<'_, Message> {
             );
         }
         let mut disabled_theme = theme.clone();
-        if self.disabled && !self.context && !self.item && !self.field_trigger {
+        if self.disabled && !self.context && !self.item && self.field_trigger.is_none() {
             disabled_theme.colors.primary = crate::theme::alpha(theme.colors.on_surface, 0.38);
             disabled_theme.colors.on_surface = disabled_theme.colors.primary;
             disabled_theme.colors.outline = crate::theme::alpha(theme.colors.on_surface, 0.12);
@@ -839,10 +865,10 @@ impl<Message: Clone> Widget<Message, Theme, Renderer> for Menu<'_, Message> {
             state.popup.open = false;
             return None;
         }
-        let trigger_bounds = if self.field_trigger {
+        let trigger_bounds = if let Some((inset, height)) = self.field_trigger {
             Rectangle {
-                y: layout.bounds().y + 8.0,
-                height: tokens::size::FIELD,
+                y: layout.bounds().y + inset,
+                height,
                 ..layout.bounds()
             }
         } else {
@@ -899,6 +925,7 @@ impl<Value> SelectOption<Value> {
 }
 /// See the [rendered examples](crate::guide::components::select).
 pub struct Select<'a, Value, Message> {
+    typography: crate::Typography,
     label: String,
     options: Vec<SelectOption<Value>>,
     selected: Option<Value>,
@@ -918,6 +945,7 @@ pub fn select<'a, Value, Message>(
     selected: Option<Value>,
 ) -> Select<'a, Value, Message> {
     Select {
+        typography: crate::Typography::default(),
         label: label.into(),
         options: options.into_iter().collect(),
         selected,
@@ -932,6 +960,10 @@ pub fn select<'a, Value, Message>(
     }
 }
 impl<'a, Value, Message> Select<'a, Value, Message> {
+    pub(crate) fn with_typography(mut self, typography: crate::Typography) -> Self {
+        self.typography = typography;
+        self
+    }
     /// Set an explicit trigger fill. Outlined selects are transparent by default,
     /// with a real gap in the outline around the floating label.
     pub fn background(mut self, color: iced::Color) -> Self {
@@ -1013,6 +1045,7 @@ impl<'a, Value: Clone + PartialEq + 'a, Message: Clone + 'a> From<Select<'a, Val
             separator: false,
         });
         let mut trigger = crate::text_field(&select.label, &current)
+            .with_typography(select.typography.clone())
             .variant(select.variant)
             .width(select.width)
             .trailing(Element::new(DropArrow))
@@ -1030,11 +1063,12 @@ impl<'a, Value: Clone + PartialEq + 'a, Message: Clone + 'a> From<Select<'a, Val
                 trigger.supporting_text(text)
             };
         }
-        let mut menu = build(trigger.into(), items, false)
+        let field_geometry = (trigger.inset(), trigger.field_height());
+        let mut menu = build(trigger.into(), items, false, select.typography)
             .width(select.width)
             .disabled(disabled);
         menu.match_width = true;
-        menu.field_trigger = true;
+        menu.field_trigger = Some(field_geometry);
         Element::from(menu).map(move |event| match event {
             Selection::Select(value) => {
                 select.handler.as_ref().expect("enabled select handler")(value)

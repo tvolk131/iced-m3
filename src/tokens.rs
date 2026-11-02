@@ -84,6 +84,23 @@ pub enum TypeScale {
 }
 #[allow(non_upper_case_globals)]
 impl TypeScale {
+    pub const ALL: [Self; 15] = [
+        Self::DisplayLarge,
+        Self::DisplayMedium,
+        Self::DisplaySmall,
+        Self::HeadlineLarge,
+        Self::HeadlineMedium,
+        Self::HeadlineSmall,
+        Self::TitleLarge,
+        Self::TitleMedium,
+        Self::TitleSmall,
+        Self::BodyLarge,
+        Self::BodyMedium,
+        Self::BodySmall,
+        Self::LabelLarge,
+        Self::LabelMedium,
+        Self::LabelSmall,
+    ];
     pub const Display: Self = Self::DisplayMedium;
     pub const Headline: Self = Self::HeadlineMedium;
     pub const Title: Self = Self::TitleLarge;

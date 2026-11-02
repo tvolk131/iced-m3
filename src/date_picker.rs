@@ -1,7 +1,5 @@
 //! Controlled Gregorian calendar and ISO date input. No timezone conversion occurs.
-use crate::{
-    ButtonVariant, Element, TextField, Theme, TypeScale, button, focus, text_field, typography,
-};
+use crate::{ButtonVariant, Element, TextField, Theme, TypeScale, focus, text_field};
 use iced::{Border, Length, widget};
 use std::{fmt, str::FromStr};
 mod keyboard;
@@ -185,6 +183,7 @@ impl DateSelection {
 }
 /// See the [rendered examples](crate::guide::components::date_picker).
 pub struct DatePicker<'a, Message> {
+    typography: crate::Typography,
     month: Date,
     selection: DateSelection,
     today: Option<Date>,
@@ -210,6 +209,7 @@ pub struct DatePicker<'a, Message> {
 #[cfg_attr(iced_m3_doc_media, doc = include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/docs/generated/date_picker-primary.md")))]
 pub fn date_picker<'a, Message>(month: Date, selection: DateSelection) -> DatePicker<'a, Message> {
     DatePicker {
+        typography: crate::Typography::default(),
         month: month.first_of_month(),
         selection,
         today: None,
@@ -234,6 +234,10 @@ pub fn date_picker<'a, Message>(month: Date, selection: DateSelection) -> DatePi
     }
 }
 impl<'a, Message> DatePicker<'a, Message> {
+    pub(crate) fn with_typography(mut self, typography: crate::Typography) -> Self {
+        self.typography = typography;
+        self
+    }
     /// Add an OK action for a complete, valid selection. Calendar edits still
     /// use `on_select`; keep a separate application draft for transactional use.
     /// Manual OK/Enter sends this callback instead of `on_select`.
@@ -358,6 +362,7 @@ const MONTHS: [&str; 12] = [
 ];
 impl<'a, Message: Clone + 'a> From<DatePicker<'a, Message>> for Element<'a, Message> {
     fn from(mut picker: DatePicker<'a, Message>) -> Self {
+        let widgets = picker.typography.widgets();
         let confirmed = if picker.input_mode {
             picker.input_selection().ok()
         } else {
@@ -399,7 +404,8 @@ impl<'a, Message: Clone + 'a> From<DatePicker<'a, Message>> for Element<'a, Mess
                         .map(|_| "End date must be on or after start date".to_owned())
                 })
             };
-            let mut start = date_input(if range { "Start date" } else { "Date" }, &picker.input);
+            let mut start =
+                widgets.date_input(if range { "Start date" } else { "Date" }, &picker.input);
             if let Some(error) = start_error {
                 start = start.error(error);
             }
@@ -411,7 +417,7 @@ impl<'a, Message: Clone + 'a> From<DatePicker<'a, Message>> for Element<'a, Mess
             }
             let mut fields = widget::column![start].spacing(16);
             if range {
-                let mut end = date_input("End date", &picker.end_input);
+                let mut end = widgets.date_input("End date", &picker.end_input);
                 if let Some(error) = end_error {
                     end = end.error(error);
                 }
@@ -495,14 +501,21 @@ impl<'a, Message: Clone + 'a> From<DatePicker<'a, Message>> for Element<'a, Mess
             )
         };
         let month_label: Element<'a, Message> = if let Some(message) = picker.on_toggle_years {
-            button(label)
+            widgets
+                .button(label)
                 .variant(ButtonVariant::Text)
                 .padding([8, 0])
                 .on_press(message)
                 .into()
         } else {
-            widget::container(typography(label, TypeScale::TitleSmall))
-                .center_y(40)
+            widget::container(widgets.typography(label, TypeScale::TitleSmall))
+                .center_y(
+                    picker
+                        .typography
+                        .style(TypeScale::TitleSmall)
+                        .line_height
+                        .max(40.0),
+                )
                 .into()
         };
         let heading = widget::row![
@@ -548,7 +561,7 @@ impl<'a, Message: Clone + 'a> From<DatePicker<'a, Message>> for Element<'a, Mess
                     }
                     line = line.push(
                         widget::container(
-                            crate::Button::new(typography(
+                            crate::Button::new(widgets.typography(
                                 if year <= 9999 {
                                     year.to_string()
                                 } else {
@@ -583,7 +596,7 @@ impl<'a, Message: Clone + 'a> From<DatePicker<'a, Message>> for Element<'a, Mess
             let mut weekdays = widget::Row::new();
             for i in 0..7 {
                 weekdays = weekdays.push(
-                    widget::container(typography(
+                    widget::container(widgets.typography(
                         ["S", "M", "T", "W", "T", "F", "S"]
                             [(i + picker.first_weekday as usize) % 7],
                         TypeScale::BodyLarge,
@@ -625,39 +638,40 @@ impl<'a, Message: Clone + 'a> From<DatePicker<'a, Message>> for Element<'a, Mess
                         }
                         enabled_count += 1;
                     }
-                    let day =
-                        crate::Button::new(typography(date.day.to_string(), TypeScale::BodyLarge))
-                            .width(40)
-                            .height(40)
-                            .minimum_height(40.0)
-                            .padding(0)
-                            .variant(if endpoint {
-                                ButtonVariant::Filled
-                            } else if picker.today == Some(date) {
-                                ButtonVariant::Outlined
+                    let day = crate::Button::new(
+                        widgets.typography(date.day.to_string(), TypeScale::BodyLarge),
+                    )
+                    .width(40)
+                    .height(40)
+                    .minimum_height(40.0)
+                    .padding(0)
+                    .variant(if endpoint {
+                        ButtonVariant::Filled
+                    } else if picker.today == Some(date) {
+                        ButtonVariant::Outlined
+                    } else {
+                        ButtonVariant::Text
+                    })
+                    .outline_color(|theme, _| theme.colors.primary)
+                    .palette(move |theme| {
+                        (
+                            if endpoint {
+                                theme.colors.primary
                             } else {
-                                ButtonVariant::Text
-                            })
-                            .outline_color(|theme, _| theme.colors.primary)
-                            .palette(move |theme| {
-                                (
-                                    if endpoint {
-                                        theme.colors.primary
-                                    } else {
-                                        iced::Color::TRANSPARENT
-                                    },
-                                    if endpoint {
-                                        theme.colors.on_primary
-                                    } else if inside {
-                                        theme.colors.on_secondary_container
-                                    } else if picker.today == Some(date) {
-                                        theme.colors.primary
-                                    } else {
-                                        theme.colors.on_surface
-                                    },
-                                )
-                            })
-                            .on_press_maybe(message);
+                                iced::Color::TRANSPARENT
+                            },
+                            if endpoint {
+                                theme.colors.on_primary
+                            } else if inside {
+                                theme.colors.on_secondary_container
+                            } else if picker.today == Some(date) {
+                                theme.colors.primary
+                            } else {
+                                theme.colors.on_surface
+                            },
+                        )
+                    })
+                    .on_press_maybe(message);
                     if enabled && picker.on_select.is_some() {
                         dates.push(date);
                     }
@@ -710,41 +724,43 @@ impl<'a, Message: Clone + 'a> From<DatePicker<'a, Message>> for Element<'a, Mess
             })
         };
         let toggle: Option<Element<'a, Message>> = picker.on_toggle_input.map(|message| {
-            crate::tooltip(
-                crate::icon_button(Element::new(if picker.input_mode {
-                    crate::glyph::Glyph::Calendar
-                } else {
-                    crate::glyph::Glyph::Edit
-                }))
-                .on_press(message),
-                if picker.input_mode {
-                    "Choose from calendar"
-                } else {
-                    "Type a date"
-                },
-            )
-            .into()
+            widgets
+                .tooltip(
+                    crate::icon_button(Element::new(if picker.input_mode {
+                        crate::glyph::Glyph::Calendar
+                    } else {
+                        crate::glyph::Glyph::Edit
+                    }))
+                    .on_press(message),
+                    if picker.input_mode {
+                        "Choose from calendar"
+                    } else {
+                        "Type a date"
+                    },
+                )
+                .into()
         });
         let mut content = widget::Column::new().spacing(12);
         let header = if !picker.compact {
             let single = matches!(picker.selection, DateSelection::Single(_));
-            let title = typography(picker.title, TypeScale::LabelLarge).style(|theme: &Theme| {
-                widget::text::Style {
+            let title = widgets
+                .typography(picker.title, TypeScale::LabelLarge)
+                .style(|theme: &Theme| widget::text::Style {
                     color: Some(theme.colors.on_surface_variant),
-                }
-            });
-            let headline = typography(
-                headline,
-                if single {
-                    TypeScale::HeadlineLarge
-                } else {
-                    TypeScale::TitleLarge
-                },
-            )
-            .width(Length::Fill)
-            .style(|theme: &Theme| widget::text::Style {
-                color: Some(theme.colors.on_surface_variant),
-            });
+                });
+            let headline = widgets
+                .typography(
+                    headline,
+                    if single {
+                        TypeScale::HeadlineLarge
+                    } else {
+                        TypeScale::TitleLarge
+                    },
+                )
+                .width(Length::Fill)
+                .style(|theme: &Theme| widget::text::Style {
+                    color: Some(theme.colors.on_surface_variant),
+                });
             let row = widget::row![headline].align_y(iced::Alignment::Center);
             let row = if let Some(toggle) = toggle {
                 row.push(toggle)
@@ -764,15 +780,16 @@ impl<'a, Message: Clone + 'a> From<DatePicker<'a, Message>> for Element<'a, Mess
             if let Some(toggle) = toggle {
                 content = content.push(
                     widget::row![
-                        typography(
-                            if picker.input_mode {
-                                "Enter date"
-                            } else {
-                                "Choose date"
-                            },
-                            TypeScale::TitleSmall
-                        )
-                        .width(Length::Fill),
+                        widgets
+                            .typography(
+                                if picker.input_mode {
+                                    "Enter date"
+                                } else {
+                                    "Choose date"
+                                },
+                                TypeScale::TitleSmall
+                            )
+                            .width(Length::Fill),
                         toggle
                     ]
                     .align_y(iced::Alignment::Center),
@@ -789,14 +806,16 @@ impl<'a, Message: Clone + 'a> From<DatePicker<'a, Message>> for Element<'a, Mess
             let mut actions = widget::row![widget::space().width(Length::Fill)].spacing(8);
             if let Some(message) = picker.on_cancel {
                 actions = actions.push(
-                    button("Cancel")
+                    widgets
+                        .button("Cancel")
                         .variant(ButtonVariant::Text)
                         .on_press(message),
                 );
             }
             if has_confirm || picker.input_mode {
                 actions = actions.push(
-                    button(if has_confirm { "OK" } else { "Apply" })
+                    widgets
+                        .button(if has_confirm { "OK" } else { "Apply" })
                         .variant(ButtonVariant::Text)
                         .on_press_maybe(submit),
                 );
@@ -816,7 +835,11 @@ impl<'a, Message: Clone + 'a> From<DatePicker<'a, Message>> for Element<'a, Mess
                     background: Some(theme.colors.surface_container_high.into()),
                     text_color: Some(theme.colors.on_surface),
                     border: Border {
-                        radius: if picker.compact { 16.0 } else { 28.0 }.into(),
+                        radius: theme.shapes.corners(if picker.compact {
+                            crate::ShapeScale::Large
+                        } else {
+                            crate::ShapeScale::ExtraLarge
+                        }),
                         ..Default::default()
                     },
                     ..Default::default()
@@ -899,6 +922,7 @@ pub fn docked_date_picker<'a, Message: Clone + 'a>(
 ) -> Element<'a, Message> {
     let confirm_required = picker.on_confirm.is_some();
     let picker = DatePicker {
+        typography: picker.typography,
         month: picker.month,
         selection: picker.selection,
         today: picker.today,
@@ -940,7 +964,7 @@ pub fn docked_date_picker<'a, Message: Clone + 'a>(
     };
     let trigger = trigger.into().map(PopupEvent::Keep);
     let body: Element<'a, PopupEvent<Message>> = picker.into();
-    let content = crate::elevation::elevated(
+    let content = crate::elevation::themed(
         widget::container(crate::staged::part(
             widget::scrollable(body).width(Length::Fill),
             crate::staged::Part::Popup(true),
@@ -948,17 +972,17 @@ pub fn docked_date_picker<'a, Message: Clone + 'a>(
         .style(|theme: &Theme| widget::container::Style {
             background: Some(theme.colors.surface_container_high.into()),
             border: Border {
-                radius: 16.0.into(),
+                radius: theme.shapes.corners(crate::ShapeScale::Large),
                 ..Default::default()
             },
 
             ..Default::default()
         }),
         3.0,
-        16.0,
+        crate::ShapeScale::Large,
     );
     let popup: Element<'a, PopupEvent<Message>> = crate::menu::rich_popup(trigger, content)
-        .surface(16.0, 3, true)
+        .surface(crate::ShapeScale::Large, 3, true)
         .width(328.0)
         .max_height(600.0)
         .close_when(|event| matches!(event, PopupEvent::Select(_, true)))

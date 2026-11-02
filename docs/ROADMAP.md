@@ -2,8 +2,8 @@
 
 Current Expressive follow-up: [shared springs and action recipes](EXPRESSIVE.md).
 Earlier checked milestones below record family coverage, not complete Expressive
-fidelity; the new guide records remaining typography/shape, FAB, toolbar, slider
-and navigation work.
+fidelity. Theme-owned [typography and rounded shapes](THEMING.md) are available;
+the Expressive guide records remaining FAB, toolbar, slider and navigation work.
 
 Authorized sequence: adaptive navigation → date/time pickers → remaining variants
 and carousel → visual/Expressive refinement, with keyboard and accessibility work

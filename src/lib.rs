@@ -23,7 +23,7 @@
 //! | Actions | [button](mod@button), [icon_button], [fab](mod@fab), [chip](mod@chip), [segmented] |
 //! | Input | [text_field](mod@text_field), [checkbox](mod@checkbox), [switch], [radio](mod@radio), [menu::select], [slider](mod@slider), [range_slider](mod@range_slider), [date_picker](mod@date_picker), [time_picker](mod@time_picker) |
 //! | Navigation | [app_bar](mod@app_bar), [tabs](mod@tabs), [navigation], [search], [menu](mod@menu) |
-//! | Content | [surface], [variants::card], [list](mod@list), [carousel](mod@carousel), [typography], [divider] |
+//! | Content | [surface], [variants::card], [list](mod@list), [carousel](mod@carousel), [typography()], [divider] |
 //! | Feedback | [dialog](mod@dialog), [sheet], [snackbar](mod@snackbar), [tooltip](mod@tooltip), [badge], [progress], [loading] |
 //! | Foundations | [theme], [tokens], [fonts], [icon](mod@icon), [focus], [elevation] |
 //! | Expressive previews | [expressive] |
@@ -92,6 +92,7 @@ mod reveal;
 mod ripple;
 pub mod search;
 pub mod segmented;
+pub mod shapes;
 pub mod sheet;
 pub mod slider;
 pub mod snackbar;
@@ -102,11 +103,14 @@ pub mod theme;
 pub mod time_picker;
 pub mod tokens;
 pub mod tooltip;
+pub mod typography;
 pub mod variants;
 #[cfg(test)]
 #[path = "../tests/visual/mod.rs"]
 mod visual_tests;
 mod widget_delegate;
+pub mod widgets;
+pub use widgets::Widgets;
 
 pub use app_bar::{AppBar, AppBarVariant, app_bar};
 pub use fab::{Fab, FabColor, FabSize, extended_fab, fab};
@@ -138,9 +142,11 @@ pub use components::{
 };
 pub use dialog::{Dialog, FullScreenDialog, dialog, full_screen_dialog};
 pub use motion_scheme::{MotionScheme, MotionSpeed, Spring};
+pub use shapes::{ShapeScale, ShapeScheme};
 pub use text_field::{TextField, TextFieldVariant, text_field};
 pub use theme::{ColorScheme, Theme};
 pub use tokens::TypeScale;
+pub use typography::{TypeStyle, Typography};
 
 /// An ordinary iced element using the Material theme and iced's default renderer.
 pub type Element<'a, Message> = iced::Element<'a, Message, Theme>;

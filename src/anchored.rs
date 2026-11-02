@@ -201,7 +201,7 @@ pub(crate) struct Anchored<'a, 'b, Message> {
     pub close_when: Option<&'a dyn Fn(&Message) -> bool>,
     pub labels: &'a [String],
     pub reveal: Option<f32>,
-    pub surface: Option<(f32, u8)>,
+    pub surface: Option<(crate::ShapeScale, u8)>,
     pub plain_surface: bool,
     pub surface_high: bool,
     pub linear_focus: bool,
@@ -594,7 +594,8 @@ impl<Message: Clone> Overlay<Message, Theme, Renderer> for Anchored<'_, '_, Mess
                 height,
                 ..bounds
             };
-            let (radius, elevation) = self.surface.unwrap_or((4.0, 2));
+            let (radius, elevation) = self.surface.unwrap_or((crate::ShapeScale::ExtraSmall, 2));
+            let radius = theme.shapes.radius(radius);
             let fallback = crate::elevation::Cache::default();
             let cache = self.menu.as_ref().map_or(&fallback, |state| &state.shadow);
             let paper = self.menu.as_ref().map_or(1.0, |s| s.presence.paper.value);
@@ -629,9 +630,11 @@ impl<Message: Clone> Overlay<Message, Theme, Renderer> for Anchored<'_, '_, Mess
                         paper,
                     ),
                 );
-                // Rich content has at least 16px horizontal padding; keep its
-                // rectangular backgrounds/fades away from the rounded edge.
-                let inset = if self.plain_surface { 0. } else { radius };
+                let inset = if self.plain_surface {
+                    0.0
+                } else {
+                    radius.min(16.0)
+                };
                 let content_clip = Rectangle {
                     x: reveal.x + inset,
                     width: (reveal.width - 2. * inset).max(0.),
@@ -669,6 +672,7 @@ impl<Message: Clone> Overlay<Message, Theme, Renderer> for Anchored<'_, '_, Mess
         if progress < 1.0 {
             clipped_theme.shadows = false;
             if let Some((radius, elevation)) = self.surface {
+                let radius = theme.shapes.radius(radius);
                 let fallback = crate::elevation::Cache::default();
                 let cache = self.menu.as_ref().map_or(&fallback, |state| &state.shadow);
                 crate::elevation::draw_resizing(

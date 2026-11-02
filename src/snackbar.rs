@@ -1,5 +1,5 @@
 //! Transient feedback hosted inside the root modal host. No application timer.
-use crate::{ButtonVariant, Element, Theme, TypeScale, button, tokens, typography};
+use crate::{ButtonVariant, Element, Theme, TypeScale, button, tokens};
 use iced::advanced::{
     Clipboard, Layout, Shell, Widget, layout, overlay, renderer,
     widget::{Operation, Tree, tree},
@@ -9,6 +9,7 @@ use iced::{Color, Event, Length, Point, Rectangle, Renderer, Size, Vector, mouse
 
 /// See the [rendered examples](crate::guide::components::snackbar).
 pub struct Snackbar<Message> {
+    typography: crate::Typography,
     text: String,
     id: u64,
     action: Option<(String, Message)>,
@@ -23,6 +24,7 @@ pub struct Snackbar<Message> {
 #[cfg_attr(iced_m3_doc_media, doc = include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/docs/generated/snackbar-primary.md")))]
 pub fn snackbar<Message>(text: impl Into<String>) -> Snackbar<Message> {
     Snackbar {
+        typography: crate::Typography::default(),
         text: text.into(),
         id: 0,
         action: None,
@@ -33,6 +35,10 @@ pub fn snackbar<Message>(text: impl Into<String>) -> Snackbar<Message> {
     }
 }
 impl<Message> Snackbar<Message> {
+    pub(crate) fn with_typography(mut self, typography: crate::Typography) -> Self {
+        self.typography = typography;
+        self
+    }
     /// Keep the current notice mounted with `visible(false)` for animated removal.
     /// Passing `None` to the host removes it immediately.
     pub fn visible(mut self, visible: bool) -> Self {
@@ -95,22 +101,27 @@ pub fn host<'a, Message: Clone + 'a>(
 ) -> Element<'a, Message> {
     let notice = notice.map(|notice| {
         let mut row = widget::row![
-            widget::container(typography(notice.text.clone(), TypeScale::BodyMedium))
-                .padding([10, 0])
-                .width(Length::Fill)
+            widget::container(
+                notice
+                    .typography
+                    .text(notice.text.clone(), TypeScale::BodyMedium)
+            )
+            .padding([10, 0])
+            .width(Length::Fill)
         ]
         .spacing(8)
         .align_y(iced::Alignment::Center);
         if let Some((label, message)) = notice.action {
             row = row.push(
                 button(label)
+                    .with_typography(notice.typography.clone())
                     .variant(ButtonVariant::Text)
                     .padding([10, 12])
                     .palette(|theme| (Color::TRANSPARENT, theme.colors.inverse_primary))
                     .on_press(message),
             );
         }
-        let bar = crate::elevation::elevated(
+        let bar = crate::elevation::themed(
             widget::container(row)
                 .padding([4, 16])
                 .width(Length::Fill)
@@ -118,14 +129,14 @@ pub fn host<'a, Message: Clone + 'a>(
                     background: Some(theme.colors.inverse_surface.into()),
                     text_color: Some(theme.colors.inverse_on_surface),
                     border: iced::Border {
-                        radius: 4.0.into(),
+                        radius: theme.shapes.corners(crate::ShapeScale::ExtraSmall),
                         ..Default::default()
                     },
 
                     ..Default::default()
                 }),
             3.0,
-            4.0,
+            crate::ShapeScale::ExtraSmall,
         );
         Notice {
             bar,

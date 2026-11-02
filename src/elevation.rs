@@ -432,12 +432,26 @@ pub fn elevated<'a, Message: 'a>(
         content: content.into(),
         level,
         radius: radius.into(),
+        role: None,
     })
 }
 struct Elevated<'a, Message> {
     content: Element<'a, Message>,
     level: f32,
     radius: iced::border::Radius,
+    role: Option<crate::ShapeScale>,
+}
+pub(crate) fn themed<'a, Message: 'a>(
+    content: impl Into<Element<'a, Message>>,
+    level: f32,
+    role: crate::ShapeScale,
+) -> Element<'a, Message> {
+    Element::new(Elevated {
+        content: content.into(),
+        level,
+        radius: Default::default(),
+        role: Some(role),
+    })
 }
 impl<Message> Widget<Message, Theme, Renderer> for Elevated<'_, Message> {
     crate::widget_delegate::delegate!(
@@ -475,7 +489,8 @@ impl<Message> Widget<Message, Theme, Renderer> for Elevated<'_, Message> {
             r,
             th,
             l.bounds(),
-            self.radius,
+            self.role
+                .map_or(self.radius, |role| th.shapes.corners(role)),
             self.level,
             *v,
             t.state.downcast_ref::<Cache>(),

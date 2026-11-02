@@ -1,9 +1,10 @@
 //! Material list rows with independently interactive leading and trailing content.
-use crate::{Button, ButtonVariant, Element, Theme, TypeScale, tokens, typography};
+use crate::{Button, ButtonVariant, Element, Theme, TypeScale, tokens};
 use iced::{Color, Length, widget};
 
 /// See the [rendered examples](crate::guide::components::list_item).
 pub struct ListItem<'a, Message> {
+    typography: crate::Typography,
     headline: String,
     supporting: Option<String>,
     overline: Option<String>,
@@ -17,6 +18,7 @@ pub struct ListItem<'a, Message> {
 #[cfg_attr(iced_m3_doc_media, doc = include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/docs/generated/list_item-primary.md")))]
 pub fn list_item<'a, Message>(headline: impl Into<String>) -> ListItem<'a, Message> {
     ListItem {
+        typography: crate::Typography::default(),
         headline: headline.into(),
         supporting: None,
         overline: None,
@@ -29,6 +31,10 @@ pub fn list_item<'a, Message>(headline: impl Into<String>) -> ListItem<'a, Messa
     }
 }
 impl<'a, Message> ListItem<'a, Message> {
+    pub(crate) fn with_typography(mut self, typography: crate::Typography) -> Self {
+        self.typography = typography;
+        self
+    }
     pub fn supporting_text(mut self, text: impl Into<String>) -> Self {
         self.supporting = Some(text.into());
         self
@@ -89,28 +95,26 @@ impl<'a, Message: Clone + 'a> From<ListItem<'a, Message>> for Element<'a, Messag
         };
         let mut text = widget::Column::new().width(Length::Fill);
         if let Some(overline) = item.overline {
-            text = text.push(
-                typography(overline, TypeScale::LabelSmall).style(move |theme| {
-                    widget::text::Style {
-                        color: Some(color(theme, true)),
-                    }
-                }),
-            );
+            text = text.push(item.typography.text(overline, TypeScale::LabelSmall).style(
+                move |theme| widget::text::Style {
+                    color: Some(color(theme, true)),
+                },
+            ));
         }
         text = text.push(
-            typography(item.headline, TypeScale::BodyLarge).style(move |theme| {
-                widget::text::Style {
+            item.typography
+                .text(item.headline, TypeScale::BodyLarge)
+                .style(move |theme| widget::text::Style {
                     color: Some(color(theme, false)),
-                }
-            }),
+                }),
         );
         if let Some(supporting) = item.supporting {
             text = text.push(
-                typography(supporting, TypeScale::BodyMedium).style(move |theme| {
-                    widget::text::Style {
+                item.typography
+                    .text(supporting, TypeScale::BodyMedium)
+                    .style(move |theme| widget::text::Style {
                         color: Some(color(theme, true)),
-                    }
-                }),
+                    }),
             );
         }
         let mut row = widget::Row::new()

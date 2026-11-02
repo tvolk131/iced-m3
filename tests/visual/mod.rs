@@ -25,6 +25,7 @@ mod pickers;
 mod polish;
 mod surface_composition;
 mod switch_motion;
+mod theming;
 use crate::{Element, Theme, TypeScale, snackbar, typography};
 use iced::{Length, Size, widget};
 use std::time::Instant;

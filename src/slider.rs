@@ -1,5 +1,5 @@
 //! A controlled, single-thumb baseline Material slider.
-use crate::{Element, Theme, TypeScale, motion::Transition, theme::alpha, tokens, typography};
+use crate::{Element, Theme, TypeScale, motion::Transition, theme::alpha, tokens};
 use iced::advanced::{
     Clipboard, Layout, Shell, Widget, layout, renderer,
     widget::{Tree, tree},
@@ -9,6 +9,7 @@ use std::{cell::Cell, ops::RangeInclusive};
 
 /// See the [rendered examples](crate::guide::components::slider) for appearance variants and interaction.
 pub struct Slider<'a, Message> {
+    typography: crate::Typography,
     range: RangeInclusive<f32>,
     value: f32,
     step: Option<f32>,
@@ -24,6 +25,7 @@ pub struct Slider<'a, Message> {
 #[cfg_attr(iced_m3_doc_media, doc = include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/docs/generated/slider-primary.md")))]
 pub fn slider<'a, Message>(range: RangeInclusive<f32>, value: f32) -> Slider<'a, Message> {
     Slider {
+        typography: crate::Typography::default(),
         range,
         value,
         step: None,
@@ -37,6 +39,10 @@ pub fn slider<'a, Message>(range: RangeInclusive<f32>, value: f32) -> Slider<'a,
     }
 }
 impl<'a, Message> Slider<'a, Message> {
+    pub(crate) fn with_typography(mut self, typography: crate::Typography) -> Self {
+        self.typography = typography;
+        self
+    }
     pub fn on_change(mut self, handler: impl Fn(f32) -> Message + 'a) -> Self {
         self.on_change = Some(Box::new(handler));
         self
@@ -157,7 +163,8 @@ impl<'a, Message> Slider<'a, Message> {
                 .trim_end_matches('.')
                 .to_owned()
         });
-        typography(label, TypeScale::LabelMedium)
+        self.typography
+            .text(label, TypeScale::LabelMedium)
             .wrapping(iced::widget::text::Wrapping::None)
             .into()
     }
@@ -211,7 +218,7 @@ pub(crate) fn draw_label<Message>(
     );
 }
 pub(crate) fn label_bounds(text: Size, bounds: Rectangle, x: f32, track_y: f32) -> Rectangle {
-    let height = tokens::size::SLIDER_LABEL;
+    let height = tokens::size::SLIDER_LABEL.max(text.height + 12.0);
     let width = (text.width + 8.0).max(height).min(bounds.width);
     Rectangle {
         x: (x - width / 2.0).clamp(bounds.x, (bounds.x + bounds.width - width).max(bounds.x)),
@@ -318,6 +325,9 @@ impl<'a, Message: Clone + 'a> Widget<Message, Theme, Renderer> for Slider<'a, Me
                 tokens::size::SLIDER_TARGET
                     + if self.labeled {
                         tokens::size::SLIDER_LABEL_SPACE
+                            + (self.typography.style(TypeScale::LabelMedium).line_height + 12.0
+                                - tokens::size::SLIDER_LABEL)
+                                .max(0.0)
                     } else {
                         0.0
                     },
@@ -340,7 +350,11 @@ impl<'a, Message: Clone + 'a> Widget<Message, Theme, Renderer> for Slider<'a, Me
             renderer,
             &layout::Limits::new(
                 Size::ZERO,
-                Size::new((size.width - 16.0).max(0.0), tokens::size::SLIDER_LABEL),
+                Size::new(
+                    (size.width - 16.0).max(0.0),
+                    tokens::size::SLIDER_LABEL
+                        .max(self.typography.style(TypeScale::LabelMedium).line_height),
+                ),
             ),
         );
         layout::Node::with_children(size, vec![bubble])

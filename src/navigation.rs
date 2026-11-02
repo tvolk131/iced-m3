@@ -1,5 +1,5 @@
 //! Controlled desktop navigation rail. Page content and routing belong to the app.
-use crate::{Button, ButtonVariant, Element, Theme, TypeScale, badge, tokens, typography};
+use crate::{Button, ButtonVariant, Element, Theme, TypeScale, tokens};
 use iced::{Border, Color, Length, widget};
 pub struct NavigationItem<'a, Value, Message> {
     value: Value,
@@ -43,6 +43,7 @@ impl<'a, Value, Message> NavigationItem<'a, Value, Message> {
 }
 /// See the [rendered examples](crate::guide::components::navigation_rail).
 pub struct NavigationRail<'a, Value, Message> {
+    typography: crate::Typography,
     items: Vec<NavigationItem<'a, Value, Message>>,
     selected: Option<Value>,
     handler: Option<Box<dyn Fn(Value) -> Message + 'a>>,
@@ -58,6 +59,7 @@ pub fn navigation_rail<'a, Value, Message>(
     selected: Option<Value>,
 ) -> NavigationRail<'a, Value, Message> {
     NavigationRail {
+        typography: crate::Typography::default(),
         items: items.into_iter().collect(),
         selected,
         handler: None,
@@ -69,6 +71,10 @@ pub fn navigation_rail<'a, Value, Message>(
     }
 }
 impl<'a, Value, Message> NavigationRail<'a, Value, Message> {
+    pub(crate) fn with_typography(mut self, typography: crate::Typography) -> Self {
+        self.typography = typography;
+        self
+    }
     /// Expanded 280px rail with horizontal destinations.
     pub fn expanded(mut self, expanded: bool) -> Self {
         self.expanded = expanded;
@@ -126,6 +132,7 @@ pub fn adaptive_navigation<'a, Message: 'a>(
 /// Bottom navigation for three to five top-level destinations.
 /// See the [rendered examples](crate::guide::components::navigation_bar).
 pub struct NavigationBar<'a, Value, Message> {
+    typography: crate::Typography,
     items: Vec<NavigationItem<'a, Value, Message>>,
     selected: Option<Value>,
     handler: Option<Box<dyn Fn(Value) -> Message + 'a>>,
@@ -137,6 +144,7 @@ pub fn navigation_bar<'a, Value, Message>(
     selected: Option<Value>,
 ) -> NavigationBar<'a, Value, Message> {
     NavigationBar {
+        typography: crate::Typography::default(),
         items: items.into_iter().collect(),
         selected,
         handler: None,
@@ -144,6 +152,10 @@ pub fn navigation_bar<'a, Value, Message>(
     }
 }
 impl<'a, Value, Message> NavigationBar<'a, Value, Message> {
+    pub(crate) fn with_typography(mut self, typography: crate::Typography) -> Self {
+        self.typography = typography;
+        self
+    }
     pub fn on_select(mut self, handler: impl Fn(Value) -> Message + 'a) -> Self {
         self.handler = Some(Box::new(handler));
         self
@@ -158,6 +170,7 @@ fn destination<'a, Message: Clone + 'a>(
     selected: bool,
     message: Option<Message>,
     layout: NavigationLayout,
+    typography: &crate::Typography,
 ) -> Element<'a, Message> {
     let expanded = layout == NavigationLayout::ExpandedRail;
     let enabled = message.is_some();
@@ -204,7 +217,7 @@ fn destination<'a, Message: Clone + 'a>(
     let icon: Element<'a, Message> = if let Some(count) = item.badge {
         widget::stack![
             icon,
-            widget::container(badge(count))
+            widget::container(crate::components::badge_with_typography(count, typography))
                 .align_right(Length::Fill)
                 .align_top(Length::Fill)
         ]
@@ -215,7 +228,9 @@ fn destination<'a, Message: Clone + 'a>(
     let body: Element<'a, Message> = if expanded {
         widget::row![
             icon,
-            typography(item.label, TypeScale::LabelLarge).width(Length::Fill)
+            typography
+                .text(item.label, TypeScale::LabelLarge)
+                .width(Length::Fill)
         ]
         .spacing(12)
         .align_y(iced::Alignment::Center)
@@ -223,7 +238,8 @@ fn destination<'a, Message: Clone + 'a>(
     } else {
         widget::column![
             icon,
-            typography(item.label, TypeScale::LabelMedium)
+            typography
+                .text(item.label, TypeScale::LabelMedium)
                 .align_x(iced::alignment::Horizontal::Center)
                 .width(Length::Fill)
         ]
@@ -291,12 +307,18 @@ impl<'a, Value: PartialEq + 'a, Message: Clone + 'a> From<NavigationBar<'a, Valu
                 selected,
                 message,
                 NavigationLayout::Bar,
+                &bar.typography,
             ));
         }
         crate::focus::group_with_active(
             widget::container(row)
                 .padding([4, 8])
-                .center_y(80)
+                .center_y(
+                    (tokens::size::NAV_INDICATOR_HEIGHT
+                        + bar.typography.style(TypeScale::LabelMedium).line_height
+                        + 28.0)
+                        .max(80.0),
+                )
                 .width(Length::Fill)
                 .style(|theme: &Theme| widget::container::Style {
                     background: Some(theme.colors.surface_container.into()),
@@ -345,6 +367,7 @@ impl<'a, Value: PartialEq + 'a, Message: Clone + 'a> From<NavigationRail<'a, Val
                 selected,
                 message,
                 layout,
+                &rail.typography,
             ));
         }
         let destinations = crate::focus::group_with_active(

@@ -1,5 +1,5 @@
 //! Connected outlined buttons with application-owned single or multiple selection.
-use crate::{Button, ButtonVariant, Element, Theme, TypeScale, theme::alpha, tokens, typography};
+use crate::{Button, ButtonVariant, Element, Theme, TypeScale, theme::alpha, tokens};
 use iced::advanced::{Layout, Widget, layout, renderer, widget::Tree};
 use iced::{Border, Color, Length, Rectangle, Renderer, Size, mouse, widget};
 
@@ -44,6 +44,7 @@ impl<'a, Value, Message> Segment<'a, Value, Message> {
 }
 /// See the [rendered examples](crate::guide::components::segmented_buttons).
 pub struct SegmentedButtons<'a, Value, Message> {
+    typography: crate::Typography,
     items: Vec<Segment<'a, Value, Message>>,
     selection: SegmentSelection<Value>,
     on_change: Option<Box<dyn Fn(SegmentSelection<Value>) -> Message + 'a>>,
@@ -56,6 +57,7 @@ pub fn segmented_buttons<'a, Value, Message>(
     selection: SegmentSelection<Value>,
 ) -> SegmentedButtons<'a, Value, Message> {
     SegmentedButtons {
+        typography: crate::Typography::default(),
         items: items.into_iter().collect(),
         selection,
         on_change: None,
@@ -64,6 +66,10 @@ pub fn segmented_buttons<'a, Value, Message>(
     }
 }
 impl<'a, Value, Message> SegmentedButtons<'a, Value, Message> {
+    pub(crate) fn with_typography(mut self, typography: crate::Typography) -> Self {
+        self.typography = typography;
+        self
+    }
     pub fn on_change(mut self, handler: impl Fn(SegmentSelection<Value>) -> Message + 'a) -> Self {
         self.on_change = Some(Box::new(handler));
         self
@@ -128,14 +134,19 @@ impl<'a, Value: Clone + PartialEq + 'a, Message: Clone + 'a>
                 widget::container(mark)
                     .center_x(tokens::size::SEGMENT_ICON)
                     .center_y(tokens::size::SEGMENT_ICON),
-                typography(item.label, TypeScale::LabelLarge)
+                group
+                    .typography
+                    .text(item.label, TypeScale::LabelLarge)
                     .wrapping(widget::text::Wrapping::None)
             ]
             .spacing(8)
             .align_y(iced::Alignment::Center);
             Button::new(content)
                 .variant(ButtonVariant::Text)
-                .height(tokens::size::SEGMENT)
+                .height(
+                    (group.typography.style(TypeScale::LabelLarge).line_height + 20.0)
+                        .max(tokens::size::SEGMENT),
+                )
                 .padding([10, 12])
                 .width(if group.width == Length::Shrink {
                     Length::Shrink
@@ -151,6 +162,28 @@ impl<'a, Value: Clone + PartialEq + 'a, Message: Clone + 'a>
                         bottom_right: if index + 1 == count { 20.0 } else { 0.0 },
                     },
                 )
+                .corner_roles([
+                    if index == 0 {
+                        crate::ShapeScale::LargeIncreased
+                    } else {
+                        crate::ShapeScale::None
+                    },
+                    if index + 1 == count {
+                        crate::ShapeScale::LargeIncreased
+                    } else {
+                        crate::ShapeScale::None
+                    },
+                    if index + 1 == count {
+                        crate::ShapeScale::LargeIncreased
+                    } else {
+                        crate::ShapeScale::None
+                    },
+                    if index == 0 {
+                        crate::ShapeScale::LargeIncreased
+                    } else {
+                        crate::ShapeScale::None
+                    },
+                ])
                 .on_press_maybe(message)
                 .into()
         });
@@ -225,7 +258,7 @@ impl<Message: Clone> Widget<Message, Theme, Renderer> for Outline<'_, Message> {
                 renderer::Quad {
                     bounds,
                     border: Border {
-                        radius: 20.0.into(),
+                        radius: theme.shapes.corners(crate::ShapeScale::LargeIncreased),
                         width: 1.0,
                         color: outline,
                     },

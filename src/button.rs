@@ -97,19 +97,19 @@ impl ButtonSize {
             Self::ExtraLarge => 64.,
         }
     }
-    fn square_radius(self) -> f32 {
-        match self {
-            Self::ExtraSmall | Self::Small => 12.,
-            Self::Medium => 16.,
-            Self::Large | Self::ExtraLarge => 28.,
-        }
+    fn square_radius(self, shapes: crate::ShapeScheme) -> f32 {
+        shapes.radius(match self {
+            Self::ExtraSmall | Self::Small => crate::ShapeScale::Medium,
+            Self::Medium => crate::ShapeScale::Large,
+            Self::Large | Self::ExtraLarge => crate::ShapeScale::ExtraLarge,
+        })
     }
-    fn pressed_radius(self) -> f32 {
-        match self {
-            Self::ExtraSmall | Self::Small => 8.,
-            Self::Medium => 12.,
-            Self::Large | Self::ExtraLarge => 16.,
-        }
+    fn pressed_radius(self, shapes: crate::ShapeScheme) -> f32 {
+        shapes.radius(match self {
+            Self::ExtraSmall | Self::Small => crate::ShapeScale::Small,
+            Self::Medium => crate::ShapeScale::Medium,
+            Self::Large | Self::ExtraLarge => crate::ShapeScale::Large,
+        })
     }
 }
 /// Width treatment for icon-only actions, relative to the selected size.
@@ -139,11 +139,12 @@ pub enum ButtonShape {
 pub struct Button<'a, Message> {
     content: Element<'a, Message>,
     label: Option<iced::widget::text::Fragment<'a>>,
+    typography: crate::Typography,
     size: Option<ButtonSize>,
     shape: ButtonShape,
     shape_override: bool,
     motion_scheme: Option<crate::MotionScheme>,
-    pressed_corners: Option<iced::border::Radius>,
+    pressed_roles: Option<[crate::ShapeScale; 4]>,
     grouped: bool,
     group_compression: (f32, f32),
     on_press: Option<Message>,
@@ -154,6 +155,7 @@ pub struct Button<'a, Message> {
     padding: iced::Padding,
     custom_padding: bool,
     radius: f32,
+    radius_role: Option<crate::ShapeScale>,
     selected: bool,
     palette: Option<Box<dyn Fn(&Theme) -> (Color, Color) + 'a>>,
     icon: bool,
@@ -165,6 +167,7 @@ pub struct Button<'a, Message> {
     min_height: f32,
     segment: bool,
     corners: Option<iced::border::Radius>,
+    corner_roles: Option<[crate::ShapeScale; 4]>,
     elevated: bool,
     chip: bool,
     expressive: Option<bool>,
@@ -192,11 +195,12 @@ impl<'a, Message: 'a> Button<'a, Message> {
         Self {
             content: content.into(),
             label: None,
+            typography: crate::Typography::default(),
             size: None,
             shape: ButtonShape::Round,
             shape_override: false,
             motion_scheme: None,
-            pressed_corners: None,
+            pressed_roles: None,
             grouped: false,
             group_compression: (0.0, 0.0),
             on_press: None,
@@ -207,6 +211,7 @@ impl<'a, Message: 'a> Button<'a, Message> {
             padding: [10.0, tokens::spacing::LG].into(),
             custom_padding: false,
             radius: tokens::shape::FULL,
+            radius_role: Some(crate::ShapeScale::Full),
             selected: false,
             palette: None,
             icon: false,
@@ -218,6 +223,7 @@ impl<'a, Message: 'a> Button<'a, Message> {
             min_height: tokens::size::BUTTON,
             segment: false,
             corners: None,
+            corner_roles: None,
             elevated: false,
             chip: false,
             expressive: None,
@@ -298,13 +304,28 @@ impl<'a, Message: 'a> Button<'a, Message> {
             .into();
         } else if !self.custom_padding {
             self.padding = [
-                ((size.height() - size.label().metrics().1) / 2.0).max(0.0),
+                ((size.height() - self.typography.style(size.label()).line_height) / 2.0).max(0.0),
                 size.padding(),
             ]
             .into();
         }
         if let Some(label) = &self.label {
-            self.content = crate::typography(label.clone(), size.label()).into();
+            self.content = self.typography.text(label.clone(), size.label()).into();
+        }
+        self
+    }
+    pub(crate) fn with_typography(mut self, typography: crate::Typography) -> Self {
+        self.typography = typography;
+        if let Some(label) = &self.label {
+            let size = self.size.unwrap_or_default();
+            self.content = self.typography.text(label.clone(), size.label()).into();
+            if !self.custom_padding {
+                let padding = ((size.height() - self.typography.style(size.label()).line_height)
+                    / 2.0)
+                    .max(0.0);
+                self.padding.top = padding;
+                self.padding.bottom = padding;
+            }
         }
         self
     }
@@ -349,8 +370,14 @@ impl<'a, Message: 'a> Button<'a, Message> {
         self.motion_scheme = Some(scheme);
         self
     }
-    pub(crate) fn pressed_corners(mut self, corners: iced::border::Radius) -> Self {
-        self.pressed_corners = Some(corners);
+    pub(crate) fn pressed_roles(mut self, roles: [crate::ShapeScale; 4]) -> Self {
+        self.pressed_roles = Some(roles);
+        self
+    }
+    pub(crate) fn corner_roles(mut self, roles: [crate::ShapeScale; 4]) -> Self {
+        self.corner_roles = Some(roles);
+        self.corners = None;
+        self.radius_role = None;
         self
     }
     pub(crate) fn press_amount(tree: &Tree) -> f32 {
@@ -377,10 +404,21 @@ impl<'a, Message: 'a> Button<'a, Message> {
     }
     pub fn corner_radius(mut self, radius: iced::border::Radius) -> Self {
         self.corners = Some(radius);
+        self.corner_roles = None;
+        self.radius_role = None;
         self
     }
     pub fn radius(mut self, radius: f32) -> Self {
         self.radius = radius.max(0.0);
+        self.corner_roles = None;
+        self.radius_role = None;
+        self
+    }
+    /// Follow a theme shape role instead of an explicit corner radius.
+    pub fn shape_role(mut self, role: crate::ShapeScale) -> Self {
+        self.radius_role = Some(role);
+        self.corners = None;
+        self.corner_roles = None;
         self
     }
     /// Opt into toggle styling, with application-owned selection state.
@@ -802,7 +840,7 @@ impl<Message: Clone> Widget<Message, Theme, Renderer> for Button<'_, Message> {
                     && self.card.is_none()
                     && !self.interactive_content
                     && self.corners.is_none()
-                    && self.radius == tokens::shape::FULL),
+                    && self.radius_role == Some(crate::ShapeScale::Full)),
         );
         if (shape_enabled || self.grouped) && motion.scheme.is_none() {
             motion.scheme = Some(crate::MotionScheme::expressive());
@@ -936,14 +974,23 @@ impl<Message: Clone> Widget<Message, Theme, Renderer> for Button<'_, Message> {
                 ButtonVariant::Outlined | ButtonVariant::Text => (Color::TRANSPARENT, c.primary),
             }
         };
-        let mut radius = self.corners.unwrap_or(self.radius.into());
+        let mut radius = self
+            .corner_roles
+            .map(|roles| theme.shapes.mixed(roles))
+            .or(self.corners)
+            .unwrap_or_else(|| {
+                self.radius_role
+                    .map_or(self.radius, |role| theme.shapes.radius(role))
+                    .into()
+            });
         if (self.size.is_some() || shape_enabled)
             && self.corners.is_none()
-            && self.radius == tokens::shape::FULL
+            && self.corner_roles.is_none()
+            && self.radius_role == Some(crate::ShapeScale::Full)
         {
             let size = self.size.unwrap_or_default();
             let round = bounds.height / 2.0;
-            let square = size.square_radius().min(round);
+            let square = size.square_radius(theme.shapes).min(round);
             let (rest, selected) = match self.shape {
                 ButtonShape::Round => (round, square),
                 ButtonShape::Square => (square, round),
@@ -955,7 +1002,7 @@ impl<Message: Clone> Widget<Message, Theme, Renderer> for Button<'_, Message> {
             };
             radius = (rest + (selected - rest) * amount).clamp(0.0, round).into();
         }
-        if self.pressed_corners.is_some() {
+        if self.pressed_roles.is_some() {
             let amount = if shape_enabled && enabled {
                 state.selected_shape.value
             } else {
@@ -972,8 +1019,14 @@ impl<Message: Clone> Widget<Message, Theme, Renderer> for Button<'_, Message> {
         }
         if shape_enabled {
             let pressed = self
-                .pressed_corners
-                .unwrap_or(self.size.unwrap_or_default().pressed_radius().into());
+                .pressed_roles
+                .map(|roles| theme.shapes.mixed(roles))
+                .unwrap_or(
+                    self.size
+                        .unwrap_or_default()
+                        .pressed_radius(theme.shapes)
+                        .into(),
+                );
             let shrink = |value: f32, target: f32| {
                 let limit = bounds.height.min(bounds.width) / 2.0;
                 let value = value.min(limit);

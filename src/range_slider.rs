@@ -1,7 +1,5 @@
 //! A two-thumb slider using the baseline slider's geometry and value scale.
-use crate::{
-    Element, Slider, Theme, TypeScale, motion::Transition, slider, theme::alpha, tokens, typography,
-};
+use crate::{Element, Slider, Theme, TypeScale, motion::Transition, slider, theme::alpha, tokens};
 use iced::advanced::{
     Clipboard, Layout, Shell, Widget, layout, renderer,
     widget::{Tree, tree},
@@ -11,6 +9,7 @@ use std::{cell::Cell, ops::RangeInclusive};
 
 /// See the [rendered examples](crate::guide::components::range_slider).
 pub struct RangeSlider<'a, Message> {
+    typography: crate::Typography,
     scale: Slider<'a, Message>,
     range: RangeInclusive<f32>,
     values: (f32, f32),
@@ -31,6 +30,7 @@ pub fn range_slider<'a, Message>(
     values: (f32, f32),
 ) -> RangeSlider<'a, Message> {
     RangeSlider {
+        typography: crate::Typography::default(),
         scale: slider(range.clone(), values.0),
         range,
         values,
@@ -45,6 +45,10 @@ pub fn range_slider<'a, Message>(
     }
 }
 impl<'a, Message> RangeSlider<'a, Message> {
+    pub(crate) fn with_typography(mut self, typography: crate::Typography) -> Self {
+        self.typography = typography;
+        self
+    }
     pub fn on_change(mut self, callback: impl Fn((f32, f32)) -> Message + 'a) -> Self {
         self.on_change = Some(Box::new(callback));
         self
@@ -112,7 +116,8 @@ impl<'a, Message> RangeSlider<'a, Message> {
                 .trim_end_matches('.')
                 .to_owned()
         };
-        typography(label, TypeScale::LabelMedium)
+        self.typography
+            .text(label, TypeScale::LabelMedium)
             .wrapping(iced::widget::text::Wrapping::None)
             .into()
     }
@@ -168,6 +173,9 @@ impl<'a, Message: Clone + 'a> Widget<Message, Theme, Renderer> for RangeSlider<'
                 tokens::size::SLIDER_TARGET
                     + if self.labeled {
                         tokens::size::SLIDER_LABEL_SPACE
+                            + (self.typography.style(TypeScale::LabelMedium).line_height + 12.0
+                                - tokens::size::SLIDER_LABEL)
+                                .max(0.0)
                     } else {
                         0.0
                     },
@@ -192,7 +200,11 @@ impl<'a, Message: Clone + 'a> Widget<Message, Theme, Renderer> for RangeSlider<'
                     renderer,
                     &layout::Limits::new(
                         Size::ZERO,
-                        Size::new((size.width - 16.0).max(0.0), tokens::size::SLIDER_LABEL),
+                        Size::new(
+                            (size.width - 16.0).max(0.0),
+                            tokens::size::SLIDER_LABEL
+                                .max(self.typography.style(TypeScale::LabelMedium).line_height),
+                        ),
                     ),
                 )
             })

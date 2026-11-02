@@ -1,7 +1,6 @@
 //! Controlled search bar with an expanding, scrollable search view.
 use crate::{
     Button, ButtonVariant, Element, Theme, TypeScale, glyph::Glyph, motion::Transition, tokens,
-    typography,
 };
 use iced::advanced::{
     Clipboard, Layout, Overlay, Shell, Widget, layout, overlay, renderer,
@@ -18,6 +17,7 @@ use std::{cell::Cell, rc::Rc};
 /// outside input; Escape, the back button, and outside clicks request dismissal.
 /// See the [rendered examples](crate::guide::components::search_bar).
 pub struct Search<'a, Message> {
+    typography: crate::Typography,
     placeholder: String,
     value: String,
     results: Element<'a, Message>,
@@ -36,6 +36,7 @@ pub fn search_bar<'a, Message: 'a>(
     value: &str,
 ) -> Search<'a, Message> {
     Search {
+        typography: crate::Typography::default(),
         placeholder: placeholder.into(),
         value: value.into(),
         results: widget::space().into(),
@@ -50,6 +51,10 @@ pub fn search_bar<'a, Message: 'a>(
     }
 }
 impl<'a, Message: 'a> Search<'a, Message> {
+    pub(crate) fn with_typography(mut self, typography: crate::Typography) -> Self {
+        self.typography = typography;
+        self
+    }
     pub fn results(mut self, results: impl Into<Element<'a, Message>>) -> Self {
         self.results = results.into();
         self
@@ -103,7 +108,9 @@ impl<'a, Message: Clone + 'a> From<Search<'a, Message>> for Element<'a, Message>
         let bar = Button::new(
             widget::row![
                 Element::new(Glyph::Search),
-                typography(label, TypeScale::BodyLarge)
+                search
+                    .typography
+                    .text(label, TypeScale::BodyLarge)
                     .width(Length::Fill)
                     .wrapping(widget::text::Wrapping::None)
             ]
@@ -113,7 +120,7 @@ impl<'a, Message: Clone + 'a> From<Search<'a, Message>> for Element<'a, Message>
         .height(56)
         .padding([0, 16])
         .width(Length::Fill)
-        .radius(28.0)
+        .shape_role(crate::ShapeScale::ExtraLarge)
         .palette(move |t| {
             (
                 t.colors.surface_container_high,
@@ -140,9 +147,15 @@ impl<'a, Message: Clone + 'a> From<Search<'a, Message>> for Element<'a, Message>
             .map(|callback| callback(String::new()));
         let mut input = widget::text_input(&search.placeholder, &search.value)
             .id(input_id.clone())
-            .font(crate::fonts::REGULAR)
-            .size(16)
-            .line_height(widget::text::LineHeight::Absolute(24.0.into()))
+            .font(search.typography.style(TypeScale::BodyLarge).font)
+            .size(search.typography.style(TypeScale::BodyLarge).size)
+            .line_height(widget::text::LineHeight::Absolute(
+                search
+                    .typography
+                    .style(TypeScale::BodyLarge)
+                    .line_height
+                    .into(),
+            ))
             .padding([8, 0])
             .width(Length::Fill)
             .on_submit_maybe(search.on_submit)
@@ -592,9 +605,10 @@ impl<Message: Clone> Overlay<Message, Theme, Renderer> for SearchOverlay<'_, '_,
         let bounds = self.state.bounds;
         let full = self.full_screen.unwrap_or(layout.bounds().width < 600.0);
         let radius = if full {
-            28.0 * (1.0 - self.state.progress.value.clamp(0.0, 1.0))
+            theme.shapes.radius(crate::ShapeScale::ExtraLarge)
+                * (1.0 - self.state.progress.value.clamp(0.0, 1.0))
         } else {
-            28.0
+            theme.shapes.radius(crate::ShapeScale::ExtraLarge)
         };
         crate::elevation::draw_resizing(
             renderer,

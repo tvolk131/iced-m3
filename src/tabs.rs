@@ -1,7 +1,5 @@
 //! Controlled primary and secondary tabs with a finite animated indicator.
-use crate::{
-    Button, ButtonVariant, Element, Theme, TypeScale, badge, motion::Transition, tokens, typography,
-};
+use crate::{Button, ButtonVariant, Element, Theme, TypeScale, motion::Transition, tokens};
 use iced::advanced::{
     Clipboard, Layout, Shell, Widget, layout, overlay, renderer,
     widget::{Operation, Tree, tree},
@@ -50,6 +48,7 @@ impl<'a, Value, Message> Tab<'a, Value, Message> {
 }
 /// See the [rendered examples](crate::guide::components::tabs).
 pub struct Tabs<'a, Value, Message> {
+    typography: crate::Typography,
     items: Vec<Tab<'a, Value, Message>>,
     selected: Option<Value>,
     on_select: Option<Box<dyn Fn(Value) -> Message + 'a>>,
@@ -65,6 +64,7 @@ pub fn tabs<'a, Value, Message>(
     selected: Option<Value>,
 ) -> Tabs<'a, Value, Message> {
     Tabs {
+        typography: crate::Typography::default(),
         items: items.into_iter().collect(),
         selected,
         on_select: None,
@@ -76,6 +76,10 @@ pub fn tabs<'a, Value, Message>(
     }
 }
 impl<'a, Value, Message> Tabs<'a, Value, Message> {
+    pub(crate) fn with_typography(mut self, typography: crate::Typography) -> Self {
+        self.typography = typography;
+        self
+    }
     pub fn on_select(mut self, handler: impl Fn(Value) -> Message + 'a) -> Self {
         self.on_select = Some(Box::new(handler));
         self
@@ -141,8 +145,14 @@ impl<'a, Value: PartialEq + 'a, Message: Clone + 'a> From<Tabs<'a, Value, Messag
             .enumerate()
             .map(|(index, item)| {
                 let active = selected == Some(index);
+                let icon_height = if item.icon.is_some() && variant == TabVariant::Primary {
+                    26.0
+                } else {
+                    0.0
+                };
                 let mut label = widget::row![
-                    typography(item.label, TypeScale::TitleSmall)
+                    tabs.typography
+                        .text(item.label, TypeScale::TitleSmall)
                         .wrapping(widget::text::Wrapping::None)
                 ]
                 .spacing(6)
@@ -150,7 +160,10 @@ impl<'a, Value: PartialEq + 'a, Message: Clone + 'a> From<Tabs<'a, Value, Messag
                 if let Some(count) = item.badge
                     && (item.icon.is_none() || variant == TabVariant::Secondary)
                 {
-                    label = label.push(badge(count));
+                    label = label.push(crate::components::badge_with_typography(
+                        count,
+                        &tabs.typography,
+                    ));
                 }
                 let content: Element<'a, Message> = if let Some(icon) = item.icon {
                     let icon = widget::container(icon).center_x(24).center_y(24);
@@ -158,9 +171,12 @@ impl<'a, Value: PartialEq + 'a, Message: Clone + 'a> From<Tabs<'a, Value, Messag
                         let icon: Element<'a, Message> = if let Some(count) = item.badge {
                             widget::stack![
                                 widget::container(icon).center_x(56).center_y(24),
-                                widget::container(badge(count))
-                                    .align_right(Length::Fill)
-                                    .align_top(Length::Fill)
+                                widget::container(crate::components::badge_with_typography(
+                                    count,
+                                    &tabs.typography
+                                ))
+                                .align_right(Length::Fill)
+                                .align_top(Length::Fill)
                             ]
                             .into()
                         } else {
@@ -188,7 +204,12 @@ impl<'a, Value: PartialEq + 'a, Message: Clone + 'a> From<Tabs<'a, Value, Messag
                 Button::new(content)
                     .variant(ButtonVariant::Text)
                     .radius(0.0)
-                    .height(height)
+                    .height(
+                        (tabs.typography.style(TypeScale::TitleSmall).line_height
+                            + 16.0
+                            + icon_height)
+                            .max(height),
+                    )
                     .padding([8, 16])
                     .width(if tabs.scrollable {
                         Length::Shrink

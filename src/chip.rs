@@ -1,6 +1,6 @@
 //! Baseline Material chips. Selection and removal are application-owned.
 mod selection;
-use crate::{Button, ButtonVariant, Element, TypeScale, glyph::Glyph, typography};
+use crate::{Button, ButtonVariant, Element, TypeScale, glyph::Glyph};
 use iced::{Alignment, Length, widget};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -15,6 +15,7 @@ pub enum ChipVariant {
 /// Omit callbacks to disable actions. Icons should be passive, 18px content.
 /// See the [rendered examples](crate::guide::components::filter_chip).
 pub struct Chip<'a, Message> {
+    typography: crate::Typography,
     label: String,
     variant: ChipVariant,
     selected: bool,
@@ -44,8 +45,13 @@ pub fn input_chip<'a, Message>(label: impl Into<String>) -> Chip<'a, Message> {
     Chip::new(label, ChipVariant::Input, false)
 }
 impl<'a, Message> Chip<'a, Message> {
+    pub(crate) fn with_typography(mut self, typography: crate::Typography) -> Self {
+        self.typography = typography;
+        self
+    }
     fn new(label: impl Into<String>, variant: ChipVariant, selected: bool) -> Self {
         Self {
+            typography: crate::Typography::default(),
             label: label.into(),
             variant,
             selected,
@@ -139,7 +145,9 @@ impl<'a, Message: Clone + 'a> From<Chip<'a, Message>> for Element<'a, Message> {
             );
         }
         content = content.push(
-            typography(chip.label, TypeScale::LabelLarge).wrapping(widget::text::Wrapping::None),
+            chip.typography
+                .text(chip.label, TypeScale::LabelLarge)
+                .wrapping(widget::text::Wrapping::None),
         );
         if chip.dropdown {
             content = content.push(Element::new(Glyph::Down));
@@ -167,7 +175,7 @@ impl<'a, Message: Clone + 'a> From<Chip<'a, Message>> for Element<'a, Message> {
                     .height(32)
                     .width(32)
                     .padding(7)
-                    .radius(8.0)
+                    .shape_role(crate::ShapeScale::Small)
                     .on_press_maybe(remove)
                     .disabled(chip.disabled),
             );
@@ -179,11 +187,11 @@ impl<'a, Message: Clone + 'a> From<Chip<'a, Message>> for Element<'a, Message> {
                 ButtonVariant::Outlined
             })
             .chip_style(selected, chip.variant == ChipVariant::Assist)
-            .height(32)
-            .radius(if chip.avatar && variant == ChipVariant::Input {
-                16.0
+            .height((chip.typography.style(TypeScale::LabelLarge).line_height + 12.0).max(32.0))
+            .shape_role(if chip.avatar && variant == ChipVariant::Input {
+                crate::ShapeScale::Large
             } else {
-                8.0
+                crate::ShapeScale::Small
             })
             .width(chip.width)
             .padding(iced::Padding {

@@ -24,6 +24,10 @@ pub fn radio<'a, Value: PartialEq, Message>(
     }
 }
 impl<'a, Value: Clone + 'a, Message: 'a> Radio<'a, Value, Message> {
+    pub(crate) fn with_typography(mut self, typography: crate::Typography) -> Self {
+        self.control = self.control.with_typography(typography);
+        self
+    }
     pub fn on_select(mut self, handler: impl Fn(Value) -> Message + 'a) -> Self {
         let value = self.value.clone();
         self.control = self.control.on_toggle(move |_| handler(value.clone()));
@@ -64,6 +68,7 @@ impl<Value> RadioOption<Value> {
     }
 }
 pub struct RadioGroup<'a, Value, Message> {
+    typography: crate::Typography,
     options: Vec<RadioOption<Value>>,
     selected: Option<Value>,
     on_select: Option<Rc<dyn Fn(Value) -> Message + 'a>>,
@@ -77,6 +82,7 @@ pub fn radio_group<'a, Value, Message>(
     selected: Option<Value>,
 ) -> RadioGroup<'a, Value, Message> {
     RadioGroup {
+        typography: crate::Typography::default(),
         options: options.into_iter().collect(),
         selected,
         on_select: None,
@@ -86,6 +92,10 @@ pub fn radio_group<'a, Value, Message>(
     }
 }
 impl<'a, Value, Message> RadioGroup<'a, Value, Message> {
+    pub(crate) fn with_typography(mut self, typography: crate::Typography) -> Self {
+        self.typography = typography;
+        self
+    }
     pub fn on_select(mut self, handler: impl Fn(Value) -> Message + 'a) -> Self {
         self.on_select = Some(Rc::new(handler));
         self
@@ -115,7 +125,8 @@ impl<'a, Value: Clone + PartialEq + 'a, Message: 'a> From<RadioGroup<'a, Value, 
             .unwrap_or(0);
         crate::focus::group_with_active(
             iced::widget::Column::with_children(group.options.into_iter().map(|option| {
-                let mut choice = radio(option.label, option.value, group.selected.clone());
+                let mut choice = radio(option.label, option.value, group.selected.clone())
+                    .with_typography(group.typography.clone());
                 if let Some(handler) = &group.on_select {
                     let handler = Rc::clone(handler);
                     choice = choice.on_select(move |value| handler(value));

@@ -61,6 +61,13 @@ pub fn checkbox<'a, Message>(checked: bool) -> Checkbox<'a, Message> {
 }
 
 impl<'a, Message> Checkbox<'a, Message> {
+    pub(crate) fn with_typography(mut self, typography: crate::Typography) -> Self {
+        let style = typography.style(crate::TypeScale::BodyLarge);
+        self.font = style.font;
+        self.text_size = style.size.into();
+        self.line_height = text::LineHeight::Absolute(style.line_height.into());
+        self
+    }
     fn enabled(&self) -> bool {
         !self.disabled && self.on_toggle.is_some()
     }

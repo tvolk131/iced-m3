@@ -12,14 +12,7 @@ pub fn typography<'a>(
     content: impl widget::text::IntoFragment<'a>,
     scale: TypeScale,
 ) -> widget::Text<'a, Theme> {
-    crate::fonts::ensure_loaded();
-    let (size, line) = scale.metrics();
-    widget::text(content)
-        .size(size)
-        .line_height(iced::widget::text::LineHeight::Absolute(line.into()))
-        .font(scale.font())
-        .shaping(iced::widget::text::Shaping::Advanced)
-        .wrapping(iced::widget::text::Wrapping::WordOrGlyph)
+    crate::Typography::default().text(content, scale)
 }
 
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
@@ -62,7 +55,7 @@ impl<Message> Surface<'_, Message> {
 }
 impl<'a, Message: 'a> From<Surface<'a, Message>> for Element<'a, Message> {
     fn from(value: Surface<'a, Message>) -> Self {
-        crate::elevation::elevated(
+        crate::elevation::themed(
             widget::container(value.content)
                 .padding(value.padding)
                 .width(value.width)
@@ -79,7 +72,7 @@ impl<'a, Message: 'a> From<Surface<'a, Message>> for Element<'a, Message> {
                         ),
                         text_color: Some(c.on_surface),
                         border: Border {
-                            radius: tokens::shape::MEDIUM.into(),
+                            radius: t.shapes.corners(crate::ShapeScale::Medium),
                             width: if value.variant == SurfaceVariant::Outlined {
                                 1.0
                             } else {
@@ -96,7 +89,7 @@ impl<'a, Message: 'a> From<Surface<'a, Message>> for Element<'a, Message> {
             } else {
                 0.0
             },
-            tokens::shape::MEDIUM,
+            crate::ShapeScale::Medium,
         )
     }
 }
@@ -130,24 +123,37 @@ pub fn chip<'a, Message: 'a>(
     label: impl widget::text::IntoFragment<'a>,
     selected: bool,
 ) -> Button<'a, Message> {
-    Button::new(typography(label, TypeScale::Label))
+    chip_with_typography(label, selected, &crate::Typography::default())
+}
+pub(crate) fn chip_with_typography<'a, Message: 'a>(
+    label: impl widget::text::IntoFragment<'a>,
+    selected: bool,
+    typography: &crate::Typography,
+) -> Button<'a, Message> {
+    Button::new(typography.text(label, TypeScale::Label))
         .variant(ButtonVariant::Outlined)
         .chip_style(selected, false)
         .padding([6.0, 16.0])
-        .height(tokens::size::CHIP)
-        .radius(tokens::shape::SMALL * 2.0)
+        .height((typography.style(TypeScale::Label).line_height + 12.0).max(tokens::size::CHIP))
+        .shape_role(crate::ShapeScale::Small)
 }
 
 /// A compact standalone count/status badge. Use in a row or an iced stack.
 /// Counts above 99 are displayed as `99+`; zero is displayed deliberately.
 #[cfg_attr(iced_m3_doc_media, doc = include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/docs/generated/badge-primary.md")))]
 pub fn badge<'a, Message: 'a>(count: u32) -> widget::Container<'a, Message, Theme> {
+    badge_with_typography(count, &crate::Typography::default())
+}
+pub(crate) fn badge_with_typography<'a, Message: 'a>(
+    count: u32,
+    typography: &crate::Typography,
+) -> widget::Container<'a, Message, Theme> {
     let label = if count > 99 {
         "99+".into()
     } else {
         count.to_string()
     };
-    widget::container(typography(label, TypeScale::LabelSmall))
+    widget::container(typography.text(label, TypeScale::LabelSmall))
         .padding([0.0, 5.0])
         .center_x(Length::Shrink)
         .style(|theme: &Theme| widget::container::Style {
@@ -172,6 +178,7 @@ pub use crate::checkbox::checkbox;
 /// motion makes transitions immediate.
 /// See the [visual examples and variants](crate::guide::components::switch).
 pub struct Switch<'a, Message> {
+    typography: crate::Typography,
     icons: bool,
     checked: bool,
     label: Option<String>,
@@ -183,6 +190,7 @@ pub struct Switch<'a, Message> {
 #[cfg_attr(iced_m3_doc_media, doc = include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/docs/generated/switch-primary.md")))]
 pub fn switch<'a, Message>(checked: bool) -> Switch<'a, Message> {
     Switch {
+        typography: crate::Typography::default(),
         icons: false,
         checked,
         label: None,
@@ -192,6 +200,10 @@ pub fn switch<'a, Message>(checked: bool) -> Switch<'a, Message> {
     }
 }
 impl<'a, Message> Switch<'a, Message> {
+    pub(crate) fn with_typography(mut self, typography: crate::Typography) -> Self {
+        self.typography = typography;
+        self
+    }
     pub fn icons(mut self, enabled: bool) -> Self {
         self.icons = enabled;
         self
@@ -219,6 +231,7 @@ impl<'a, Message> Switch<'a, Message> {
 impl<'a, Message: 'a> From<Switch<'a, Message>> for Element<'a, Message> {
     fn from(value: Switch<'a, Message>) -> Self {
         let mut control = crate::checkbox(value.checked)
+            .with_typography(value.typography)
             .into_switch()
             .switch_icons(value.icons)
             .disabled(value.disabled)
