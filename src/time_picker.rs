@@ -1,5 +1,5 @@
 //! Controlled time pickers. Values are local wall-clock times without a timezone.
-use crate::{ButtonVariant, Element, TextField, Theme, TypeScale, focus, text_field, typography};
+use crate::{ButtonVariant, Element, TextField, Theme, TypeScale, focus, text_field};
 use iced::advanced::{
     Clipboard, Layout, Shell, Widget, layout, renderer,
     widget::{Operation, Tree, tree},
@@ -92,6 +92,7 @@ pub enum TimePart {
 }
 /// See the [rendered examples](crate::guide::components::time_picker).
 pub struct TimePicker<'a, Message> {
+    typography: crate::Typography,
     value: Time,
     part: TimePart,
     format24: bool,
@@ -109,6 +110,7 @@ pub struct TimePicker<'a, Message> {
 #[cfg_attr(iced_m3_doc_media, doc = include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/docs/generated/time_picker-primary.md")))]
 pub fn time_picker<'a, Message>(value: Time, part: TimePart) -> TimePicker<'a, Message> {
     TimePicker {
+        typography: crate::Typography::default(),
         value,
         part,
         format24: false,
@@ -125,6 +127,10 @@ pub fn time_picker<'a, Message>(value: Time, part: TimePart) -> TimePicker<'a, M
     }
 }
 impl<'a, Message> TimePicker<'a, Message> {
+    pub(crate) fn with_typography(mut self, typography: crate::Typography) -> Self {
+        self.typography = typography;
+        self
+    }
     /// Add an OK action. Selection edits still use `on_change`; keep a separate
     /// draft in application state when confirmation must be transactional.
     /// Numeric OK/Enter validates the draft and sends this callback only.
@@ -230,6 +236,7 @@ enum Action<Message> {
 impl<'a, Message: Clone + 'a> From<TimePicker<'a, Message>> for Element<'a, Message> {
     fn from(picker: TimePicker<'a, Message>) -> Self {
         let TimePicker {
+            typography,
             value,
             part,
             format24,
@@ -251,6 +258,7 @@ impl<'a, Message: Clone + 'a> From<TimePicker<'a, Message>> for Element<'a, Mess
         let (period, period_handler) =
             input_period.map_or((None, None), |(pm, f)| (Some(pm), Some(f)));
         TimePicker {
+            typography,
             value,
             part,
             format24,
@@ -280,15 +288,18 @@ impl<'a, Message: Clone + 'a> From<TimePicker<'a, Message>> for Element<'a, Mess
 impl<'a, Message: Clone + 'a> TimePicker<'a, Message> {
     fn into_view(self) -> Element<'a, Message> {
         let picker = self;
+        let widgets = picker.typography.widgets();
         if picker.input_mode {
             return numeric_picker(picker);
         }
         let display = |value: u8, part| {
-            crate::Button::new(typography(typography_time(value), TypeScale::DisplayLarge))
+            crate::Button::new(widgets.typography(typography_time(value), TypeScale::DisplayLarge))
                 .width(if picker.format24 { 114 } else { 96 })
-                .height(80)
+                .height(
+                    (picker.typography.style(TypeScale::DisplayLarge).line_height + 16.0).max(80.0),
+                )
                 .padding(0)
-                .radius(8.0)
+                .shape_role(crate::ShapeScale::Small)
                 .variant(if picker.part == part {
                     ButtonVariant::Tonal
                 } else {
@@ -317,13 +328,14 @@ impl<'a, Message: Clone + 'a> TimePicker<'a, Message> {
         };
         let mut header = widget::row![
             display(hour, TimePart::Hour),
-            typography(":", TypeScale::DisplayLarge),
+            widgets.typography(":", TypeScale::DisplayLarge),
             display(picker.value.minute, TimePart::Minute)
         ]
         .spacing(8)
         .align_y(iced::Alignment::Center);
         if !picker.format24 {
             header = header.push(period_selector(
+                &picker.typography,
                 picker.value.is_pm(),
                 picker
                     .on_change
@@ -357,26 +369,27 @@ impl<'a, Message: Clone + 'a> TimePicker<'a, Message> {
                 } else {
                     picker.value.hour12() == value as u8
                 };
-                typography(
-                    if picker.part == TimePart::Minute {
-                        format!("{value:02}")
-                    } else {
-                        value.to_string()
-                    },
-                    if i >= 12 {
-                        TypeScale::BodyMedium
-                    } else {
-                        TypeScale::BodyLarge
-                    },
-                )
-                .style(move |theme: &Theme| widget::text::Style {
-                    color: Some(if selected {
-                        theme.colors.on_primary
-                    } else {
-                        theme.colors.on_surface
-                    }),
-                })
-                .into()
+                widgets
+                    .typography(
+                        if picker.part == TimePart::Minute {
+                            format!("{value:02}")
+                        } else {
+                            value.to_string()
+                        },
+                        if i >= 12 {
+                            TypeScale::BodyMedium
+                        } else {
+                            TypeScale::BodyLarge
+                        },
+                    )
+                    .style(move |theme: &Theme| widget::text::Style {
+                        color: Some(if selected {
+                            theme.colors.on_primary
+                        } else {
+                            theme.colors.on_surface
+                        }),
+                    })
+                    .into()
             })
             .collect();
         let clock: Element<'a, Message> = Element::new(Clock {
@@ -389,11 +402,13 @@ impl<'a, Message: Clone + 'a> TimePicker<'a, Message> {
         });
         let mut content = widget::column![
             widget::column![
-                typography(picker.title, TypeScale::LabelMedium).style(|theme: &Theme| {
-                    widget::text::Style {
-                        color: Some(theme.colors.on_surface_variant),
-                    }
-                }),
+                widgets
+                    .typography(picker.title, TypeScale::LabelMedium)
+                    .style(|theme: &Theme| {
+                        widget::text::Style {
+                            color: Some(theme.colors.on_surface_variant),
+                        }
+                    }),
                 header
             ]
             .spacing(12),
@@ -406,19 +421,21 @@ impl<'a, Message: Clone + 'a> TimePicker<'a, Message> {
         {
             let mut actions = widget::row![].spacing(8).align_y(iced::Alignment::Center);
             if let Some(message) = picker.on_toggle_input {
-                actions = actions.push(mode_toggle(false, message));
+                actions = actions.push(mode_toggle(&picker.typography, false, message));
             }
             actions = actions.push(widget::space().width(Length::Fill));
             if let Some(message) = picker.on_cancel {
                 actions = actions.push(
-                    crate::button("Cancel")
+                    widgets
+                        .button("Cancel")
                         .variant(ButtonVariant::Text)
                         .on_press(message),
                 );
             }
             if let Some(confirm) = picker.on_confirm {
                 actions = actions.push(
-                    crate::button("OK")
+                    widgets
+                        .button("OK")
                         .variant(ButtonVariant::Text)
                         .on_press(confirm(picker.value)),
                 );
@@ -437,7 +454,7 @@ impl<'a, Message: Clone + 'a> TimePicker<'a, Message> {
                 background: Some(theme.colors.surface_container_high.into()),
                 text_color: Some(theme.colors.on_surface),
                 border: Border {
-                    radius: 28.0.into(),
+                    radius: theme.shapes.corners(crate::ShapeScale::ExtraLarge),
                     ..Default::default()
                 },
                 ..Default::default()
@@ -447,36 +464,51 @@ impl<'a, Message: Clone + 'a> TimePicker<'a, Message> {
 }
 // One outer outline and one shared divider, including the selected half.
 fn period_selector<'a, Message: Clone + 'a>(
+    typography: &crate::Typography,
     pm: bool,
     am: Option<Message>,
     pm_message: Option<Message>,
 ) -> Element<'a, Message> {
+    let height = (typography.style(TypeScale::TitleMedium).line_height + 16.0).max(40.0);
     let period = |is_pm, message| {
-        crate::Button::new(typography(
-            if is_pm { "PM" } else { "AM" },
-            TypeScale::TitleMedium,
-        ))
-        .width(52)
-        .height(40)
-        .padding(0)
-        .corner_radius(iced::border::Radius {
-            top_left: if is_pm { 0.0 } else { 8.0 },
-            top_right: if is_pm { 0.0 } else { 8.0 },
-            bottom_left: if is_pm { 8.0 } else { 0.0 },
-            bottom_right: if is_pm { 8.0 } else { 0.0 },
-        })
-        .variant(ButtonVariant::Text)
-        .palette(move |theme| {
-            if pm == is_pm {
-                (
-                    theme.colors.tertiary_container,
-                    theme.colors.on_tertiary_container,
-                )
-            } else {
-                (iced::Color::TRANSPARENT, theme.colors.on_surface_variant)
-            }
-        })
-        .on_press_maybe(message)
+        crate::Button::new(typography.text(if is_pm { "PM" } else { "AM" }, TypeScale::TitleMedium))
+            .width(52)
+            .height(height)
+            .padding(0)
+            .corner_roles([
+                if is_pm {
+                    crate::ShapeScale::None
+                } else {
+                    crate::ShapeScale::Small
+                },
+                if is_pm {
+                    crate::ShapeScale::None
+                } else {
+                    crate::ShapeScale::Small
+                },
+                if is_pm {
+                    crate::ShapeScale::Small
+                } else {
+                    crate::ShapeScale::None
+                },
+                if is_pm {
+                    crate::ShapeScale::Small
+                } else {
+                    crate::ShapeScale::None
+                },
+            ])
+            .variant(ButtonVariant::Text)
+            .palette(move |theme| {
+                if pm == is_pm {
+                    (
+                        theme.colors.tertiary_container,
+                        theme.colors.on_tertiary_container,
+                    )
+                } else {
+                    (iced::Color::TRANSPARENT, theme.colors.on_surface_variant)
+                }
+            })
+            .on_press_maybe(message)
     };
     let frame =
         widget::container(
@@ -488,12 +520,17 @@ fn period_selector<'a, Message: Clone + 'a>(
             }),
         )
         .width(52)
-        .center_y(80)
-        .style(|theme: &Theme| widget::container::Style {
+        .center_y(height * 2.0)
+        .style(move |theme: &Theme| widget::container::Style {
             border: Border {
                 color: theme.colors.outline,
                 width: 1.0,
-                radius: 8.0.into(),
+                radius: theme
+                    .shapes
+                    .radius(crate::ShapeScale::Small)
+                    .min(height / 2.0)
+                    .min(26.0)
+                    .into(),
             },
             ..Default::default()
         });
@@ -509,25 +546,34 @@ fn number(value: &str) -> Result<u8, InvalidTime> {
     }
     value.parse().map_err(|_| InvalidTime)
 }
-fn mode_toggle<'a, Message: Clone + 'a>(input: bool, message: Message) -> Element<'a, Message> {
-    crate::tooltip(
-        crate::icon_button(Element::new(if input {
-            crate::glyph::Glyph::Clock
-        } else {
-            crate::glyph::Glyph::Keyboard
-        }))
-        .on_press(message),
-        if input {
-            "Switch to clock"
-        } else {
-            "Type time"
-        },
-    )
-    .into()
+fn mode_toggle<'a, Message: Clone + 'a>(
+    typography: &crate::Typography,
+    input: bool,
+    message: Message,
+) -> Element<'a, Message> {
+    typography
+        .widgets()
+        .tooltip(
+            crate::icon_button(Element::new(if input {
+                crate::glyph::Glyph::Clock
+            } else {
+                crate::glyph::Glyph::Keyboard
+            }))
+            .on_press(message),
+            if input {
+                "Switch to clock"
+            } else {
+                "Type time"
+            },
+        )
+        .into()
 }
 fn numeric_picker<'a, Message: Clone + 'a>(
     picker: TimePicker<'a, Message>,
 ) -> Element<'a, Message> {
+    let widgets = picker.typography.widgets();
+    let input_height =
+        (picker.typography.style(TypeScale::DisplayLarge).line_height + 16.0).max(80.0);
     let valid = picker.input_time();
     let submit = valid.ok().and_then(|time| {
         picker
@@ -555,9 +601,15 @@ fn numeric_picker<'a, Message: Clone + 'a>(
                     }
                 });
             let input = widget::text_input("", &value)
-                .font(crate::fonts::REGULAR)
-                .size(57)
-                .line_height(iced::advanced::text::LineHeight::Absolute(64.0.into()))
+                .font(picker.typography.style(TypeScale::DisplayLarge).font)
+                .size(picker.typography.style(TypeScale::DisplayLarge).size)
+                .line_height(iced::advanced::text::LineHeight::Absolute(
+                    picker
+                        .typography
+                        .style(TypeScale::DisplayLarge)
+                        .line_height
+                        .into(),
+                ))
                 .padding([8, 4])
                 .align_x(iced::alignment::Horizontal::Center)
                 .width(if picker.format24 { 114 } else { 96 })
@@ -575,7 +627,7 @@ fn numeric_picker<'a, Message: Clone + 'a>(
                         })
                         .into(),
                         border: Border {
-                            radius: 8.0.into(),
+                            radius: theme.shapes.corners(crate::ShapeScale::Small),
                             width: if focused || invalid { 2.0 } else { 0.0 },
                             color: if invalid { c.error } else { c.primary },
                         },
@@ -593,15 +645,17 @@ fn numeric_picker<'a, Message: Clone + 'a>(
                 });
             widget::column![
                 input,
-                typography(label, TypeScale::BodySmall).style(move |theme: &Theme| {
-                    widget::text::Style {
-                        color: Some(if invalid {
-                            theme.colors.error
-                        } else {
-                            theme.colors.on_surface_variant
-                        }),
-                    }
-                })
+                widgets
+                    .typography(label, TypeScale::BodySmall)
+                    .style(move |theme: &Theme| {
+                        widget::text::Style {
+                            color: Some(if invalid {
+                                theme.colors.error
+                            } else {
+                                theme.colors.on_surface_variant
+                            }),
+                        }
+                    })
             ]
             .spacing(4)
         };
@@ -615,49 +669,54 @@ fn numeric_picker<'a, Message: Clone + 'a>(
                 picker.value.hour12()
             }
         ),
-        widget::container(typography(":", TypeScale::DisplayLarge)).center_y(80),
+        widget::container(widgets.typography(":", TypeScale::DisplayLarge)).center_y(input_height),
         entry("Minute", picker.minute_input, picker.value.minute),
     ]
     .spacing(8);
     if !picker.format24 {
         header = header.push(period_selector(
+            &picker.typography,
             pm,
             picker.input_period.as_ref().map(|(_, f)| f(false)),
             picker.input_period.as_ref().map(|(_, f)| f(true)),
         ));
     }
     let mut content = widget::column![
-        typography(picker.title, TypeScale::LabelMedium).style(|theme: &Theme| {
-            widget::text::Style {
-                color: Some(theme.colors.on_surface_variant),
-            }
-        }),
+        widgets
+            .typography(picker.title, TypeScale::LabelMedium)
+            .style(|theme: &Theme| {
+                widget::text::Style {
+                    color: Some(theme.colors.on_surface_variant),
+                }
+            }),
         header
     ]
     .spacing(12);
     if valid.is_err() {
         content = content.push(
-            typography(
-                if picker.format24 {
-                    "Enter hours 00–23 and minutes 00–59"
-                } else {
-                    "Enter hours 01–12 and minutes 00–59"
-                },
-                TypeScale::BodySmall,
-            )
-            .style(|theme: &Theme| widget::text::Style {
-                color: Some(theme.colors.error),
-            }),
+            widgets
+                .typography(
+                    if picker.format24 {
+                        "Enter hours 00–23 and minutes 00–59"
+                    } else {
+                        "Enter hours 01–12 and minutes 00–59"
+                    },
+                    TypeScale::BodySmall,
+                )
+                .style(|theme: &Theme| widget::text::Style {
+                    color: Some(theme.colors.error),
+                }),
         );
     }
     let mut actions = widget::row![];
     if let Some(message) = picker.on_toggle_input {
-        actions = actions.push(mode_toggle(true, message));
+        actions = actions.push(mode_toggle(&picker.typography, true, message));
     }
     actions = actions.push(widget::space().width(Length::Fill)).spacing(8);
     if let Some(message) = picker.on_cancel {
         actions = actions.push(
-            crate::button("Cancel")
+            widgets
+                .button("Cancel")
                 .variant(ButtonVariant::Text)
                 .on_press(message),
         );
@@ -665,13 +724,14 @@ fn numeric_picker<'a, Message: Clone + 'a>(
     content = content.push(
         actions
             .push(
-                crate::button(if picker.on_confirm.is_some() {
-                    "OK"
-                } else {
-                    "Apply"
-                })
-                .variant(ButtonVariant::Text)
-                .on_press_maybe(submit),
+                widgets
+                    .button(if picker.on_confirm.is_some() {
+                        "OK"
+                    } else {
+                        "Apply"
+                    })
+                    .variant(ButtonVariant::Text)
+                    .on_press_maybe(submit),
             )
             .align_y(iced::Alignment::Center),
     );
@@ -687,7 +747,7 @@ fn numeric_picker<'a, Message: Clone + 'a>(
             background: Some(theme.colors.surface_container_high.into()),
             text_color: Some(theme.colors.on_surface),
             border: Border {
-                radius: 28.0.into(),
+                radius: theme.shapes.corners(crate::ShapeScale::ExtraLarge),
                 ..Default::default()
             },
             ..Default::default()

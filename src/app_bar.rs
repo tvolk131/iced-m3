@@ -12,6 +12,7 @@ pub enum AppBarVariant {
 }
 /// See the [rendered examples](crate::guide::components::app_bar).
 pub struct AppBar<'a, Message> {
+    typography: crate::Typography,
     title: String,
     leading: Option<Element<'a, Message>>,
     actions: Vec<Element<'a, Message>>,
@@ -22,6 +23,7 @@ pub struct AppBar<'a, Message> {
 #[cfg_attr(iced_m3_doc_media, doc = include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/docs/generated/app_bar-primary.md")))]
 pub fn app_bar<'a, Message>(title: impl Into<String>) -> AppBar<'a, Message> {
     AppBar {
+        typography: crate::Typography::default(),
         title: title.into(),
         leading: None,
         actions: Vec::new(),
@@ -31,6 +33,10 @@ pub fn app_bar<'a, Message>(title: impl Into<String>) -> AppBar<'a, Message> {
     }
 }
 impl<'a, Message> AppBar<'a, Message> {
+    pub(crate) fn with_typography(mut self, typography: crate::Typography) -> Self {
+        self.typography = typography;
+        self
+    }
     pub fn variant(mut self, variant: AppBarVariant) -> Self {
         self.variant = variant;
         self
@@ -68,25 +74,29 @@ impl<'a, Message: 'a> From<AppBar<'a, Message>> for Element<'a, Message> {
             AppBarVariant::Large => 88.0,
             _ => 0.0,
         } * (1.0 - progress);
-        let height = tokens::size::APP_BAR + extra;
-        let font_size = 22.0
-            + match bar.variant {
-                AppBarVariant::Medium => 6.0,
-                AppBarVariant::Large => 10.0,
-                _ => 0.0,
-            } * (1.0 - progress);
-        let line_height = 28.0
-            + match bar.variant {
-                AppBarVariant::Medium => 8.0,
-                AppBarVariant::Large => 12.0,
-                _ => 0.0,
-            } * (1.0 - progress);
-        let title = widget::container(Element::new(title::Title::new(
-            bar.title,
-            font_size,
-            line_height,
-            bar.variant == AppBarVariant::CenterAligned,
-        )))
+        let small = bar.typography.style(crate::TypeScale::TitleLarge);
+        let expanded_style = bar.typography.style(match bar.variant {
+            AppBarVariant::Medium => crate::TypeScale::HeadlineMedium,
+            AppBarVariant::Large => crate::TypeScale::HeadlineLarge,
+            _ => crate::TypeScale::TitleLarge,
+        });
+        let font_size = small.size + (expanded_style.size - small.size) * (1.0 - progress);
+        let line_height =
+            small.line_height + (expanded_style.line_height - small.line_height) * (1.0 - progress);
+        let height = (tokens::size::APP_BAR + extra).max(line_height + 32.0);
+        let title = widget::container(Element::new(
+            title::Title::new(
+                bar.title,
+                font_size,
+                line_height,
+                bar.variant == AppBarVariant::CenterAligned,
+            )
+            .font(if progress == 1.0 {
+                small.font
+            } else {
+                expanded_style.font
+            }),
+        ))
         .width(Length::Fill)
         .clip(true)
         .into();

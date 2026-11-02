@@ -82,6 +82,12 @@ Use `iced_m3::Element` and return a `Theme` from your application's theme
 callback. Set `fonts::REGULAR` as the default font to match native iced text.
 Wrap the view in `focus::scope` for keyboard traversal and activation.
 
+Use `theme.widgets()` to apply custom `theme.typography` recipes to built-in
+labels and editors. Recreate this owned factory when the theme changes; ordinary
+free constructors retain their baseline typography. Rounded shape roles resolve
+from `theme.shapes` at drawing time. See the [theming guide](https://github.com/tvolk131/iced-m3/blob/master/docs/THEMING.md)
+for examples and override precedence.
+
 The default `wgpu` feature enables GPU rendering with a software fallback.
 See [getting started](https://github.com/tvolk131/iced-m3/blob/master/docs/GETTING_STARTED.md) for software-only configuration
 and faster development builds. Native and third-party iced widgets can share the

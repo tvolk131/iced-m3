@@ -299,21 +299,9 @@ impl<'a, Message: 'a> Sheet<'a, Message> {
             return;
         };
         let radius = match (self.placement, self.modal) {
-            (Placement::Side, true) => iced::border::Radius {
-                top_left: 16.0,
-                bottom_left: 16.0,
-                ..Default::default()
-            },
-            (Placement::Start, _) => iced::border::Radius {
-                top_right: 16.0,
-                bottom_right: 16.0,
-                ..Default::default()
-            },
-            (Placement::Bottom, _) => iced::border::Radius {
-                top_left: 28.0,
-                top_right: 28.0,
-                ..Default::default()
-            },
+            (Placement::Side, true) => theme.shapes.left(crate::ShapeScale::Large),
+            (Placement::Start, _) => theme.shapes.right(crate::ShapeScale::Large),
+            (Placement::Bottom, _) => theme.shapes.top(crate::ShapeScale::ExtraLarge),
             _ => 0.0.into(),
         };
         crate::elevation::draw(

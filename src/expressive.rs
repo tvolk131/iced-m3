@@ -1,5 +1,5 @@
 //! Expressive action compositions, sharing the existing Material interaction layer.
-use crate::{Button, Element, MenuItem, Theme, TypeScale, typography};
+use crate::{Button, Element, MenuItem, Theme, TypeScale};
 use iced::{Border, Length, widget};
 mod group;
 /// Equal-width actions with retained press expansion and neighbor compression.
@@ -52,22 +52,50 @@ impl<'a, Message: Clone + 'a> From<ButtonGroup<'a, Message>> for Element<'a, Mes
                 let button = button.grouped().width(Length::Fill);
                 if group.connected {
                     button
-                        .corner_radius(
-                            Border::default()
-                                .rounded(iced::border::Radius {
-                                    top_left: if i == 0 { 999.0 } else { 8.0 },
-                                    bottom_left: if i == 0 { 999.0 } else { 8.0 },
-                                    top_right: if i == last { 999.0 } else { 8.0 },
-                                    bottom_right: if i == last { 999.0 } else { 8.0 },
-                                })
-                                .radius,
-                        )
-                        .pressed_corners(iced::border::Radius {
-                            top_left: if i == 0 { 999.0 } else { 4.0 },
-                            bottom_left: if i == 0 { 999.0 } else { 4.0 },
-                            top_right: if i == last { 999.0 } else { 4.0 },
-                            bottom_right: if i == last { 999.0 } else { 4.0 },
-                        })
+                        .corner_roles([
+                            if i == 0 {
+                                crate::ShapeScale::Full
+                            } else {
+                                crate::ShapeScale::Small
+                            },
+                            if i == last {
+                                crate::ShapeScale::Full
+                            } else {
+                                crate::ShapeScale::Small
+                            },
+                            if i == last {
+                                crate::ShapeScale::Full
+                            } else {
+                                crate::ShapeScale::Small
+                            },
+                            if i == 0 {
+                                crate::ShapeScale::Full
+                            } else {
+                                crate::ShapeScale::Small
+                            },
+                        ])
+                        .pressed_roles([
+                            if i == 0 {
+                                crate::ShapeScale::Full
+                            } else {
+                                crate::ShapeScale::ExtraSmall
+                            },
+                            if i == last {
+                                crate::ShapeScale::Full
+                            } else {
+                                crate::ShapeScale::ExtraSmall
+                            },
+                            if i == last {
+                                crate::ShapeScale::Full
+                            } else {
+                                crate::ShapeScale::ExtraSmall
+                            },
+                            if i == 0 {
+                                crate::ShapeScale::Full
+                            } else {
+                                crate::ShapeScale::ExtraSmall
+                            },
+                        ])
                 } else {
                     button
                 }
@@ -86,17 +114,26 @@ pub fn split_button<'a, Message: Clone + 'a>(
     action: Message,
     items: impl IntoIterator<Item = MenuItem<'a, Message>>,
 ) -> Element<'a, Message> {
+    split_button_with_typography(label, action, items, crate::Typography::default())
+}
+pub(crate) fn split_button_with_typography<'a, Message: Clone + 'a>(
+    label: impl widget::text::IntoFragment<'a>,
+    action: Message,
+    items: impl IntoIterator<Item = MenuItem<'a, Message>>,
+    typography: crate::Typography,
+) -> Element<'a, Message> {
     widget::row![
         crate::button(label)
+            .with_typography(typography.clone())
             .on_press(action)
             .expressive(true)
-            .corner_radius(iced::border::Radius {
-                top_left: 20.0,
-                bottom_left: 20.0,
-                top_right: 4.0,
-                bottom_right: 4.0
-            }),
-        crate::menu::split_menu(items)
+            .corner_roles([
+                crate::ShapeScale::LargeIncreased,
+                crate::ShapeScale::ExtraSmall,
+                crate::ShapeScale::ExtraSmall,
+                crate::ShapeScale::LargeIncreased
+            ]),
+        crate::menu::split_menu(items, typography)
     ]
     .spacing(2)
     .into()
@@ -142,7 +179,7 @@ impl<'a, Message: 'a> From<Toolbar<'a, Message>> for Element<'a, Message> {
                 .align_y(iced::Alignment::Center)
                 .into()
         };
-        crate::focus::group(crate::elevation::elevated(
+        crate::focus::group(crate::elevation::themed(
             widget::container(items)
                 .padding(12)
                 .width(if toolbar.floating || toolbar.vertical {
@@ -153,14 +190,22 @@ impl<'a, Message: 'a> From<Toolbar<'a, Message>> for Element<'a, Message> {
                 .style(move |theme: &Theme| widget::container::Style {
                     background: Some(theme.colors.surface_container.into()),
                     border: Border {
-                        radius: if toolbar.floating { 32.0 } else { 0.0 }.into(),
+                        radius: theme.shapes.corners(if toolbar.floating {
+                            crate::ShapeScale::ExtraLargeIncreased
+                        } else {
+                            crate::ShapeScale::None
+                        }),
                         ..Default::default()
                     },
 
                     ..Default::default()
                 }),
             if toolbar.floating { 3.0 } else { 0.0 },
-            if toolbar.floating { 32.0 } else { 0.0 },
+            if toolbar.floating {
+                crate::ShapeScale::ExtraLargeIncreased
+            } else {
+                crate::ShapeScale::None
+            },
         ))
     }
 }
@@ -192,10 +237,19 @@ pub fn fab_menu<'a, Message: Clone + 'a>(
     toggle: Message,
     items: impl IntoIterator<Item = FabMenuItem<'a, Message>>,
 ) -> Element<'a, Message> {
+    fab_menu_with_typography(icon, open, toggle, items, crate::Typography::default())
+}
+pub(crate) fn fab_menu_with_typography<'a, Message: Clone + 'a>(
+    icon: impl Into<Element<'a, Message>>,
+    open: bool,
+    toggle: Message,
+    items: impl IntoIterator<Item = FabMenuItem<'a, Message>>,
+    typography: crate::Typography,
+) -> Element<'a, Message> {
     let items = widget::Column::with_children(items.into_iter().map(|item| {
         Button::new(
             widget::row![
-                typography(item.label, TypeScale::LabelLarge),
+                typography.text(item.label, TypeScale::LabelLarge),
                 widget::container(item.icon).center_x(24).center_y(24)
             ]
             .spacing(16)

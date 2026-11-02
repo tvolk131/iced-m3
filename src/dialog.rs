@@ -765,6 +765,7 @@ fn is_input(event: &Event) -> bool {
 /// Convert to [`Dialog`] with `.into()` when passing it to [`modal`].
 /// See the [rendered examples](crate::guide::components::full_screen_dialog).
 pub struct FullScreenDialog<'a, Message> {
+    typography: crate::Typography,
     title: String,
     body: Element<'a, Message>,
     actions: Vec<Element<'a, Message>>,
@@ -778,6 +779,7 @@ pub fn full_screen_dialog<'a, Message>(
     body: impl Into<Element<'a, Message>>,
 ) -> FullScreenDialog<'a, Message> {
     FullScreenDialog {
+        typography: crate::Typography::default(),
         title: title.into(),
         body: body.into(),
         actions: Vec::new(),
@@ -787,6 +789,10 @@ pub fn full_screen_dialog<'a, Message>(
     }
 }
 impl<'a, Message> FullScreenDialog<'a, Message> {
+    pub(crate) fn with_typography(mut self, typography: crate::Typography) -> Self {
+        self.typography = typography;
+        self
+    }
     pub fn on_dismiss(mut self, message: Message) -> Self {
         self.dismiss = Some(message);
         self
@@ -806,7 +812,7 @@ impl<'a, Message> FullScreenDialog<'a, Message> {
 }
 impl<'a, Message: Clone + 'a> From<FullScreenDialog<'a, Message>> for Dialog<'a, Message> {
     fn from(dialog: FullScreenDialog<'a, Message>) -> Self {
-        let mut header = crate::app_bar(dialog.title).leading(
+        let mut header = dialog.typography.widgets().app_bar(dialog.title).leading(
             crate::icon_button(Element::new(crate::glyph::Glyph::Close))
                 .on_press_maybe(dialog.dismiss.clone()),
         );
@@ -886,7 +892,7 @@ fn draw_dialog<Message>(
         &surface_theme,
         reveal,
         bounds.height,
-        28.0,
+        theme.shapes.radius(crate::ShapeScale::ExtraLarge),
         3.0,
         *viewport,
         &state.shadow,
@@ -895,7 +901,7 @@ fn draw_dialog<Message>(
         renderer::Quad {
             bounds: reveal,
             border: Border {
-                radius: 28.0.into(),
+                radius: theme.shapes.corners(crate::ShapeScale::ExtraLarge),
                 ..Default::default()
             },
             ..Default::default()

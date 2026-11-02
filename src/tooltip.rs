@@ -1,6 +1,6 @@
 //! Noninteractive hints with delayed hover/focus and shared popup placement.
 pub use crate::anchored::Placement;
-use crate::{Element, Theme, TypeScale, anchored::Anchored, typography};
+use crate::{Element, Theme, TypeScale, anchored::Anchored};
 use iced::advanced::{
     Clipboard, Layout, Shell, Widget, overlay, renderer,
     widget::{Tree, tree},
@@ -25,16 +25,23 @@ pub fn tooltip<'a, Message: 'a>(
     content: impl Into<Element<'a, Message>>,
     hint: impl widget::text::IntoFragment<'a>,
 ) -> Tooltip<'a, Message> {
+    with_typography(content, hint, &crate::Typography::default())
+}
+pub(crate) fn with_typography<'a, Message: 'a>(
+    content: impl Into<Element<'a, Message>>,
+    hint: impl widget::text::IntoFragment<'a>,
+    typography: &crate::Typography,
+) -> Tooltip<'a, Message> {
     Tooltip {
         content: content.into(),
-        hint: widget::container(typography(hint, TypeScale::BodySmall))
+        hint: widget::container(typography.text(hint, TypeScale::BodySmall))
             .max_width(240)
             .padding([4, 8])
             .style(|theme: &Theme| widget::container::Style {
                 background: Some(theme.colors.inverse_surface.into()),
                 text_color: Some(theme.colors.inverse_on_surface),
                 border: Border {
-                    radius: 4.0.into(),
+                    radius: theme.shapes.corners(crate::ShapeScale::ExtraSmall),
                     ..Default::default()
                 },
                 ..Default::default()

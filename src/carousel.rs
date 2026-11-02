@@ -454,6 +454,7 @@ impl<Message> Widget<Message, Theme, Renderer> for Carousel<'_, Message> {
                         l.child(i).bounds(),
                         item_clip,
                         self.background.unwrap_or(theme.colors.surface),
+                        theme.shapes.radius(crate::ShapeScale::ExtraLarge),
                     );
                 }
             }
@@ -465,7 +466,7 @@ impl<Message> Widget<Message, Theme, Renderer> for Carousel<'_, Message> {
                         border: iced::Border {
                             color: theme.colors.primary,
                             width: 2.0,
-                            radius: 12.0.into(),
+                            radius: theme.shapes.corners(crate::ShapeScale::Medium),
                         },
                         ..Default::default()
                     },
@@ -538,12 +539,18 @@ impl<'a, Message: 'a> From<Carousel<'a, Message>> for Element<'a, Message> {
     }
 }
 
-fn rounded_mask(renderer: &mut Renderer, bounds: Rectangle, clip: Rectangle, color: iced::Color) {
+fn rounded_mask(
+    renderer: &mut Renderer,
+    bounds: Rectangle,
+    clip: Rectangle,
+    color: iced::Color,
+    radius: f32,
+) {
     use iced::advanced::Renderer as _;
     use iced::advanced::svg::{Handle, Renderer as _, Svg};
     static CORNERS: std::sync::OnceLock<[Handle; 4]> = std::sync::OnceLock::new();
     let handles=CORNERS.get_or_init(||["M0 0H1A1 1 0 0 0 0 1Z","M0 0H1V1A1 1 0 0 0 0 0Z","M1 0V1H0A1 1 0 0 0 1 0Z","M1 1H0V0A1 1 0 0 0 1 1Z"].map(|p|Handle::from_memory(format!("<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1 1'><path d='{p}'/></svg>").into_bytes())));
-    let radius = 28.0_f32.min(bounds.width / 2.0).min(bounds.height / 2.0);
+    let radius = radius.min(bounds.width / 2.0).min(bounds.height / 2.0);
     renderer.with_layer(clip, |r| {
         for (i, (x, y)) in [
             (bounds.x, bounds.y),

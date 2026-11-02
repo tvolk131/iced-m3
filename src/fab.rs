@@ -1,5 +1,5 @@
 //! Baseline Material floating action buttons, composed from the shared button.
-use crate::{Button, Element, Theme, TypeScale, tokens, typography};
+use crate::{Button, Element, Theme, TypeScale, tokens};
 use iced::{Alignment, Length, widget};
 
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
@@ -21,8 +21,9 @@ pub enum FabColor {
 /// placement; use ordinary iced layout/stack widgets to float it over content.
 /// See the [rendered examples](crate::guide::components::fab) for appearance variants and interaction.
 pub struct Fab<'a, Message> {
+    typography: crate::Typography,
     icon: Element<'a, Message>,
-    label: Option<Element<'a, Message>>,
+    label: Option<widget::text::Fragment<'a>>,
     size: FabSize,
     color: FabColor,
     action: Option<Message>,
@@ -51,6 +52,7 @@ pub struct Fab<'a, Message> {
 #[cfg_attr(iced_m3_doc_media, doc = include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/docs/generated/fab-primary.md")))]
 pub fn fab<'a, Message: 'a>(icon: impl Into<Element<'a, Message>>) -> Fab<'a, Message> {
     Fab {
+        typography: crate::Typography::default(),
         icon: icon.into(),
         label: None,
         size: FabSize::Regular,
@@ -85,11 +87,15 @@ pub fn extended_fab<'a, Message: 'a>(
     label: impl widget::text::IntoFragment<'a>,
 ) -> Fab<'a, Message> {
     Fab {
-        label: Some(typography(label, TypeScale::LabelLarge).into()),
+        label: Some(label.into_fragment()),
         ..fab(icon)
     }
 }
 impl<'a, Message: 'a> Fab<'a, Message> {
+    pub(crate) fn with_typography(mut self, typography: crate::Typography) -> Self {
+        self.typography = typography;
+        self
+    }
     /// Animate showing or hiding an extended FAB's label. Keep the widget in
     /// the tree and change this flag to expand or collapse it. The icon remains
     /// 24 logical pixels and the button remains 56 logical pixels tall.
@@ -141,15 +147,16 @@ impl<'a, Message: Clone + 'a> From<Fab<'a, Message>> for Element<'a, Message> {
             value.size
         };
         let (dimension, radius, icon_size) = match size {
-            FabSize::Small => (tokens::size::FAB_SMALL, tokens::shape::MEDIUM, 24.0),
-            FabSize::Regular => (tokens::size::FAB, tokens::shape::LARGE, 24.0),
-            FabSize::Large => (tokens::size::FAB_LARGE, tokens::shape::EXTRA_LARGE, 36.0),
+            FabSize::Small => (tokens::size::FAB_SMALL, crate::ShapeScale::Medium, 24.0),
+            FabSize::Regular => (tokens::size::FAB, crate::ShapeScale::Large, 24.0),
+            FabSize::Large => (tokens::size::FAB_LARGE, crate::ShapeScale::ExtraLarge, 36.0),
         };
         let icon = widget::container(value.icon)
             .center_x(icon_size)
             .center_y(icon_size);
         let extended = value.label.is_some();
         let content: Element<'a, Message> = if let Some(label) = value.label {
+            let label = value.typography.text(label, TypeScale::LabelLarge);
             widget::row![
                 icon,
                 crate::reveal::reveal(
@@ -181,7 +188,7 @@ impl<'a, Message: Clone + 'a> From<Fab<'a, Message>> for Element<'a, Message> {
             } else {
                 iced::Padding::ZERO
             })
-            .radius(radius)
+            .shape_role(radius)
             .elevated_style()
             .elevation_levels(
                 if value.lowered { 1 } else { 3 },

@@ -61,6 +61,8 @@ pub struct ColorScheme {
 #[derive(Debug, Clone, PartialEq)]
 pub struct Theme {
     pub colors: ColorScheme,
+    pub typography: crate::Typography,
+    pub shapes: crate::ShapeScheme,
     pub motion: Motion,
     /// Default shape feedback for ordinary action buttons. Explicit component
     /// settings take precedence; custom card/list/chip geometry is unaffected.
@@ -119,6 +121,8 @@ impl Theme {
         {
             return Self {
                 colors: *colors,
+                typography: crate::Typography::default(),
+                shapes: crate::ShapeScheme::default(),
                 dark,
                 motion: Motion::default(),
                 action_shape_motion: false,
@@ -184,12 +188,23 @@ impl Theme {
         cache.truncate(32);
         Self {
             colors,
+            typography: crate::Typography::default(),
+            shapes: crate::ShapeScheme::default(),
             dark,
             motion: Motion::default(),
             action_shape_motion: false,
             reduced_motion: false,
             shadows: true,
         }
+    }
+    /// Set the recipes used by [`Theme::widgets`]. Rebuild the view after changes.
+    pub fn typography(mut self, typography: crate::Typography) -> Self {
+        self.typography = typography;
+        self
+    }
+    pub fn shapes(mut self, shapes: crate::ShapeScheme) -> Self {
+        self.shapes = shapes;
+        self
     }
     /// Apply the application's reduced-motion preference to all shared animations.
     pub fn reduced_motion(mut self, reduced: bool) -> Self {

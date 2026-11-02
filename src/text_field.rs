@@ -39,7 +39,8 @@ pub struct TextField<'a, Message> {
     on_input: Option<std::rc::Rc<dyn Fn(String) -> Message + 'a>>,
     width: Length,
     background: Option<Box<dyn Fn(&Theme) -> Color + 'a>>,
-    font: iced::Font,
+    font: Option<iced::Font>,
+    typography: crate::Typography,
     variant: TextFieldVariant,
     leading: Element<'a, Message>,
     has_leading: bool,
@@ -86,6 +87,34 @@ pub fn text_field<'a, Message: Clone + 'a>(label: &str, value: &str) -> TextFiel
     TextField::new(label, value)
 }
 impl<'a, Message: Clone + 'a> TextField<'a, Message> {
+    pub(crate) fn with_typography(mut self, typography: crate::Typography) -> Self {
+        let style = typography.style(crate::TypeScale::BodyLarge);
+        self.input = self
+            .input
+            .font(style.font)
+            .size(style.size)
+            .line_height(text::LineHeight::Absolute(style.line_height.into()));
+        self.typography = typography;
+        self
+    }
+    fn body_style(&self) -> crate::TypeStyle {
+        self.typography.style(crate::TypeScale::BodyLarge)
+    }
+    fn supporting_style(&self) -> crate::TypeStyle {
+        self.typography.style(crate::TypeScale::BodySmall)
+    }
+    pub(crate) fn field_height(&self) -> f32 {
+        (self.body_style().line_height
+            + if self.variant == TextFieldVariant::Filled {
+                self.supporting_style().line_height + 16.0
+            } else {
+                32.0
+            })
+        .max(tokens::size::FIELD)
+    }
+    pub(crate) fn inset(&self) -> f32 {
+        self.supporting_style().line_height / 2.0
+    }
     pub fn new(label: &str, value: &str) -> Self {
         crate::fonts::ensure_loaded();
         Self {
@@ -118,7 +147,8 @@ impl<'a, Message: Clone + 'a> TextField<'a, Message> {
             on_input: None,
             width: Length::Fill,
             background: None,
-            font: crate::fonts::REGULAR,
+            font: None,
+            typography: crate::Typography::default(),
             variant: TextFieldVariant::Outlined,
             leading: widget::space().into(),
             has_leading: false,
@@ -228,7 +258,7 @@ impl<'a, Message: Clone + 'a> TextField<'a, Message> {
     /// Set the same typeface for the value, floating label, and supporting text.
     pub fn font(mut self, font: iced::Font) -> Self {
         self.input = self.input.font(font);
-        self.font = font;
+        self.font = Some(font);
         self
     }
     pub fn supporting_text(mut self, text: impl Into<String>) -> Self {
@@ -349,10 +379,10 @@ impl<'a, Message: Clone + 'a> Widget<Message, Theme, Renderer> for TextField<'a,
             paragraph.update(super::text_field::paragraph(
                 text,
                 available / 3.0,
-                16.0,
-                24.0,
+                self.body_style().size,
+                self.body_style().line_height,
                 text::Wrapping::None,
-                self.font,
+                self.font.unwrap_or(self.body_style().font),
             ));
         }
         state.prefix_width = if self.prefix.is_empty() {
@@ -372,7 +402,7 @@ impl<'a, Message: Clone + 'a> Widget<Message, Theme, Renderer> for TextField<'a,
             left: 16.0 + leading + state.prefix_width,
             right: 16.0 + trailing + state.suffix_width,
             top: if self.variant == TextFieldVariant::Filled {
-                24.0
+                self.supporting_style().line_height + 8.0
             } else {
                 16.0
             },
@@ -382,30 +412,37 @@ impl<'a, Message: Clone + 'a> Widget<Message, Theme, Renderer> for TextField<'a,
                 16.0
             },
         });
-        let label_size = 16.0 - 4.0 * state.floating.value;
+        let body = self.body_style();
+        let small = self.supporting_style();
+        let label_size = body.size + (small.size - body.size) * state.floating.value;
         state.label.update(paragraph(
             &self.label,
             available,
             label_size,
-            24.0 - 8.0 * state.floating.value,
+            body.line_height + (small.line_height - body.line_height) * state.floating.value,
             text::Wrapping::None,
-            self.font,
+            self.font.unwrap_or(if state.floating.value < 0.5 {
+                body.font
+            } else {
+                small.font
+            }),
         ));
         state.supporting.update(paragraph(
             self.supporting.as_deref().unwrap_or(""),
             width - 32.0,
-            12.0,
-            16.0,
+            small.size,
+            small.line_height,
             text::Wrapping::WordOrGlyph,
-            self.font,
+            self.font.unwrap_or(small.font),
         ));
+        let field_height = self.field_height();
         let input = Widget::layout(
             &mut self.input,
             &mut tree.children[0],
             renderer,
-            &layout::Limits::new(Size::ZERO, Size::new(width, tokens::size::FIELD)),
+            &layout::Limits::new(Size::ZERO, Size::new(width, field_height)),
         )
-        .move_to(Point::new(0.0, 8.0));
+        .move_to(Point::new(0.0, self.inset()));
         let support = if self.supporting.is_some() {
             state.supporting.min_height() + 8.0
         } else {
@@ -419,7 +456,10 @@ impl<'a, Message: Clone + 'a> Widget<Message, Theme, Renderer> for TextField<'a,
                 renderer,
                 &layout::Limits::new(Size::ZERO, Size::new(24.0, 24.0)),
             )
-            .move_to(Point::new(12.0, 24.0));
+            .move_to(Point::new(
+                12.0,
+                self.inset() + (self.field_height() - 24.0) / 2.0,
+            ));
         let side = if matches!(self.trailing, Trailing::Action(..)) {
             40.0
         } else {
@@ -435,10 +475,10 @@ impl<'a, Message: Clone + 'a> Widget<Message, Theme, Renderer> for TextField<'a,
             )
             .move_to(Point::new(
                 (width - 28.0 - side / 2.0).max(0.0),
-                36.0 - side / 2.0,
+                self.inset() + (self.field_height() - side) / 2.0,
             ));
         layout::Node::with_children(
-            Size::new(width, 8.0 + tokens::size::FIELD + support),
+            Size::new(width, self.inset() + self.field_height() + support),
             vec![input, leading_node, trailing_node],
         )
     }
@@ -638,8 +678,8 @@ impl<'a, Message: Clone + 'a> Widget<Message, Theme, Renderer> for TextField<'a,
             return;
         };
         let field = Rectangle {
-            y: bounds.y + 8.0,
-            height: tokens::size::FIELD,
+            y: bounds.y + self.inset(),
+            height: self.field_height(),
             ..bounds
         };
         let state = tree.state.downcast_ref::<State>();
@@ -693,8 +733,17 @@ impl<'a, Message: Clone + 'a> Widget<Message, Theme, Renderer> for TextField<'a,
         let progress = state.floating.value;
         let leading = if self.has_leading { 36.0 } else { 0.0 };
         let label_x = field.x + 16.0 + leading * if filled { 1.0 } else { 1.0 - progress };
-        let label_height = 24.0 - 8.0 * progress;
-        let label_y = field.y + 16.0 - if filled { 8.0 } else { 24.0 } * progress;
+        let body = self.body_style();
+        let small = self.supporting_style();
+        let label_height = body.line_height + (small.line_height - body.line_height) * progress;
+        let rest_y = (field.height - body.line_height) / 2.0;
+        let float_y = if filled { 8.0 } else { -self.inset() };
+        let label_y = field.y + rest_y + (float_y - rest_y) * progress;
+        let corner = theme
+            .shapes
+            .radius(crate::ShapeScale::ExtraSmall)
+            .min(field.height / 2.0)
+            .min(field.width / 2.0);
         let label_width = state.label.min_width().min((field.width - 32.0).max(0.0));
         renderer.with_layer(clip, |renderer| {
             renderer.fill_quad(
@@ -705,13 +754,13 @@ impl<'a, Message: Clone + 'a> Widget<Message, Theme, Renderer> for TextField<'a,
                         width: 0.0,
                         radius: if filled {
                             iced::border::Radius {
-                                top_left: 4.0,
-                                top_right: 4.0,
+                                top_left: corner,
+                                top_right: corner,
                                 bottom_left: 0.0,
                                 bottom_right: 0.0,
                             }
                         } else {
-                            tokens::shape::SMALL.into()
+                            corner.into()
                         },
                     },
                     ..Default::default()
@@ -728,15 +777,14 @@ impl<'a, Message: Clone + 'a> Widget<Message, Theme, Renderer> for TextField<'a,
                         } else {
                             tokens::size::OUTLINE
                         },
-                        radius: tokens::shape::SMALL.into(),
+                        radius: corner.into(),
                     },
                     ..Default::default()
                 };
                 // Clip the outline around the moving label instead of erasing
                 // it with an assumed parent color. The fill remains independent.
-                let notch_left = (label_x - 4.0).max(field.x + tokens::shape::SMALL);
-                let notch_right =
-                    (label_x + label_width + 4.0).min(field.x + field.width - tokens::shape::SMALL);
+                let notch_left = (label_x - 4.0).max(field.x + corner);
+                let notch_right = (label_x + label_width + 4.0).min(field.x + field.width - corner);
                 let notch = Rectangle {
                     x: notch_left,
                     y: label_y,
@@ -784,8 +832,8 @@ impl<'a, Message: Clone + 'a> Widget<Message, Theme, Renderer> for TextField<'a,
                         bounds: field,
                         border: Border {
                             radius: iced::border::Radius {
-                                top_left: 4.0,
-                                top_right: 4.0,
+                                top_left: corner,
+                                top_right: corner,
                                 bottom_left: 0.0,
                                 bottom_right: 0.0,
                             },
@@ -847,7 +895,12 @@ impl<'a, Message: Clone + 'a> Widget<Message, Theme, Renderer> for TextField<'a,
                 &clip,
             );
             let trailing = if self.trailing.present() { 36.0 } else { 0.0 };
-            let text_y = field.y + if filled { 24.0 } else { 16.0 };
+            let text_y = field.y
+                + if filled {
+                    small.line_height + 8.0
+                } else {
+                    16.0
+                };
             let affix_color = alpha(
                 adornment_style.text_color,
                 progress * adornment_style.text_color.a,
@@ -869,7 +922,7 @@ impl<'a, Message: Clone + 'a> Widget<Message, Theme, Renderer> for TextField<'a,
                         x,
                         y: text_y,
                         width,
-                        height: 24.0,
+                        height: body.line_height,
                     })
                     .intersection(&clip)
                 {
@@ -885,7 +938,7 @@ impl<'a, Message: Clone + 'a> Widget<Message, Theme, Renderer> for TextField<'a,
                 x: label_x,
                 y: bounds.y,
                 width: (field.x + field.width - 16.0 - label_x).max(0.0),
-                height: field.height + 8.0,
+                height: field.height + self.inset(),
             };
             if let Some(label_clip) = label_clip.intersection(&clip) {
                 renderer.fill_paragraph(

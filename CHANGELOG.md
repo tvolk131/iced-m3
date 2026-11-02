@@ -1,5 +1,19 @@
 # Release notes
 
+## Unreleased
+
+- Add theme-owned typography and rounded shape schemes without changing the
+  existing baseline recipes. `Theme::widgets()` explicitly applies an owned
+  typography snapshot to built-in labels/editors, including composed picker and
+  submenu content; ordinary free constructors keep their existing typography.
+- Expose independently customizable baseline/emphasized type roles, font-family
+  and text-metric scaling helpers, and the complete rounded Material corner-size
+  scale. Explicit native text and button radius overrides remain available.
+- Resolve built-in surface, elevation and interaction corners consistently from
+  the drawing theme. Retain native editor state and remeasure app-bar titles
+  when their font changes. Add an interactive `theming` example and contracts
+  for defaults, propagation, layout, retained state and shape/shadow agreement.
+
 ## 0.1.0-beta.6 — 2026-10-28
 
 This beta adds an optional offline Material Symbols catalog and separate selected

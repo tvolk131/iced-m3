@@ -15,10 +15,11 @@ pub(super) struct Title {
     size: f32,
     line_height: f32,
     centered: bool,
+    font: iced::Font,
 }
 #[derive(Default)]
 struct State {
-    key: Option<(String, f32, f32, f32, bool)>,
+    key: Option<(String, f32, f32, f32, bool, iced::Font)>,
     paragraph: Paragraph,
 }
 impl Title {
@@ -29,7 +30,12 @@ impl Title {
             size,
             line_height,
             centered,
+            font: fonts::REGULAR,
         }
+    }
+    pub(super) fn font(mut self, font: iced::Font) -> Self {
+        self.font = font;
+        self
     }
     fn paragraph(&self, content: &str) -> Paragraph {
         Paragraph::with_text(text::Text {
@@ -37,7 +43,7 @@ impl Title {
             bounds: Size::new(f32::INFINITY, self.line_height),
             size: self.size.into(),
             line_height: text::LineHeight::Absolute(self.line_height.into()),
-            font: fonts::REGULAR,
+            font: self.font,
             align_x: if self.centered {
                 text::Alignment::Center
             } else {
@@ -97,6 +103,7 @@ impl<Message> Widget<Message, Theme, Renderer> for Title {
             self.line_height,
             size.width,
             self.centered,
+            self.font,
         );
         if state.key.as_ref() != Some(&key) {
             state.paragraph = self.fit(size.width).1;

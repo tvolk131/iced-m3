@@ -1,5 +1,5 @@
 //! Composable variants built on the shared focus, state, and popup primitives.
-use crate::{Button, ButtonVariant, Element, SurfaceVariant, Theme, TypeScale, typography};
+use crate::{Button, ButtonVariant, Element, SurfaceVariant, Theme, TypeScale};
 use iced::{Border, Length, widget};
 /// See the [rendered examples](crate::guide::components::card).
 pub struct Card<'a, Message> {
@@ -79,7 +79,7 @@ impl<'a, Message: Clone + 'a> From<Card<'a, Message>> for Element<'a, Message> {
                     1
                 },
             )
-            .radius(12.0)
+            .shape_role(crate::ShapeScale::Medium)
             .padding(16)
             .width(card.width)
             .interactive_children(card.disabled || card.dragged)
@@ -112,10 +112,17 @@ pub fn badged<'a, Message: 'a>(
     content: impl Into<Element<'a, Message>>,
     count: Option<u32>,
 ) -> Element<'a, Message> {
+    badged_with_typography(content, count, &crate::Typography::default())
+}
+pub(crate) fn badged_with_typography<'a, Message: 'a>(
+    content: impl Into<Element<'a, Message>>,
+    count: Option<u32>,
+    typography: &crate::Typography,
+) -> Element<'a, Message> {
     widget::stack![
         content.into(),
         widget::container(match count {
-            Some(count) => crate::badge(count).into(),
+            Some(count) => crate::components::badge_with_typography(count, typography).into(),
             None => Element::from(badge_dot()),
         })
         .align_right(Length::Fill)
@@ -138,12 +145,23 @@ pub fn rich_tooltip<'a, Message: Clone + 'a>(
     title: impl Into<String>,
     body: impl Into<Element<'a, Message>>,
 ) -> crate::Menu<'a, Message> {
+    rich_tooltip_with_typography(trigger, title, body, &crate::Typography::default())
+}
+pub(crate) fn rich_tooltip_with_typography<'a, Message: Clone + 'a>(
+    trigger: impl Into<Element<'a, Message>>,
+    title: impl Into<String>,
+    body: impl Into<Element<'a, Message>>,
+    typography: &crate::Typography,
+) -> crate::Menu<'a, Message> {
     crate::menu::rich_popup(
         trigger,
-        crate::elevation::elevated(
+        crate::elevation::themed(
             widget::container(crate::staged::part(
-                widget::column![typography(title.into(), TypeScale::TitleSmall), body.into()]
-                    .spacing(12),
+                widget::column![
+                    typography.text(title.into(), TypeScale::TitleSmall),
+                    body.into()
+                ]
+                .spacing(12),
                 crate::staged::Part::Popup(false),
             ))
             .padding(16)
@@ -152,14 +170,14 @@ pub fn rich_tooltip<'a, Message: Clone + 'a>(
                 background: Some(theme.colors.surface_container.into()),
                 text_color: Some(theme.colors.on_surface_variant),
                 border: Border {
-                    radius: 12.0.into(),
+                    radius: theme.shapes.corners(crate::ShapeScale::Medium),
                     ..Default::default()
                 },
 
                 ..Default::default()
             }),
             2.0,
-            12.0,
+            crate::ShapeScale::Medium,
         ),
     )
 }
